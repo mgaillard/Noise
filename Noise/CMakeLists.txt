@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(Worley)
+project(Noise)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
@@ -11,8 +11,7 @@ endif()
 
 find_package(OpenCV REQUIRED)
 
-target_include_directories(Worley PRIVATE "Include")
-
-set(SOURCE_FILES main.cpp Include/math2d.cpp Source/math2d.cpp Include/noise.cpp Source/noise.cpp Inckude/perlin.cpp Source/perlin.cpp Include/worley.cpp Source/worley.cpp)
-add_executable(Worley ${SOURCE_FILES})
-target_link_libraries(Worley ${OpenCV_LIBS})
+set(SOURCE_FILES Source/main.cpp Include/math2d.h Source/math2d.cpp Include/noise.h Source/noise.cpp Include/perlin.h Source/perlin.cpp Include/worley.h Source/worley.cpp)
+add_executable(Noise ${SOURCE_FILES})
+target_include_directories(Noise PRIVATE Include)
+target_link_libraries(Noise ${OpenCV_LIBS})
