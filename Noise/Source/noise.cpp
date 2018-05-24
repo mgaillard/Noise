@@ -128,6 +128,12 @@ double ComputeColor(double x, double y, const array<array<Point, 5>, 5>& points,
 		}
 	}
 
+	// When near to the grid
+	if (abs(x - floor(x)) < 0.015625 || abs(y - floor(y)) < 0.015625)
+	{
+		value = 1.0;
+	}
+
 	return value;
 }
 
