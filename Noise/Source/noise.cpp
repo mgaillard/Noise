@@ -2,8 +2,6 @@
 
 #include <iostream>
 #include <vector>
-#include <array>
-#include <random>
 #include <cstdint>
 #include <limits>
 #include <cmath>
@@ -11,25 +9,39 @@
 
 #include "perlin.h"
 #include "math2d.h"
+#include "utils.h"
 
 using namespace std;
 
-int GenerateSeedNoise(int i, int j)
+Noise::Noise(const Point& noiseTopLeft, const Point& noiseBottomRight, const Point& perlinTopLeft, const Point& perlinBottomRight, int seed, double eps, bool displayPoints, bool displaySegments, bool displayGrid) :
+	m_seed(seed),
+	m_displayPoints(displayPoints),
+	m_displaySegments(displaySegments),
+	m_displayGrid(displayGrid),
+	m_noiseTopLeft(noiseTopLeft),
+	m_noiseBottomRight(noiseBottomRight),
+	m_perlinTopLeft(perlinTopLeft),
+	m_perlinBottomRight(perlinBottomRight),
+	m_distribution(eps, 1.0 - eps)
 {
-	// TODO: implement a better permutation method
-	return (541 * i + 79 * j) % numeric_limits<int>::max();
+
 }
 
-Point GeneratePoint(int x, int y)
+int Noise::GenerateSeedNoise(int i, int j) const
+{
+	// TODO: implement a better permutation method
+	return (541 * i + 79 * j + m_seed) % numeric_limits<int>::max();
+}
+
+Point Noise::GeneratePoint(int x, int y) const
 {
 	// Fixed seed for internal consistency
 	default_random_engine generator(GenerateSeedNoise(x, y));
-	uniform_real_distribution<double> distribution(0.0, 1.0);
 
-	return Point(double(x) + distribution(generator), double(y) + distribution(generator));
+	return Point(double(x) + m_distribution(generator), double(y) + m_distribution(generator));
 }
 
-array<array<Point, 5>, 5> GenerateNeighboringPoints(int cx, int cy)
+array<array<Point, 5>, 5> Noise::GenerateNeighboringPoints(int cx, int cy) const
 {
 	array<array<Point, 5>, 5> points;
 
@@ -48,7 +60,7 @@ array<array<Point, 5>, 5> GenerateNeighboringPoints(int cx, int cy)
 	return points;
 }
 
-array<array<double, 5>, 5> ComputeElevations(const array<array<Point, 5>, 5>& points)
+array<array<double, 5>, 5> Noise::ComputeElevations(const array<array<Point, 5>, 5>& points) const
 {
 	array<array<double, 5>, 5> elevations;
 
@@ -56,14 +68,17 @@ array<array<double, 5>, 5> ComputeElevations(const array<array<Point, 5>, 5>& po
 	{
 		for (int j = 0; j < elevations[i].size(); j++)
 		{
-			elevations[i][j] = Perlin(points[i][j].x / 16.0, points[i][j].y / 16.0);
+			const double x = Remap(points[i][j].x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_perlinTopLeft.x, m_perlinBottomRight.x);
+			const double y = Remap(points[i][j].y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_perlinTopLeft.y, m_perlinBottomRight.y);
+
+			elevations[i][j] = Perlin(x, y);
 		}
 	}
 
 	return elevations;
 }
 
-array<Segment, 9> GenerateSegments(const array<array<Point, 5>, 5>& points)
+array<Segment, 9> Noise::GenerateSegments(const array<array<Point, 5>, 5>& points) const 
 {
 	const array<array<double, 5>, 5> elevations = ComputeElevations(points);
 
@@ -97,47 +112,56 @@ array<Segment, 9> GenerateSegments(const array<array<Point, 5>, 5>& points)
 	return segments;
 }
 
-double ComputeColor(double x, double y, const array<array<Point, 5>, 5>& points, const array<Segment, 9>& segments)
+double Noise::ComputeColor(double x, double y, const array<array<Point, 5>, 5>& points, const array<Segment, 9>& segments) const
 {
 	// Find color
 	double value = 0.0;
 
 	// White when near to a control point
-	for (int i = 0; i < points.size(); i++)
+	if (m_displayPoints)
 	{
-		for (int j = 0; j < points[i].size(); j++)
+		for (int i = 0; i < points.size(); i++)
 		{
-			double dist_center = dist(Point(x, y), points[i][j]);
+			for (int j = 0; j < points[i].size(); j++)
+			{
+				double dist_center = dist(Point(x, y), points[i][j]);
 
-			if (dist_center < 0.0625)
+				if (dist_center < 0.0625)
+				{
+					value = 1.0;
+				}
+			}
+		}
+	}
+
+	// White when near to a segment
+	if (m_displaySegments)
+	{
+		for (const Segment& segment : segments)
+		{
+			Point c;
+			double dist = distToLineSegment(Point(x, y), segment, c);
+
+			if (dist < 0.015625)
 			{
 				value = 1.0;
 			}
 		}
 	}
 
-	// White when near to a segment
-	for (const Segment& segment : segments)
+	// When near to the grid
+	if (m_displayGrid)
 	{
-		Point c;
-		double dist = distToLineSegment(Point(x, y), segment, c);
-
-		if (dist < 0.015625)
+		if (abs(x - floor(x)) < 0.0078125 || abs(y - floor(y)) < 0.0078125)
 		{
 			value = 1.0;
 		}
 	}
 
-	// When near to the grid
-	if (abs(x - floor(x)) < 0.015625 || abs(y - floor(y)) < 0.015625)
-	{
-		value = 1.0;
-	}
-
 	return value;
 }
 
-double Noise(double x, double y)
+double Noise::evaluate(double x, double y) const
 {
 	// In which cell is the point
 	const int cx = int(floor(x));

@@ -11,7 +11,7 @@ endif()
 
 find_package(OpenCV REQUIRED)
 
-set(SOURCE_FILES Source/main.cpp Include/math2d.h Source/math2d.cpp Include/noise.h Source/noise.cpp Include/perlin.h Source/perlin.cpp Include/worley.h Source/worley.cpp)
+set(SOURCE_FILES Source/main.cpp Include/math2d.h Source/math2d.cpp Include/noise.h Source/noise.cpp Include/perlin.h Source/perlin.cpp Include/worley.h Source/worley.cpp Include/utils.h Source/utils.cpp)
 add_executable(Noise ${SOURCE_FILES})
 target_include_directories(Noise PRIVATE Include)
 target_link_libraries(Noise ${OpenCV_LIBS})

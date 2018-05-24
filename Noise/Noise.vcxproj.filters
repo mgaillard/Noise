@@ -29,6 +29,9 @@
     <ClCompile Include="Source\math2d.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\utils.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\noise.h">
@@ -41,6 +44,9 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="Include\math2d.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\utils.h">
       <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
