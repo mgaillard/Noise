@@ -97,24 +97,8 @@ array<Segment, 9> GenerateSegments(const array<array<Point, 5>, 5>& points)
 	return segments;
 }
 
-double Noise(double x, double y)
+double ComputeColor(double x, double y, const array<array<Point, 5>, 5>& points, const array<Segment, 9>& segments)
 {
-	// In which cell is the point
-	const double int_x = floor(x);
-	const double int_y = floor(y);
-
-	const double u = x - int_x;
-	const double v = y - int_y;
-
-	const int cx = int(int_x);
-	const int cy = int(int_y);
-
-	// Points in neighboring cells
-	array<array<Point, 5>, 5> points = GenerateNeighboringPoints(cx, cy);
-	// List of segments 
-	array<Segment, 9> segments = GenerateSegments(points);
-
-
 	// Find color
 	double value = 0.0;
 
@@ -144,6 +128,19 @@ double Noise(double x, double y)
 		}
 	}
 
-
 	return value;
+}
+
+double Noise(double x, double y)
+{
+	// In which cell is the point
+	const int cx = int(floor(x));
+	const int cy = int(floor(y));
+
+	// Points in neighboring cells
+	array<array<Point, 5>, 5> points = GenerateNeighboringPoints(cx, cy);
+	// List of segments 
+	array<Segment, 9> segments = GenerateSegments(points);
+
+	return ComputeColor(x, y, points, segments);
 }
