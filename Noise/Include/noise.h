@@ -34,7 +34,7 @@ private:
 	const Point m_perlinTopLeft;
 	const Point m_perlinBottomRight;
 
-	uniform_real_distribution<double> m_distribution;
+	const double m_eps;
 };
 
 #endif // NOISE_H

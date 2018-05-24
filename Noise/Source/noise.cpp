@@ -22,7 +22,7 @@ Noise::Noise(const Point& noiseTopLeft, const Point& noiseBottomRight, const Poi
 	m_noiseBottomRight(noiseBottomRight),
 	m_perlinTopLeft(perlinTopLeft),
 	m_perlinBottomRight(perlinBottomRight),
-	m_distribution(eps, 1.0 - eps)
+	m_eps(eps)
 {
 
 }
@@ -37,8 +37,9 @@ Point Noise::GeneratePoint(int x, int y) const
 {
 	// Fixed seed for internal consistency
 	default_random_engine generator(GenerateSeedNoise(x, y));
+	uniform_real_distribution<double> distribution(m_eps, 1.0 - m_eps);
 
-	return Point(double(x) + m_distribution(generator), double(y) + m_distribution(generator));
+	return Point(double(x) + distribution(generator), double(y) + distribution(generator));
 }
 
 array<array<Point, 5>, 5> Noise::GenerateNeighboringPoints(int cx, int cy) const
