@@ -36,10 +36,14 @@ int Noise::GenerateSeedNoise(int i, int j) const
 Point Noise::GeneratePoint(int x, int y) const
 {
 	// Fixed seed for internal consistency
-	default_random_engine generator(GenerateSeedNoise(x, y));
-	uniform_real_distribution<double> distribution(m_eps, 1.0 - m_eps);
+	const int seed = GenerateSeedNoise(x, y);
+	RandomGenerator generator(seed);
 
-	return Point(double(x) + distribution(generator), double(y) + distribution(generator));
+	uniform_real_distribution<double> distribution(m_eps, 1.0 - m_eps);
+	const double px = distribution(generator);
+	const double py = distribution(generator);
+
+	return Point(double(x) + px, double(y) + py);
 }
 
 array<array<Point, 5>, 5> Noise::GenerateNeighboringPoints(int cx, int cy) const

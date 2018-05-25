@@ -22,7 +22,11 @@ private:
 	array<array<double, 5>, 5> ComputeElevations(const array<array<Point, 5>, 5>& points) const;
 	array<Segment, 9> GenerateSegments(const array<array<Point, 5>, 5>& points) const;
 	double ComputeColor(double x, double y, const array<array<Point, 5>, 5>& points, const array<Segment, 9>& segments) const;
+	
+	// Random generator used by the class
+	typedef minstd_rand RandomGenerator;
 
+	// Seed of the noise
 	const int m_seed;
 
 	const bool m_displayPoints;
@@ -34,6 +38,7 @@ private:
 	const Point m_perlinTopLeft;
 	const Point m_perlinBottomRight;
 
+	// Epsilon used to biais the area where points are generated in cells
 	const double m_eps;
 };
 

@@ -78,12 +78,13 @@ int main(int argc, char* argv[])
 	const string FILENAME = "output.png";
 	
 	const int seed = 0;
+	const double eps = 0.0;
 	const Point noiseTopLeft(0.0, 0.0);
 	const Point noiseBottomRight(8.0, 8.0);
 	const Point perlinTopLeft(0.0, 0.0);
 	const Point perlinBottomRight(1.0, 1.0);
 
-	Noise noise(noiseTopLeft, noiseBottomRight, perlinTopLeft, perlinBottomRight, seed);
+	Noise noise(noiseTopLeft, noiseBottomRight, perlinTopLeft, perlinBottomRight, seed, eps);
 
 	cv::Mat imagePerlin;
 	cv::Mat imageNoise;
