@@ -20,7 +20,7 @@ private:
 
 	Point GeneratePoint(int x, int y) const;
 
-	tuple<int, int> Noise::GetSubQuadrant(double cx, double cy, double x, double y) const;
+	tuple<int, int> GetSubQuadrant(double cx, double cy, double x, double y) const;
 
 	array<array<Point, 5>, 5> GenerateNeighboringPoints(int cx, int cy) const;
 
