@@ -30,6 +30,8 @@ private:
 
 	array<Segment, 9> GenerateSegments(const array<array<Point, 5>, 5>& points) const;
 
+	array<Segment, 9> GenerateSubSegments(const array<array<Point, 5>, 5>& points, const array<Segment, 9>& segments) const;
+
 	double ComputeColor(double x, double y, const array<array<Point, 5>, 5>& points, const array<Segment, 9>& segments) const;
 
 	double ComputeColorSub(double x, double y, const array<array<Point, 5>, 5>& points, const array<Segment, 9>& segments) const;

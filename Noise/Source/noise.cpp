@@ -118,6 +118,36 @@ array<Segment, 9> Noise::GenerateSegments(const array<array<Point, 5>, 5>& point
 	return segments;
 }
 
+array<Segment, 9> Noise::GenerateSubSegments(const array<array<Point, 5>, 5>& points, const array<Segment, 9>& segments) const
+{
+	// Connect each point to the nearest segment
+	array<Segment, 9> subSegments;
+	for (int i = 1; i <= 3; i++)
+	{
+		for (int j = 1; j <= 3; j++)
+		{
+			double nearestSegmentDist = numeric_limits<double>::max();
+			Point nearestSegmentIntersection;
+
+			for (const Segment& segment : segments)
+			{
+				Point segmentNearestPoint;
+				double dist = distToLineSegment(points[i][j], segment, segmentNearestPoint);
+
+				if (dist < nearestSegmentDist)
+				{
+					nearestSegmentDist = dist;
+					nearestSegmentIntersection = segmentNearestPoint;
+				}
+			}
+
+			subSegments[3 * (i - 1) + j - 1] = Segment(points[i][j], nearestSegmentIntersection);
+		}
+	}
+
+	return subSegments;
+}
+
 double Noise::ComputeColor(double x, double y, const array<array<Point, 5>, 5>& points, const array<Segment, 9>& segments) const
 {
 	// Find color
@@ -306,7 +336,7 @@ double Noise::evaluate(double x, double y) const
 	// Level 2: Points in neighboring cells
 	array<array<Point, 5>, 5> subPoints = GenerateNeighboringSubPoints(cx, cy, x, y, points);
 	// Level 2: List of segments 
-	array<Segment, 9> subSegments;
+	array<Segment, 9> subSegments = GenerateSubSegments(subPoints, segments);
 	
 	return max(
 		ComputeColor(x, y, points, segments),
