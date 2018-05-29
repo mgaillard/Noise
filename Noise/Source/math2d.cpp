@@ -31,7 +31,8 @@ double distToLineSegment(const Point& p, const Point& a, const Point& b, Point& 
 	}
 	else
 	{
-		// Between A and B
-		return distToLine(p, a, b, c);
+		// Between A and B, equivalent to distToLine(p, a, b, c);
+		c = translate(a, scale(ab, u));
+		return dist(p, c);
 	}
 }
