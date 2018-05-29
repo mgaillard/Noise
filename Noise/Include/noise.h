@@ -17,11 +17,22 @@ public:
 
 private:
 	int GenerateSeedNoise(int i, int j) const;
+
 	Point GeneratePoint(int x, int y) const;
+
+	tuple<int, int> Noise::GetSubQuadrant(double cx, double cy, double x, double y) const;
+
 	array<array<Point, 5>, 5> GenerateNeighboringPoints(int cx, int cy) const;
+
+	array<array<Point, 5>, 5> GenerateNeighboringSubPoints(double cx, double cy, double x, double y, const array<array<Point, 5>, 5>& points) const;
+
 	array<array<double, 5>, 5> ComputeElevations(const array<array<Point, 5>, 5>& points) const;
+
 	array<Segment, 9> GenerateSegments(const array<array<Point, 5>, 5>& points) const;
+
 	double ComputeColor(double x, double y, const array<array<Point, 5>, 5>& points, const array<Segment, 9>& segments) const;
+
+	double ComputeColorSub(double x, double y, const array<array<Point, 5>, 5>& points, const array<Segment, 9>& segments) const;
 	
 	// Random generator used by the class
 	typedef minstd_rand RandomGenerator;

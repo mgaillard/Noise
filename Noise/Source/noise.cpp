@@ -6,6 +6,7 @@
 #include <limits>
 #include <cmath>
 #include <tuple>
+#include <cassert>
 
 #include "perlin.h"
 #include "math2d.h"
@@ -166,16 +167,149 @@ double Noise::ComputeColor(double x, double y, const array<array<Point, 5>, 5>& 
 	return value;
 }
 
+double Noise::ComputeColorSub(double x, double y, const array<array<Point, 5>, 5>& points, const array<Segment, 9>& segments) const
+{
+	// Find color
+	double value = 0.0;
+
+	// White when near to a control point
+	if (m_displayPoints)
+	{
+		for (int i = 0; i < points.size(); i++)
+		{
+			for (int j = 0; j < points[i].size(); j++)
+			{
+				double dist_center = dist(Point(x, y), points[i][j]);
+
+				if (dist_center < 0.015625)
+				{
+					value = 1.0;
+				}
+			}
+		}
+	}
+
+	// White when near to a segment
+	if (m_displaySegments)
+	{
+		for (const Segment& segment : segments)
+		{
+			Point c;
+			double dist = distToLineSegment(Point(x, y), segment, c);
+
+			if (dist < 0.0078125)
+			{
+				value = 1.0;
+			}
+		}
+	}
+
+	// When near to the grid
+	if (m_displayGrid)
+	{
+		if (abs(x - floor(x) - 0.5) < 0.00390625 || abs(y - floor(y) - 0.5) < 0.00390625)
+		{
+			value = 1.0;
+		}
+	}
+
+	return value;
+}
+
+tuple<int, int> Noise::GetSubQuadrant(double cx, double cy, double x, double y) const
+{
+	// Return the coordinates of the quadrant in which (x, y) if we divide the cell (cx, cy) in 4 quadrants
+	//      cx    cx+1    cx+2
+	//   cy -----------------
+	//      |0;0|1;0|2;0|3;0|
+	//      -----------------
+	//      |0;1|1;1|2;1|3;1|
+	// cy+1 -----------------
+	//      |0;2|1;2|2;2|3;2|
+	//      -----------------
+	//      |0;3|1;3|2;3|3;3|
+	// cy+2 -----------------
+	// 
+	// If x is in [cx, cx + 0.5[ and y is in [cy, cy + 0.5[, then the quadrant is (0, 0)
+	// In the same way, if (x - cx) is in [0, 0.5[ and (y - cy) is in [0, 0.5[, then the quadrant is (0, 0) as well
+
+	// ----- int(floor(2.0 * a)) -----
+	// If a is in [-1.5, -1[ return -3
+	// If a is in [-1, -0.5[ return -2
+	// If a is in [-0.5, 0[  return -1
+	// If a is in [0, 0.5[   return  0
+	// If a is in [0.5, 1[   return  1
+	// If a is in [1, 1.5[   return  2
+	// Etc...
+
+	int quadrantX = int(floor(2.0 *(x - cx)));
+	int quadrantY = int(floor(2.0 *(y - cy)));
+
+	return make_tuple(quadrantX, quadrantY);
+}
+
+array<array<Point, 5>, 5> Noise::GenerateNeighboringSubPoints(double cx, double cy, double x, double y, const array<array<Point, 5>, 5>& points) const
+{
+	// In which cell is the point (x, y)
+	const int cxInt = int(cx);
+	const int cyInt = int(cy);
+
+	// Detect in which quadrant is the current point (x, y)
+	int quadrantX, quadrantY;
+	tie(quadrantX, quadrantY) = GetSubQuadrant(cx, cy, x, y);
+	array<array<Point, 5>, 5> subPoints = GenerateNeighboringPoints(2 * cxInt + quadrantX, 2 * cyInt + quadrantY);
+
+	// Divide point coordinates by 2
+	for (int i = 0; i < subPoints.size(); i++)
+	{
+		for (int j = 0; j < subPoints[i].size(); j++)
+		{
+			subPoints[i][j].x /= 2.0;
+			subPoints[i][j].y /= 2.0;
+		}
+	}
+
+	// Replace subpoints by the already existing points
+	for (int i = 0; i < points.size(); i++)
+	{
+		for (int j = 0; j < points[i].size(); j++)
+		{
+			int qX, qY;
+			tie(qX, qY) = GetSubQuadrant(cx, cy, points[i][j].x, points[i][j].y);
+
+			int k = 2 - quadrantY + qY;
+			int l = 2 - quadrantX + qX;
+
+			if (k >= 0 && k < 5 && l >= 0 && l < 5)
+			{
+				subPoints[k][l] = points[i][j];
+			}
+		}
+	}
+
+	return subPoints;
+}
+
 double Noise::evaluate(double x, double y) const
 {
-	// In which cell is the point
-	const int cx = int(floor(x));
-	const int cy = int(floor(y));
+	// In which cell is the point (x, y)
+	const double cx = floor(x);
+	const double cy = floor(y);
+	const int cxInt = int(cx);
+	const int cyInt = int(cy);
 
-	// Points in neighboring cells
-	array<array<Point, 5>, 5> points = GenerateNeighboringPoints(cx, cy);
-	// List of segments 
+	// Level 1: Points in neighboring cells
+	array<array<Point, 5>, 5> points = GenerateNeighboringPoints(cxInt, cyInt);
+	// Level 1: List of segments 
 	array<Segment, 9> segments = GenerateSegments(points);
 
-	return ComputeColor(x, y, points, segments);
+	// Level 2: Points in neighboring cells
+	array<array<Point, 5>, 5> subPoints = GenerateNeighboringSubPoints(cx, cy, x, y, points);
+	// Level 2: List of segments 
+	array<Segment, 9> subSegments;
+	
+	return max(
+		ComputeColor(x, y, points, segments),
+		ComputeColorSub(x, y, subPoints, subSegments)
+	);
 }
