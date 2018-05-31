@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClCompile Include="Source\main.cpp" />
     <ClCompile Include="Source\math2d.cpp" />
+    <ClCompile Include="Source\math3d.cpp" />
     <ClCompile Include="Source\noise.cpp" />
     <ClCompile Include="Source\perlin.cpp" />
     <ClCompile Include="Source\utils.cpp" />
@@ -139,6 +140,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\math2d.h" />
+    <ClInclude Include="Include\math3d.h" />
     <ClInclude Include="Include\noise.h" />
     <ClInclude Include="Include\perlin.h" />
     <ClInclude Include="Include\utils.h" />

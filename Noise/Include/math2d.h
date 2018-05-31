@@ -3,68 +3,75 @@
 
 #include <cmath>
 
-struct Point
+struct Point2D
 {
 	double x;
 	double y;
 
-	Point() : x(0.0), y(0.0) { }
+	Point2D() : x(0.0), y(0.0) { }
 
-	Point(double _x, double _y) : x(_x), y(_y) { }
+	Point2D(double _x, double _y) : x(_x), y(_y) { }
 };
 
-struct Vec
+struct Vec2D
 {
 	double x;
 	double y;
 
-	Vec() : x(0.0), y(0.0) { }
+	Vec2D() : x(0.0), y(0.0) { }
 
-	Vec(double _x, double _y) : x(_x), y(_y) { }
+	Vec2D(double _x, double _y) : x(_x), y(_y) { }
 
-	Vec(const Point& a, const Point& b) : x(b.x - a.x), y(b.y - a.y) { }
+	Vec2D(const Point2D& a, const Point2D& b) : x(b.x - a.x), y(b.y - a.y) { }
 };
 
-struct Segment
+struct Segment2D
 {
-	Point a;
-	Point b;
+	Point2D a;
+	Point2D b;
 
-	Segment() = default;
+	Segment2D() = default;
 
-	Segment(const Point& _a, const Point& _b) : a(_a), b(_b) { }
+	Segment2D(const Point2D& _a, const Point2D& _b) : a(_a), b(_b) { }
 };
 
-inline double dist(const Point& lhs, const Point& rhs)
+inline double dist(const Point2D& lhs, const Point2D& rhs)
 {
 	return hypot(lhs.x - rhs.x, lhs.y - rhs.y);
 }
 
-inline double norm_sq(const Vec& a)
+inline double norm_sq(const Vec2D& a)
 {
 	return a.x * a.x + a.y * a.y;
 }
 
-inline Vec scale(const Vec& v, double s)
+inline Vec2D scale(const Vec2D& v, double s)
 {
-	return Vec(v.x * s, v.y * s);
+	return Vec2D(v.x * s, v.y * s);
 }
 
-inline double dot(const Vec& a, const Vec& b)
+inline double dot(const Vec2D& a, const Vec2D& b)
 {
 	return a.x * b.x + a.y * b.y;
 }
 
-inline Point translate(const Point& p, const Vec& v)
+inline Point2D translate(const Point2D& p, const Vec2D& v)
 {
-	return Point(p.x + v.x, p.y + v.y);
+	return Point2D(p.x + v.x, p.y + v.y);
 }
 
-double distToLine(const Point& p, const Point& a, const Point& b, Point& c);
+double pointLineProjection(const Point2D& p, const Point2D& a, const Point2D& b);
 
-double distToLineSegment(const Point& p, const Point& a, const Point& b, Point& c);
+inline double pointSegmentProjection(const Point2D& p, const Segment2D& s)
+{
+	return pointLineProjection(p, s.a, s.b);
+}
 
-inline double distToLineSegment(const Point& p, const Segment& s, Point& c)
+double distToLine(const Point2D& p, const Point2D& a, const Point2D& b, Point2D& c);
+
+double distToLineSegment(const Point2D& p, const Point2D& a, const Point2D& b, Point2D& c);
+
+inline double distToLineSegment(const Point2D& p, const Segment2D& s, Point2D& c)
 {
 	return distToLineSegment(p, s.a, s.b, c);
 }

@@ -1,9 +1,17 @@
 #include "math2d.h"
 
-double distToLine(const Point& p, const Point& a, const Point& b, Point& c)
+double pointLineProjection(const Point2D& p, const Point2D& a, const Point2D& b)
 {
-	const Vec ap(a, p);
-	const Vec ab(a, b);
+	const Vec2D ap(a, p);
+	const Vec2D ab(a, b);
+	// Project vector AP on AB
+	return dot(ap, ab) / norm_sq(ab);
+}
+
+double distToLine(const Point2D& p, const Point2D& a, const Point2D& b, Point2D& c)
+{
+	const Vec2D ap(a, p);
+	const Vec2D ab(a, b);
 	const double u = dot(ap, ab) / norm_sq(ab);
 
 	c = translate(a, scale(ab, u));
@@ -11,10 +19,10 @@ double distToLine(const Point& p, const Point& a, const Point& b, Point& c)
 	return dist(p, c);
 }
 
-double distToLineSegment(const Point& p, const Point& a, const Point& b, Point& c)
+double distToLineSegment(const Point2D& p, const Point2D& a, const Point2D& b, Point2D& c)
 {
-	const Vec ap(a, p);
-	const Vec ab(a, b);
+	const Vec2D ap(a, p);
+	const Vec2D ab(a, b);
 	const double u = dot(ap, ab) / norm_sq(ab);
 
 	if (u < 0.0)

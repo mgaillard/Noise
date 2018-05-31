@@ -13,7 +13,7 @@
 
 using namespace std;
 
-cv::Mat PerlinImage(const Point& a, const Point&b, int width, int height)
+cv::Mat PerlinImage(const Point2D& a, const Point2D&b, int width, int height)
 {
 	cv::Mat image(height, width, CV_16U);
 
@@ -32,7 +32,7 @@ cv::Mat PerlinImage(const Point& a, const Point&b, int width, int height)
 	return image;
 }
 
-cv::Mat NoiseImage(const Noise& noise, const Point& a, const Point&b, int width, int height)
+cv::Mat NoiseImage(const Noise& noise, const Point2D& a, const Point2D&b, int width, int height)
 {
 	cv::Mat image(height, width, CV_16U);	
 
@@ -79,12 +79,12 @@ int main(int argc, char* argv[])
 	
 	const int seed = 0;
 	const double eps = 0.0;
-	const Point noiseTopLeft(0.0, 0.0);
-	const Point noiseBottomRight(8.0, 8.0);
-	const Point perlinTopLeft(0.0, 0.0);
-	const Point perlinBottomRight(1.0, 1.0);
+	const Point2D noiseTopLeft(0.0, 0.0);
+	const Point2D noiseBottomRight(8.0, 8.0);
+	const Point2D perlinTopLeft(0.0, 0.0);
+	const Point2D perlinBottomRight(1.0, 1.0);
 
-	Noise noise(noiseTopLeft, noiseBottomRight, perlinTopLeft, perlinBottomRight, seed, eps);
+	Noise noise(noiseTopLeft, noiseBottomRight, perlinTopLeft, perlinBottomRight, seed, eps, false, false, false);
 
 	cv::Mat imagePerlin;
 	cv::Mat imageNoise;
