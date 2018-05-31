@@ -23,21 +23,22 @@ private:
 
 	tuple<int, int> GetSubQuadrant(double cx, double cy, double x, double y) const;
 
-	array<array<Point2D, 5>, 5> GenerateNeighboringPoints(int cx, int cy) const;
+	array<array<Point2D, 5>, 5> GenerateNeighboringPoints5(int cx, int cy) const;
+	array<array<Point2D, 7>, 7> GenerateNeighboringPoints7(int cx, int cy) const;
 
-	array<array<Point2D, 5>, 5> GenerateNeighboringSubPoints(double cx, double cy, double x, double y, const array<array<Point2D, 5>, 5>& points) const;
+	array<array<Point2D, 5>, 5> GenerateNeighboringSubPoints(double cx, double cy, double x, double y, const array<array<Point2D, 7>, 7>& points) const;
 
-	array<array<double, 5>, 5> ComputeElevations(const array<array<Point2D, 5>, 5>& points) const;
+	array<array<double, 7>, 7> ComputeElevations(const array<array<Point2D, 7>, 7>& points) const;
 
-	array<Segment3D, 9> GenerateSegments(const array<array<Point2D, 5>, 5>& points) const;
+	array<Segment3D, 25> GenerateSegments(const array<array<Point2D, 7>, 7>& points) const;
 
-	array<Segment3D, 9> GenerateSubSegments(const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 9>& segments) const;
+	array<Segment3D, 9> GenerateSubSegments(const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 25>& segments) const;
 
-	double ComputeColor(double x, double y, const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 9>& segments) const;
+	double ComputeColor(double x, double y, const array<array<Point2D, 7>, 7>& points, const array<Segment3D, 25>& segments) const;
 
 	double ComputeColorSub(double x, double y, const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 9>& segments) const;
 
-	double ComputeColorWorley(double x, double y, const array<Segment3D, 9>& segments, const array<Segment3D, 9>& subSegments) const;
+	double ComputeColorWorley(double x, double y, const array<Segment3D, 25>& segments, const array<Segment3D, 9>& subSegments) const;
 	
 	// Random generator used by the class
 	typedef minstd_rand RandomGenerator;
