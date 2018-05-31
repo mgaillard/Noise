@@ -90,12 +90,9 @@ int main(int argc, char* argv[])
 	cv::Mat imageNoise;
 	cv::Mat image;
 
-	imagePerlin = PerlinImage(perlinTopLeft, perlinBottomRight, WIDTH, HEIGHT);
 	imageNoise = NoiseImage(noise, noiseTopLeft, noiseBottomRight, WIDTH, HEIGHT);
 
-	image = MergePerlinAndNoise(imagePerlin, imageNoise);
-
-	cv::imwrite(FILENAME, image);
+	cv::imwrite(FILENAME, imageNoise);
 
 	return 0;
 }
