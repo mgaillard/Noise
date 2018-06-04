@@ -86,11 +86,7 @@ int main(int argc, char* argv[])
 
 	Noise noise(noiseTopLeft, noiseBottomRight, perlinTopLeft, perlinBottomRight, seed, eps, false, false, false);
 
-	cv::Mat imagePerlin;
-	cv::Mat imageNoise;
-	cv::Mat image;
-
-	imageNoise = NoiseImage(noise, noiseTopLeft, noiseBottomRight, WIDTH, HEIGHT);
+	cv::Mat imageNoise = NoiseImage(noise, noiseTopLeft, noiseBottomRight, WIDTH, HEIGHT);
 
 	cv::imwrite(FILENAME, imageNoise);
 

@@ -1,5 +1,7 @@
 #include "math2d.h"
 
+const double Point2D::EPS = 1e-9;
+
 double pointLineProjection(const Point2D& p, const Point2D& a, const Point2D& b)
 {
 	const Vec2D ap(a, p);

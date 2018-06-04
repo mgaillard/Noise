@@ -11,6 +11,7 @@
 #include "perlin.h"
 #include "math2d.h"
 #include "math3d.h"
+#include "spline.h"
 #include "utils.h"
 
 using namespace std;
@@ -26,7 +27,22 @@ Noise::Noise(const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const
 	m_perlinBottomRight(perlinBottomRight),
 	m_eps(eps)
 {
+	InitPointCache();
+}
 
+void Noise::InitPointCache()
+{
+	m_pointCache.resize(CACHE_X);
+
+	for (int x = -CACHE_X / 2; x < CACHE_X / 2; x++)
+	{
+		m_pointCache[x + CACHE_X / 2].resize(CACHE_Y);
+
+		for (int y = -CACHE_Y / 2; y < CACHE_Y / 2; y++)
+		{
+			m_pointCache[x + CACHE_X / 2][y + CACHE_Y / 2] = GeneratePoint(x, y);
+		}
+	}
 }
 
 int Noise::GenerateSeedNoise(int i, int j) const
@@ -48,6 +64,18 @@ Point2D Noise::GeneratePoint(int x, int y) const
 	return Point2D(double(x) + px, double(y) + py);
 }
 
+Point2D Noise::GeneratePointCached(int x, int y) const
+{
+	if (x >= -CACHE_X / 2 && x < CACHE_X / 2 && y >= -CACHE_Y / 2 && y < CACHE_Y / 2)
+	{
+		return m_pointCache[x + CACHE_X / 2][y + CACHE_Y / 2];
+	}
+	else
+	{
+		return GeneratePoint(x, y);
+	}
+}
+
 array<array<Point2D, 5>, 5> Noise::GenerateNeighboringPoints5(int cx, int cy) const
 {
 	array<array<Point2D, 5>, 5> points;
@@ -60,7 +88,7 @@ array<array<Point2D, 5>, 5> Noise::GenerateNeighboringPoints5(int cx, int cy) co
 			const int x = cx + j - int(points[i].size()) / 2;
 			const int y = cy + i - int(points.size()) / 2;
 
-			points[i][j] = GeneratePoint(x, y);
+			points[i][j] = GeneratePointCached(x, y);
 		}
 	}
 
@@ -79,7 +107,7 @@ array<array<Point2D, 7>, 7> Noise::GenerateNeighboringPoints7(int cx, int cy) co
 			const int x = cx + j - int(points[i].size()) / 2;
 			const int y = cy + i - int(points.size()) / 2;
 
-			points[i][j] = GeneratePoint(x, y);
+			points[i][j] = GeneratePointCached(x, y);
 		}
 	}
 
@@ -141,7 +169,46 @@ array<Segment3D, 25> Noise::GenerateSegments(const array<array<Point2D, 7>, 7>& 
 	return segments;
 }
 
-array<Segment3D, 9> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 25>& segments) const
+void Noise::SubdivideSegments(const array<Segment3D, 25>& segments, array<Segment3D, 25>& segmentsBegin, array<array<Point2D, 5>, 5>& midPoints, array<Segment3D, 25>& segmentsEnd) const
+{
+	// Subdivide segments
+	for (int i = 0; i < segments.size(); i++)
+	{
+		Segment3D currSegment = segments[i];
+
+		// Segments ending in A and starting in B
+		vector<Segment3D> endingInA, startingInB;
+		copy_if(segments.begin(), segments.end(), back_inserter(endingInA), [&currSegment](const Segment3D& s) {
+			return (s.a != s.b) && s.b == currSegment.a;
+		});
+		copy_if(segments.begin(), segments.end(), back_inserter(startingInB), [&currSegment](const Segment3D& s) {
+			return (s.a != s.b) && s.a == currSegment.b;
+		});
+
+		Point3D midPoint = MidPoint(segments[i]);
+
+		if (endingInA.size() == 1 && startingInB.size() == 1)
+		{
+			midPoint = SubdivideCatmullRomSpline(endingInA.front().a, currSegment.a, currSegment.b, startingInB.front().b);
+		}
+		else if (endingInA.size() != 1 && startingInB.size() == 1)
+		{
+			Point3D fakeStartingPoint = 2.0 * currSegment.a - currSegment.b;
+			midPoint = SubdivideCatmullRomSpline(fakeStartingPoint, currSegment.a, currSegment.b, startingInB.front().b);
+		}
+		else if (endingInA.size() == 1 && startingInB.size() != 1)
+		{
+			Point3D fakeEndingPoint = 2.0 * currSegment.b - currSegment.a;
+			midPoint = SubdivideCatmullRomSpline(endingInA.front().a, currSegment.a, currSegment.b, fakeEndingPoint);
+		}
+
+		segmentsBegin[i] = Segment3D(segments[i].a, midPoint);
+		midPoints[i / 5][i % 5] = Point2D(ProjectionZ(midPoint));
+		segmentsEnd[i] = Segment3D(midPoint, segments[i].b);
+	}
+}
+
+array<Segment3D, 9> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd) const
 {
 	// Connect each point to the nearest segment
 	array<Segment3D, 9> subSegments;
@@ -153,7 +220,19 @@ array<Segment3D, 9> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>
 			Segment3D nearestSegment;
 			Point2D nearestSegmentIntersection;
 
-			for (const Segment3D& segment : segments)
+			for (const Segment3D& segment : segmentsBegin)
+			{
+				Point2D segmentNearestPoint;
+				double dist = distToLineSegment(points[i][j], ProjectionZ(segment), segmentNearestPoint);
+
+				if (dist < nearestSegmentDist)
+				{
+					nearestSegmentDist = dist;
+					nearestSegment = segment;
+					nearestSegmentIntersection = segmentNearestPoint;
+				}
+			}
+			for (const Segment3D& segment : segmentsEnd)
 			{
 				Point2D segmentNearestPoint;
 				double dist = distToLineSegment(points[i][j], ProjectionZ(segment), segmentNearestPoint);
@@ -182,50 +261,121 @@ array<Segment3D, 9> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>
 	return subSegments;
 }
 
-double Noise::ComputeColor(double x, double y, const array<array<Point2D, 7>, 7>& points, const array<Segment3D, 25>& segments) const
+double Noise::ComputeColorPoint(double x, double y, const Point2D& point, double radius) const
+{
+	double value = 0.0;
+
+	if (dist(Point2D(x, y), point) < radius)
+	{
+		value = 1.0;
+	}
+
+	return value;
+}
+
+double Noise::ComputeColorPoints5(double x, double y, const array<array<Point2D, 5>, 5>& points, double radius) const
+{
+	double value = 0.0;
+
+	// White when near to a control point
+	for (int i = 0; i < points.size(); i++)
+	{
+		for (int j = 0; j < points[i].size(); j++)
+		{
+			value = max(value, ComputeColorPoint(x, y, points[i][j], radius));
+		}
+	}
+
+	return value;
+}
+
+double Noise::ComputeColorPoints7(double x, double y, const array<array<Point2D, 7>, 7>& points, double radius) const
+{
+	double value = 0.0;
+
+	// White when near to a control point
+	for (int i = 0; i < points.size(); i++)
+	{
+		for (int j = 0; j < points[i].size(); j++)
+		{
+			value = max(value, ComputeColorPoint(x, y, points[i][j], radius));
+		}
+	}
+
+	return value;
+}
+
+double Noise::ComputeColorSegment9(double x, double y, const array<Segment3D, 9>& segments, double radius) const
+{
+	double value = 0.0;
+
+	// White when near to a segment
+	for (const Segment3D& segment : segments)
+	{
+		Point2D c;
+		double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segment), c);
+
+		if (dist < radius)
+		{
+			value = 1.0;
+		}
+	}
+
+	return value;
+}
+
+double Noise::ComputeColorSegment25(double x, double y, const array<Segment3D, 25>& segments, double radius) const
+{
+	double value = 0.0;
+
+	// White when near to a segment
+	for (const Segment3D& segment : segments)
+	{
+		Point2D c;
+		double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segment), c);
+
+		if (dist < radius)
+		{
+			value = 1.0;
+		}
+	}
+
+	return value;
+}
+
+double Noise::ComputeColorGrid(double x, double y, double deltaX, double deltaY, double radius) const
+{
+	double value = 0.0;
+
+	// When near to the grid
+	if (abs(x - floor(x) - deltaX) < radius || abs(y - floor(y) - deltaY) < radius)
+	{
+		value = 1.0;
+	}
+
+	return value;
+}
+
+double Noise::ComputeColor(double x, double y, const array<array<Point2D, 7>, 7>& points, const array<array<Point2D, 5>, 5>& midPoints, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd) const
 {
 	// Find color
 	double value = 0.0;
 
-	// White when near to a control point
 	if (m_displayPoints)
 	{
-		for (int i = 0; i < points.size(); i++)
-		{
-			for (int j = 0; j < points[i].size(); j++)
-			{
-				double dist_center = dist(Point2D(x, y), points[i][j]);
-
-				if (dist_center < 0.0625)
-				{
-					value = 1.0;
-				}
-			}
-		}
+		value = max(value, ComputeColorPoints7(x, y, points, 0.0625));
+		value = max(value, ComputeColorPoints5(x, y, midPoints, 0.03125));
 	}
 
-	// White when near to a segment
 	if (m_displaySegments)
 	{
-		for (const Segment3D& segment : segments)
-		{
-			Point2D c;
-			double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segment), c);
-
-			if (dist < 0.015625)
-			{
-				value = 1.0;
-			}
-		}
+		value = max(value, ComputeColorSegment25(x, y, segmentsBegin, 0.015625));
+		value = max(value, ComputeColorSegment25(x, y, segmentsEnd, 0.015625));
 	}
 
-	// When near to the grid
 	if (m_displayGrid)
 	{
-		if (abs(x - floor(x)) < 0.0078125 || abs(y - floor(y)) < 0.0078125)
-		{
-			value = 1.0;
-		}
+		value = max(value, ComputeColorGrid(x, y, 0.0, 0.0, 0.0078125));
 	}
 
 	return value;
@@ -236,58 +386,43 @@ double Noise::ComputeColorSub(double x, double y, const array<array<Point2D, 5>,
 	// Find color
 	double value = 0.0;
 
-	// White when near to a control point
 	if (m_displayPoints)
 	{
-		for (int i = 0; i < points.size(); i++)
-		{
-			for (int j = 0; j < points[i].size(); j++)
-			{
-				double dist_center = dist(Point2D(x, y), points[i][j]);
-
-				if (dist_center < 0.03125)
-				{
-					value = 1.0;
-				}
-			}
-		}
+		value = max(value, ComputeColorPoints5(x, y, points, 0.03125));
 	}
 
-	// White when near to a segment
 	if (m_displaySegments)
 	{
-		for (const Segment3D& segment : segments)
-		{
-			Point2D c;
-			double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segment), c);
-
-			if (dist < 0.0078125)
-			{
-				value = 1.0;
-			}
-		}
+		value = max(value, ComputeColorSegment9(x, y, segments, 0.0078125));
 	}
 
-	// When near to the grid
 	if (m_displayGrid)
 	{
-		if (abs(x - floor(x) - 0.5) < 0.00390625 || abs(y - floor(y) - 0.5) < 0.00390625)
-		{
-			value = 1.0;
-		}
+		value = max(value, ComputeColorGrid(x, y, 0.5, 0.5, 0.00390625));
 	}
 
 	return value;
 }
 
-double Noise::ComputeColorWorley(double x, double y, const array<Segment3D, 25>& segments, const array<Segment3D, 9>& subSegments) const
+double Noise::ComputeColorWorley(double x, double y, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd, const array<Segment3D, 9>& subSegments) const
 {
 	// Distance to the nearest segment
 	double nearestSegmentDistance = numeric_limits<double>::max();
 	Segment3D nearestSegment;
 
 	// For each level 1 segment
-	for (const Segment3D& segment : segments)
+	for (const Segment3D& segment : segmentsBegin)
+	{
+		Point2D c;
+		double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segment), c);
+
+		if (dist < nearestSegmentDistance)
+		{
+			nearestSegmentDistance = dist;
+			nearestSegment = segment;
+		}
+	}
+	for (const Segment3D& segment : segmentsEnd)
 	{
 		Point2D c;
 		double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segment), c);
@@ -408,16 +543,21 @@ double Noise::evaluate(double x, double y) const
 	// Level 1: List of segments 
 	array<Segment3D, 25> segments = GenerateSegments(points);
 
+	// Subdivide segments of level 1
+	array<Segment3D, 25> segmentsBegin, segmentsEnd;
+	array<array<Point2D, 5>, 5> midPoints;
+	SubdivideSegments(segments, segmentsBegin, midPoints, segmentsEnd);
+
 	// Level 2: Points in neighboring cells
 	array<array<Point2D, 5>, 5> subPoints = GenerateNeighboringSubPoints(cx, cy, x, y, points);
 	// Level 2: List of segments 
-	array<Segment3D, 9> subSegments = GenerateSubSegments(subPoints, segments);
-	
+	array<Segment3D, 9> subSegments = GenerateSubSegments(subPoints, segmentsBegin, segmentsEnd);
+
 	return max(
-		ComputeColorWorley(x, y, segments, subSegments),
+		ComputeColorWorley(x, y, segmentsBegin, segmentsEnd, subSegments),
 		max(
-			ComputeColor(x, y, points, segments),
-			ComputeColorSub(x, y, subPoints, subSegments)			
+			ComputeColor(x, y, points, midPoints, segmentsBegin, segmentsEnd),
+			ComputeColorSub(x, y, subPoints, subSegments)
 		)
 	);
 }
