@@ -3,7 +3,16 @@
 
 #include <cmath>
 
-// TODO: Improve with https://codereview.stackexchange.com/questions/26608/review-of-2d-vector-class
+const double EPS = 1e-6;
+
+struct Point2D;
+struct Vec2D;
+struct Segement2D;
+
+/*
+ * Point in a 2D Space
+ * TODO: Improve with https://codereview.stackexchange.com/questions/26608/review-of-2d-vector-class
+ */
 struct Point2D
 {
 	double x;
@@ -13,47 +22,75 @@ struct Point2D
 
 	Point2D(double _x, double _y) : x(_x), y(_y) { }
 
-	bool operator==(const Point2D& other) const
-	{
-		return ((fabs(x - other.x) < EPS) && (fabs(y - other.y) < EPS));
-	}
+	// Unary Point operators
+	Point2D& operator+=(const Point2D& p) { x += p.x; y += p.y; return *this; }
+	Point2D& operator-=(const Point2D& p) { x -= p.x; y -= p.y; return *this; }
 
-	bool operator!=(const Point2D& other) const
-	{
-		return !(operator==(other));
-	}
+	// Unary Vector operators
+	Point2D& operator+=(const Vec2D& v);
+	Point2D& operator-=(const Vec2D& v);
 
-	Point2D& operator+=(const Point2D& p)
-	{
-		x += p.x;
-		y += p.y;
-		return *this;
-	}
-
-	Point2D& operator-=(const Point2D& p)
-	{
-		x -= p.x;
-		y -= p.y;
-		return *this;
-	}
-
-	Point2D& operator*=(double s)
-	{
-		x *= s;
-		y *= s;
-		return *this;
-	}
-
-	Point2D& operator/=(double s)
-	{
-		x /= s;
-		y /= s;
-		return *this;
-	}
-
-	static const double EPS;
+	// Scalar operators
+	Point2D& operator*=(double s) { x *= s; y *= s; return *this; }
+	Point2D& operator/=(double s) { x /= s; y /= s; return *this; }
+	
+	// Unary minus operator
+	Point2D operator-() const { return Point2D(-x, -y);	}
 };
 
+// Comparison operators
+inline bool operator==(const Point2D& lhs, const Point2D& rhs) {
+	return ((fabs(lhs.x - rhs.x) < EPS) && (fabs(lhs.y - rhs.y) < EPS));
+}
+
+inline bool operator!=(const Point2D& lhs, const Point2D& rhs) {
+	return !(lhs  == rhs);
+}
+
+// Binary Point operators
+inline Point2D operator+(const Point2D& a, const Point2D& b) {
+	return Point2D(a) += b;
+}
+
+inline Point2D operator-(const Point2D& a, const Point2D& b) {
+	return Point2D(a) -= b;
+}
+
+// Binary Vector operators
+inline Point2D operator+(const Point2D& a, const Vec2D& v) {
+	return Point2D(a) += v;
+}
+
+inline Point2D operator-(const Point2D& a, const Vec2D& v) {
+	return Point2D(a) -= v;
+}
+
+// Binary scalar operators
+inline Point2D operator*(const Point2D& a, double s) {
+	return Point2D(a) *= s;
+}
+
+inline Point2D operator*(double s, const Point2D& a) {
+	return Point2D(a) *= s;
+}
+
+inline Point2D operator/(const Point2D& a, double s) {
+	return Point2D(a) /= s;
+}
+
+inline Point2D operator/(double s, const Point2D& a) {
+	return Point2D(a) /= s;
+}
+
+// Utility functions
+inline double dist(const Point2D& lhs, const Point2D& rhs)
+{
+	return hypot(lhs.x - rhs.x, lhs.y - rhs.y);
+}
+
+/*
+ * Vector in a 2D Space
+ */
 struct Vec2D
 {
 	double x;
@@ -64,21 +101,58 @@ struct Vec2D
 	Vec2D(double _x, double _y) : x(_x), y(_y) { }
 
 	Vec2D(const Point2D& a, const Point2D& b) : x(b.x - a.x), y(b.y - a.y) { }
+
+	// Unary Point operators
+	Vec2D& operator+=(const Vec2D& v) { x += v.x; y += v.y; return *this; }
+	Vec2D& operator-=(const Vec2D& v) { x -= v.x; y -= v.y; return *this; }
+
+	// Scalar operators
+	Vec2D& operator*=(double s) { x *= s; y *= s; return *this; }
+	Vec2D& operator/=(double s) { x /= s; y /= s; return *this; }
+
+	// Unary minus operator
+	Vec2D operator-() const { return Vec2D(-x, -y); }
 };
 
-struct Segment2D
+// Comparison operators
+inline bool operator==(const Vec2D& lhs, const Vec2D& rhs) {
+	return ((fabs(lhs.x - rhs.x) < EPS) && (fabs(lhs.y - rhs.y) < EPS));
+}
+
+inline bool operator!=(const Vec2D& lhs, const Vec2D& rhs) {
+	return !(lhs == rhs);
+}
+
+// Binary Vector operators
+inline Vec2D operator+(const Vec2D& a, const Vec2D& b) {
+	return Vec2D(a) += b;
+}
+
+inline Vec2D operator-(const Vec2D& a, const Vec2D& b) {
+	return Vec2D(a) -= b;
+}
+
+// Binary scalar operators
+inline Vec2D operator*(const Vec2D& a, double s) {
+	return Vec2D(a) *= s;
+}
+
+inline Vec2D operator*(double s, const Vec2D& a) {
+	return Vec2D(a) *= s;
+}
+
+inline Vec2D operator/(const Vec2D& a, double s) {
+	return Vec2D(a) /= s;
+}
+
+inline Vec2D operator/(double s, const Vec2D& a) {
+	return Vec2D(a) /= s;
+}
+
+// Utility functions
+inline double norm_sq(const Vec2D& a)
 {
-	Point2D a;
-	Point2D b;
-
-	Segment2D() = default;
-
-	Segment2D(const Point2D& _a, const Point2D& _b) : a(_a), b(_b) { }
-};
-
-inline double dist(const Point2D& lhs, const Point2D& rhs)
-{
-	return hypot(lhs.x - rhs.x, lhs.y - rhs.y);
+	return a.x * a.x + a.y * a.y;
 }
 
 inline double norm(const Vec2D& a)
@@ -86,41 +160,19 @@ inline double norm(const Vec2D& a)
 	return hypot(a.x, a.y);
 }
 
-inline double norm_sq(const Vec2D& a)
-{
-	return a.x * a.x + a.y * a.y;
-}
-
-inline Vec2D normalized(const Vec2D& a)
-{
-	const double u = norm(a);
-
-	return Vec2D(a.x / u, a.y / u);
-}
-
-inline Vec2D scale(const Vec2D& v, double s)
-{
-	return Vec2D(v.x * s, v.y * s);
-}
-
 inline double dot(const Vec2D& a, const Vec2D& b)
 {
 	return a.x * b.x + a.y * b.y;
 }
 
-inline Point2D translate(const Point2D& p, const Vec2D& v)
+inline double cross(const Vec2D& a, const Vec2D& b)
 {
-	return Point2D(p.x + v.x, p.y + v.y);
+	return a.x * b.y - a.y * b.x;
 }
 
-inline Point2D rotateCCW90(const Point2D& p)
+inline Vec2D normalized(const Vec2D& a)
 {
-	return Point2D(-p.y, p.x);
-}
-
-inline Point2D rotateCW90(const Point2D& p)
-{
-	return Point2D(p.y, -p.x);
+	return Vec2D(a) / norm(a);
 }
 
 inline Vec2D rotateCCW90(const Vec2D& v)
@@ -133,25 +185,18 @@ inline Vec2D rotateCW90(const Vec2D& v)
 	return Vec2D(v.y, -v.x);
 }
 
-inline Point2D operator*(const Point2D& a, double s)
+/*
+ * Segment in a 2D Space
+ */
+struct Segment2D
 {
-	return Point2D(a) *= s;
-}
+	Point2D a;
+	Point2D b;
 
-inline Point2D operator*(double s, const Point2D& a)
-{
-	return Point2D(a) *= s;
-}
+	Segment2D() = default;
 
-inline Point2D operator+(const Point2D& a, const Point2D& b)
-{
-	return Point2D(a) += b;
-}
-
-inline Point2D operator-(const Point2D& a, const Point2D& b)
-{
-	return Point2D(a) -= b;
-}
+	Segment2D(const Point2D& _a, const Point2D& _b) : a(_a), b(_b) { }
+};
 
 double pointLineProjection(const Point2D& p, const Point2D& a, const Point2D& b);
 

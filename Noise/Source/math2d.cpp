@@ -1,6 +1,18 @@
 #include "math2d.h"
 
-const double Point2D::EPS = 1e-9;
+Point2D& Point2D::operator+=(const Vec2D& v)
+{
+	x += v.x;
+	y += v.y;
+	return *this;
+}
+
+Point2D& Point2D::operator-=(const Vec2D& v)
+{
+	x -= v.x;
+	y -= v.y;
+	return *this;
+}
 
 double pointLineProjection(const Point2D& p, const Point2D& a, const Point2D& b)
 {
@@ -16,7 +28,7 @@ double distToLine(const Point2D& p, const Point2D& a, const Point2D& b, Point2D&
 	const Vec2D ab(a, b);
 	const double u = dot(ap, ab) / norm_sq(ab);
 
-	c = translate(a, scale(ab, u));
+	c = a + ab * u;
 
 	return dist(p, c);
 }
@@ -42,7 +54,7 @@ double distToLineSegment(const Point2D& p, const Point2D& a, const Point2D& b, P
 	else
 	{
 		// Between A and B, equivalent to distToLine(p, a, b, c);
-		c = translate(a, scale(ab, u));
+		c = a + ab * u;
 		return dist(p, c);
 	}
 }
