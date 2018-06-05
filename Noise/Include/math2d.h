@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-const double EPS = 1e-6;
+const double EPS = 1e-9;
 
 struct Point2D;
 struct Vec2D;
@@ -100,6 +100,8 @@ struct Vec2D
 
 	Vec2D(double _x, double _y) : x(_x), y(_y) { }
 
+	Vec2D(const Point2D& p) : x(p.x), y(p.y) { }
+
 	Vec2D(const Point2D& a, const Point2D& b) : x(b.x - a.x), y(b.y - a.y) { }
 
 	// Unary Point operators
@@ -150,38 +152,35 @@ inline Vec2D operator/(double s, const Vec2D& a) {
 }
 
 // Utility functions
-inline double norm_sq(const Vec2D& a)
-{
+inline double norm_sq(const Vec2D& a) {
 	return a.x * a.x + a.y * a.y;
 }
 
-inline double norm(const Vec2D& a)
-{
+inline double norm(const Vec2D& a) {
+	return sqrt(norm_sq(a));
+}
+
+inline double hypot(const Vec2D& a) {
 	return hypot(a.x, a.y);
 }
 
-inline double dot(const Vec2D& a, const Vec2D& b)
-{
+inline double dot(const Vec2D& a, const Vec2D& b) {
 	return a.x * b.x + a.y * b.y;
 }
 
-inline double cross(const Vec2D& a, const Vec2D& b)
-{
+inline double cross(const Vec2D& a, const Vec2D& b) {
 	return a.x * b.y - a.y * b.x;
 }
 
-inline Vec2D normalized(const Vec2D& a)
-{
+inline Vec2D normalized(const Vec2D& a) {
 	return Vec2D(a) / norm(a);
 }
 
-inline Vec2D rotateCCW90(const Vec2D& v)
-{
+inline Vec2D rotateCCW90(const Vec2D& v) {
 	return Vec2D(-v.y, v.x);
 }
 
-inline Vec2D rotateCW90(const Vec2D& v)
-{
+inline Vec2D rotateCW90(const Vec2D& v) {
 	return Vec2D(v.y, -v.x);
 }
 
@@ -198,20 +197,13 @@ struct Segment2D
 	Segment2D(const Point2D& _a, const Point2D& _b) : a(_a), b(_b) { }
 };
 
+// Utility functions
 double pointLineProjection(const Point2D& p, const Point2D& a, const Point2D& b);
-
-inline double pointSegmentProjection(const Point2D& p, const Segment2D& s)
-{
-	return pointLineProjection(p, s.a, s.b);
-}
+double pointLineProjection(const Point2D& p, const Segment2D& s);
 
 double distToLine(const Point2D& p, const Point2D& a, const Point2D& b, Point2D& c);
 
 double distToLineSegment(const Point2D& p, const Point2D& a, const Point2D& b, Point2D& c);
-
-inline double distToLineSegment(const Point2D& p, const Segment2D& s, Point2D& c)
-{
-	return distToLineSegment(p, s.a, s.b, c);
-}
+double distToLineSegment(const Point2D& p, const Segment2D& s, Point2D& c);
 
 #endif // MATH2D_H

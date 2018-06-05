@@ -248,7 +248,7 @@ array<Segment3D, 9> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>
 			// Elevation in on the nearest segment
 			const double elevationA = nearestSegment.a.z;
 			const double elevationB = nearestSegment.b.z;
-			const double u = pointSegmentProjection(points[i][j], ProjectionZ(nearestSegment));
+			const double u = pointLineProjection(points[i][j], ProjectionZ(nearestSegment));
 			const double elevation = lerp_clamp(elevationA, elevationB, u);
 			
 			const Point3D a(points[i][j].x, points[i][j].y, elevation);
@@ -450,7 +450,7 @@ double Noise::ComputeColorWorley(double x, double y, const array<Segment3D, 25>&
 	// Elevation in on the nearest segment
 	const double elevationA = nearestSegment.a.z;
 	const double elevationB = nearestSegment.b.z;
-	const double u = pointSegmentProjection(Point2D(x, y), ProjectionZ(nearestSegment));
+	const double u = pointLineProjection(Point2D(x, y), ProjectionZ(nearestSegment));
 	const double elevation = lerp_clamp(elevationA, elevationB, u);
 
 	return nearestSegmentDistance + elevation;
