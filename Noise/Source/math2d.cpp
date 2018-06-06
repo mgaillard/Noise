@@ -14,6 +14,13 @@ Point2D& Point2D::operator-=(const Vec2D& v)
 	return *this;
 }
 
+double angle(const Point2D& a, const Point2D& o, const Point2D& b)
+{
+	const Vec2D oa(o, a);
+	const Vec2D ob(o, b);
+	return angle(oa, ob);
+}
+
 double pointLineProjection(const Point2D& p, const Point2D& a, const Point2D& b)
 {
 	const Vec2D ap(a, p);

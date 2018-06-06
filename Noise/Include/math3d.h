@@ -3,6 +3,7 @@
 
 #include <cmath>
 
+#include "utils.h"
 #include "math2d.h"
 
 struct Point3D
@@ -100,9 +101,28 @@ inline double norm_sq(const Vec3D& a)
 	return a.x * a.x + a.y * a.y + a.z * a.z;
 }
 
+inline Point3D lerp(const Point3D& a, const Point3D& b, double t)
+{
+	return Point3D(
+		lerp(a.x, b.x, t),
+		lerp(a.y, b.y, t),
+		lerp(a.z, b.z, t)
+	);
+}
+
+inline Point3D lerp(const Segment3D& s, double t)
+{
+	return lerp(s.a, s.b, t);
+}
+
 inline Point2D ProjectionZ(const Point3D& p)
 {
 	return Point2D(p.x, p.y);
+}
+
+inline Vec2D ProjectionZ(const Vec3D& v)
+{
+	return Vec2D(v.x, v.y);
 }
 
 inline Segment2D ProjectionZ(const Segment3D& s)

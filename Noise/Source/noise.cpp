@@ -216,9 +216,9 @@ array<Segment3D, 9> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>
 	{
 		for (int j = 1; j < points[i].size() - 1; j++)
 		{
+			// Find the nearest segment
 			double nearestSegmentDist = numeric_limits<double>::max();
 			Segment3D nearestSegment;
-			Point2D nearestSegmentIntersection;
 
 			for (const Segment3D& segment : segmentsBegin)
 			{
@@ -229,7 +229,6 @@ array<Segment3D, 9> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>
 				{
 					nearestSegmentDist = dist;
 					nearestSegment = segment;
-					nearestSegmentIntersection = segmentNearestPoint;
 				}
 			}
 			for (const Segment3D& segment : segmentsEnd)
@@ -241,20 +240,40 @@ array<Segment3D, 9> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>
 				{
 					nearestSegmentDist = dist;
 					nearestSegment = segment;
-					nearestSegmentIntersection = segmentNearestPoint;
 				}
 			}
 
-			// Elevation in on the nearest segment
-			const double elevationA = nearestSegment.a.z;
-			const double elevationB = nearestSegment.b.z;
-			const double u = pointLineProjection(points[i][j], ProjectionZ(nearestSegment));
-			const double elevation = lerp_clamp(elevationA, elevationB, u);
-			
-			const Point3D a(points[i][j].x, points[i][j].y, elevation);
-			const Point3D b(nearestSegmentIntersection.x, nearestSegmentIntersection.y, elevation);
+			// Find an intersection on the segment with respect to constraints
+			// u = 0 is point A of the segment ; u = 1 is point B of the segment
+			double u = pointLineProjection(points[i][j], ProjectionZ(nearestSegment));
+			// The intersection must lie on the segment
+			u = clamp(u, 0.0, 1.0);
 
-			subSegments[3 * (i - 1) + j - 1] = Segment3D(a, b);
+			// If, on the segment, the nearest point is between A and B, we shift it so that the angle constraint is respected
+			if (u > 0.0 && u < 1.0)
+			{
+				// Find the intersection so that the angle between the two segments is 45°
+				// v designates the ratio of the segment on which the intersection is located
+				// v = 0 is point A of the segment ; v = 1 is point B of the segment
+				double v = u + nearestSegmentDist / length(ProjectionZ(nearestSegment));
+
+				if (v > 1.0)
+				{
+					// If the intersection is farther than B, simply take B as intersection
+					u = 1.0;
+				}
+				else
+				{
+					// Otherwise take a point on the segment
+					u = v;
+				}
+			}
+
+			// TODO compute the elevation of segmentStart in a better way
+			const Point3D segmentEnd(lerp(nearestSegment, u));
+			const Point3D segmentStart(points[i][j].x, points[i][j].y, segmentEnd.z);
+
+			subSegments[3 * (i - 1) + j - 1] = Segment3D(segmentStart, segmentEnd);
 		}
 	}
 
@@ -551,6 +570,7 @@ double Noise::evaluate(double x, double y) const
 	// Level 2: Points in neighboring cells
 	array<array<Point2D, 5>, 5> subPoints = GenerateNeighboringSubPoints(cx, cy, x, y, points);
 	// Level 2: List of segments 
+	// TODO: Connect 25 segments instead of 9
 	array<Segment3D, 9> subSegments = GenerateSubSegments(subPoints, segmentsBegin, segmentsEnd);
 
 	return max(

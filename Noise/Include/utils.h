@@ -1,9 +1,13 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <cassert>
+
 template<typename T>
-inline T Remap(T x, T in_start, T in_end, T out_start, T out_end)
+constexpr T Remap(const T& x, const T& in_start, const T& in_end, const T& out_start, const T& out_end)
 {
+	assert(in_start != in_end);
+
 	if (x < in_start)
 	{
 		return out_start;
@@ -19,13 +23,33 @@ inline T Remap(T x, T in_start, T in_end, T out_start, T out_end)
 }
 
 template<typename T>
-inline T lerp(T a, T b, T x)
+constexpr const T& clamp(const T& v, const T& lo, const T& hi)
 {
-	return (1 - x) * a + x * b;
+	assert(lo <= hi);
+
+	if (v < lo)
+	{
+		return lo;
+	}
+	else if (v > hi)
+	{
+		return hi;
+	}
+	else
+	{
+		return v;
+	}
 }
 
 template<typename T>
-inline T lerp_clamp(T a, T b, T x)
+constexpr T lerp(const T& a, const T& b, const T& x)
+{
+	// Equivalent to (1 - x) * a + x * b;
+	return fma(x, b, fma(-x, a, a));
+}
+
+template<typename T>
+constexpr T lerp_clamp(const T& a, const T& b, const T& x)
 {
 	if (x < 0.0)
 	{

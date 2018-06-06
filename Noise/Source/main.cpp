@@ -49,22 +49,32 @@ cv::Mat NoiseImage(const Noise& noise, const Point2D& a, const Point2D&b, int wi
 	return image;
 }
 
+void RemapImage(cv::Mat& image)
+{
+	double minimum, maximum;
+	cv::minMaxLoc(image, &minimum, &maximum);
+
+#pragma omp parallel for shared(image)
+	for (int i = 0; i < image.rows; i++) {
+		for (int j = 0; j < image.cols; j++) {
+			const double value = Remap(double(image.at<uint16_t>(i, j)), minimum, maximum, 0.0, 65535.0);
+
+			image.at<uint16_t>(i, j) = uint16_t(value);
+		}
+	}
+}
+
 cv::Mat MergePerlinAndNoise(const cv::Mat& imagePerlin, const cv::Mat& imageNoise)
 {
 	assert(imagePerlin.rows == imageNoise.rows);
 	assert(imagePerlin.cols == imageNoise.cols);
 
-	cv::Mat image(imageNoise.rows, imagePerlin.cols, CV_16U);
+	cv::Mat image(imageNoise.rows, imageNoise.cols, CV_16U);
 
+#pragma omp parallel for shared(image)
 	for (int i = 0; i < imageNoise.rows; i++) {
 		for (int j = 0; j < imageNoise.cols; j++) {
-			uint16_t value = imagePerlin.at<uint16_t>(i, j);
-
-			if (imageNoise.at<uint16_t>(i, j) == numeric_limits<uint16_t>::max()) {
-				value = imageNoise.at<uint16_t>(i, j);
-			}
-
-			image.at<uint16_t>(i, j) = value;
+			image.at<uint16_t>(i, j) = imagePerlin.at<uint16_t>(i, j) / 2 + imageNoise.at<uint16_t>(i, j) / 2;
 		}
 	}
 
@@ -86,7 +96,12 @@ int main(int argc, char* argv[])
 
 	Noise noise(noiseTopLeft, noiseBottomRight, perlinTopLeft, perlinBottomRight, seed, eps, false, false, false);
 
+	// cv::Mat imagePerlin = PerlinImage(perlinTopLeft, perlinBottomRight, WIDTH, HEIGHT);
 	cv::Mat imageNoise = NoiseImage(noise, noiseTopLeft, noiseBottomRight, WIDTH, HEIGHT);
+
+	// RemapImage(imagePerlin);
+	// RemapImage(imageNoise);
+	// cv::Mat image = MergePerlinAndNoise(imagePerlin, imageNoise);
 
 	cv::imwrite(FILENAME, imageNoise);
 

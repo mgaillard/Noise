@@ -88,6 +88,8 @@ inline double dist(const Point2D& lhs, const Point2D& rhs)
 	return hypot(lhs.x - rhs.x, lhs.y - rhs.y);
 }
 
+double angle(const Point2D& a, const Point2D& o, const Point2D& b);
+
 /*
  * Vector in a 2D Space
  */
@@ -184,6 +186,10 @@ inline Vec2D rotateCW90(const Vec2D& v) {
 	return Vec2D(v.y, -v.x);
 }
 
+inline double angle(const Vec2D& oa, const Vec2D& ob) {
+	return acos(dot(oa, ob) / sqrt(norm_sq(oa) * norm_sq(ob)));
+}
+
 /*
  * Segment in a 2D Space
  */
@@ -198,6 +204,10 @@ struct Segment2D
 };
 
 // Utility functions
+inline double length(const Segment2D& s) {
+	return dist(s.a, s.b);
+}
+
 double pointLineProjection(const Point2D& p, const Point2D& a, const Point2D& b);
 double pointLineProjection(const Point2D& p, const Segment2D& s);
 
