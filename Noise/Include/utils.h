@@ -44,8 +44,7 @@ constexpr const T& clamp(const T& v, const T& lo, const T& hi)
 template<typename T>
 constexpr T lerp(const T& a, const T& b, const T& x)
 {
-	// Equivalent to (1 - x) * a + x * b;
-	return fma(x, b, fma(-x, a, a));
+	return (1 - x) * a + x * b;
 }
 
 template<typename T>
