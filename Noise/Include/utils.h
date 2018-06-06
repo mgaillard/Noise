@@ -4,7 +4,7 @@
 #include <cassert>
 
 template<typename T>
-constexpr T Remap(const T& x, const T& in_start, const T& in_end, const T& out_start, const T& out_end)
+inline T Remap(const T& x, const T& in_start, const T& in_end, const T& out_start, const T& out_end)
 {
 	assert(in_start != in_end);
 
@@ -23,7 +23,7 @@ constexpr T Remap(const T& x, const T& in_start, const T& in_end, const T& out_s
 }
 
 template<typename T>
-constexpr const T& clamp(const T& v, const T& lo, const T& hi)
+inline const T& clamp(const T& v, const T& lo, const T& hi)
 {
 	assert(lo <= hi);
 
@@ -42,14 +42,14 @@ constexpr const T& clamp(const T& v, const T& lo, const T& hi)
 }
 
 template<typename T>
-constexpr T lerp(const T& a, const T& b, const T& x)
+inline T lerp(const T& a, const T& b, const T& x)
 {
 	// Equivalent to (1 - x) * a + x * b;
 	return fma(x, b, fma(-x, a, a));
 }
 
 template<typename T>
-constexpr T lerp_clamp(const T& a, const T& b, const T& x)
+inline T lerp_clamp(const T& a, const T& b, const T& x)
 {
 	if (x < 0.0)
 	{
