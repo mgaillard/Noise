@@ -176,44 +176,48 @@ void Noise::SubdivideSegments(const array<Segment3D, 25>& segments, array<Segmen
 	{
 		Segment3D currSegment = segments[i];
 
-		// Segments ending in A and starting in B
-		int numberSegmentEndingInA = 0;
-		Segment3D lastEndingInA;
-		int numberStartingInB = 0;
-		Segment3D lastStartingInB;
-		for (const Segment3D& segment : segments)
-		{
-			// If the segment's length is more than 0
-			if (segment.a != segment.b)
-			{
-				if (segment.b == currSegment.a)
-				{
-					numberSegmentEndingInA++;
-					lastEndingInA = segment;
-				}
-				else if (segment.a == currSegment.b)
-				{
-					numberStartingInB++;
-					lastStartingInB = segment;
-				}
-			}
-		}
-		
 		Point3D midPoint = MidPoint(segments[i]);
 
-		if (numberSegmentEndingInA == 1 && numberStartingInB == 1)
+		// If the current segment's length is more than 0, we can subdivide and smooth it
+		if (currSegment.a != currSegment.b)
 		{
-			midPoint = SubdivideCatmullRomSpline(lastEndingInA.a, currSegment.a, currSegment.b, lastStartingInB.b);
-		}
-		else if (numberSegmentEndingInA != 1 && numberStartingInB == 1)
-		{
-			Point3D fakeStartingPoint = 2.0 * currSegment.a - currSegment.b;
-			midPoint = SubdivideCatmullRomSpline(fakeStartingPoint, currSegment.a, currSegment.b, lastStartingInB.b);
-		}
-		else if (numberSegmentEndingInA == 1 && numberStartingInB != 1)
-		{
-			Point3D fakeEndingPoint = 2.0 * currSegment.b - currSegment.a;
-			midPoint = SubdivideCatmullRomSpline(lastEndingInA.a, currSegment.a, currSegment.b, fakeEndingPoint);
+			// Segments ending in A and starting in B
+			int numberSegmentEndingInA = 0;
+			Segment3D lastEndingInA;
+			int numberStartingInB = 0;
+			Segment3D lastStartingInB;
+			for (const Segment3D& segment : segments)
+			{
+				// If the segment's length is more than 0
+				if (segment.a != segment.b)
+				{
+					if (segment.b == currSegment.a)
+					{
+						numberSegmentEndingInA++;
+						lastEndingInA = segment;
+					}
+					else if (segment.a == currSegment.b)
+					{
+						numberStartingInB++;
+						lastStartingInB = segment;
+					}
+				}
+			}
+
+			if (numberSegmentEndingInA == 1 && numberStartingInB == 1)
+			{
+				midPoint = SubdivideCatmullRomSpline(lastEndingInA.a, currSegment.a, currSegment.b, lastStartingInB.b);
+			}
+			else if (numberSegmentEndingInA != 1 && numberStartingInB == 1)
+			{
+				Point3D fakeStartingPoint = 2.0 * currSegment.a - currSegment.b;
+				midPoint = SubdivideCatmullRomSpline(fakeStartingPoint, currSegment.a, currSegment.b, lastStartingInB.b);
+			}
+			else if (numberSegmentEndingInA == 1 && numberStartingInB != 1)
+			{
+				Point3D fakeEndingPoint = 2.0 * currSegment.b - currSegment.a;
+				midPoint = SubdivideCatmullRomSpline(lastEndingInA.a, currSegment.a, currSegment.b, fakeEndingPoint);
+			}
 		}
 
 		segmentsBegin[i] = Segment3D(segments[i].a, midPoint);
