@@ -222,13 +222,13 @@ void Noise::SubdivideSegments(const array<Segment3D, 25>& segments, array<Segmen
 	}
 }
 
-array<Segment3D, 9> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd) const
+array<Segment3D, 25> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd) const
 {
 	// Connect each point to the nearest segment
-	array<Segment3D, 9> subSegments;
-	for (int i = 1; i < points.size() - 1; i++)
+	array<Segment3D, 25> subSegments;
+	for (int i = 0; i < points.size(); i++)
 	{
-		for (int j = 1; j < points[i].size() - 1; j++)
+		for (int j = 0; j < points[i].size(); j++)
 		{
 			// Find the nearest segment
 			double nearestSegmentDist = numeric_limits<double>::max();
@@ -287,7 +287,7 @@ array<Segment3D, 9> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>
 			const Point3D segmentEnd(lerp(nearestSegment, u));
 			const Point3D segmentStart(points[i][j].x, points[i][j].y, segmentEnd.z);
 
-			subSegments[3 * (i - 1) + j - 1] = Segment3D(segmentStart, segmentEnd);
+			subSegments[5 * i + j] = Segment3D(segmentStart, segmentEnd);
 		}
 	}
 
@@ -414,7 +414,7 @@ double Noise::ComputeColor(double x, double y, const array<array<Point2D, 7>, 7>
 	return value;
 }
 
-double Noise::ComputeColorSub(double x, double y, const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 9>& segments) const
+double Noise::ComputeColorSub(double x, double y, const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 25>& segments) const
 {
 	// Find color
 	double value = 0.0;
@@ -426,7 +426,7 @@ double Noise::ComputeColorSub(double x, double y, const array<array<Point2D, 5>,
 
 	if (m_displaySegments)
 	{
-		value = max(value, ComputeColorSegment9(x, y, segments, 0.0078125));
+		value = max(value, ComputeColorSegment25(x, y, segments, 0.0078125));
 	}
 
 	if (m_displayGrid)
@@ -437,7 +437,7 @@ double Noise::ComputeColorSub(double x, double y, const array<array<Point2D, 5>,
 	return value;
 }
 
-double Noise::ComputeColorWorley(double x, double y, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd, const array<Segment3D, 9>& subSegments) const
+double Noise::ComputeColorWorley(double x, double y, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd, const array<Segment3D, 25>& subSegments) const
 {
 	// Distance to the nearest segment
 	double nearestSegmentDistance = numeric_limits<double>::max();
@@ -583,9 +583,8 @@ double Noise::evaluate(double x, double y) const
 
 	// Level 2: Points in neighboring cells
 	array<array<Point2D, 5>, 5> subPoints = GenerateNeighboringSubPoints(cx, cy, x, y, points);
-	// Level 2: List of segments 
-	// TODO: Connect 25 segments instead of 9
-	array<Segment3D, 9> subSegments = GenerateSubSegments(subPoints, segmentsBegin, segmentsEnd);
+	// Level 2: List of segments
+	array<Segment3D, 25> subSegments = GenerateSubSegments(subPoints, segmentsBegin, segmentsEnd);
 
 	return max(
 		ComputeColorWorley(x, y, segmentsBegin, segmentsEnd, subSegments),
