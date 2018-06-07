@@ -1,3 +1,17 @@
 #include "math3d.h"
 
-const double Point3D::EPS = 1e-9;
+Point3D& Point3D::operator+=(const Vec3D& v)
+{
+	x += v.x;
+	y += v.y;
+	z += v.z;
+	return *this;
+}
+
+Point3D& Point3D::operator-=(const Vec3D& v)
+{
+	x -= v.x;
+	y -= v.y;
+	z -= v.z;
+	return *this;
+}

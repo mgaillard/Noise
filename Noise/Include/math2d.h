@@ -3,6 +3,8 @@
 
 #include <cmath>
 
+#include "utils.h"
+
 const double EPS = 1e-9;
 
 struct Point2D;
@@ -11,7 +13,6 @@ struct Segement2D;
 
 /*
  * Point in a 2D Space
- * TODO: Improve with https://codereview.stackexchange.com/questions/26608/review-of-2d-vector-class
  */
 struct Point2D
 {
@@ -78,14 +79,25 @@ inline Point2D operator/(const Point2D& a, double s) {
 	return Point2D(a) /= s;
 }
 
-inline Point2D operator/(double s, const Point2D& a) {
-	return Point2D(a) /= s;
+// Utility functions
+inline double dist_sq(const Point2D& lhs, const Point2D& rhs) {
+	return (lhs.x - rhs.x) * (lhs.x - rhs.x)
+		 + (lhs.y - rhs.y) * (lhs.y - rhs.y);
 }
 
-// Utility functions
-inline double dist(const Point2D& lhs, const Point2D& rhs)
-{
+inline double dist(const Point2D& lhs, const Point2D& rhs) {
+	return sqrt(dist_sq(lhs, rhs));
+}
+
+inline double hypot(const Point2D& lhs, const Point2D& rhs) {
 	return hypot(lhs.x - rhs.x, lhs.y - rhs.y);
+}
+
+inline Point2D lerp(const Point2D& a, const Point2D& b, double t) {
+	return Point2D(
+		lerp(a.x, b.x, t),
+		lerp(a.y, b.y, t)
+	);
 }
 
 double angle(const Point2D& a, const Point2D& o, const Point2D& b);
@@ -149,10 +161,6 @@ inline Vec2D operator/(const Vec2D& a, double s) {
 	return Vec2D(a) /= s;
 }
 
-inline Vec2D operator/(double s, const Vec2D& a) {
-	return Vec2D(a) /= s;
-}
-
 // Utility functions
 inline double norm_sq(const Vec2D& a) {
 	return a.x * a.x + a.y * a.y;
@@ -175,7 +183,8 @@ inline double cross(const Vec2D& a, const Vec2D& b) {
 }
 
 inline Vec2D normalized(const Vec2D& a) {
-	return Vec2D(a) / norm(a);
+	const double n = norm(a);
+	return Vec2D(a.x / n, a.y / n);
 }
 
 inline Vec2D rotateCCW90(const Vec2D& v) {
@@ -204,8 +213,23 @@ struct Segment2D
 };
 
 // Utility functions
+inline double length_sq(const Segment2D& s) {
+	return dist_sq(s.a, s.b);
+}
+
 inline double length(const Segment2D& s) {
 	return dist(s.a, s.b);
+}
+
+inline Point2D lerp(const Segment2D& s, double t) {
+	return lerp(s.a, s.b, t);
+}
+
+inline Point2D MidPoint(const Segment2D& s) {
+	return Point2D(
+		(s.a.x + s.b.x) / 2.0,
+		(s.a.y + s.b.y) / 2.0
+	);
 }
 
 double pointLineProjection(const Point2D& p, const Point2D& a, const Point2D& b);
