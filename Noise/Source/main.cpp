@@ -34,15 +34,37 @@ cv::Mat PerlinImage(const Point2D& a, const Point2D&b, int width, int height)
 
 cv::Mat NoiseImage(const Noise& noise, const Point2D& a, const Point2D&b, int width, int height)
 {
-	cv::Mat image(height, width, CV_16U);	
+	vector<vector<double> > temp(height, vector<double>(width));
 
-#pragma omp parallel for shared(image)
+#pragma omp parallel for shared(temp)
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			const double x = Remap(double(j), 0.0, double(width), a.x, b.x);
 			const double y = Remap(double(i), 0.0, double(height), a.y, b.y);
 
-			image.at<uint16_t>(i, j) = uint16_t(noise.evaluate(x, y) * numeric_limits<uint16_t>::max());
+			temp[i][j] = noise.evaluate(x, y);
+		}
+	}
+
+	// Find min and max to remap to 16 bits
+	double minimum = numeric_limits<double>::max();
+	double maximum = numeric_limits<double>::lowest();
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			minimum = min(minimum, temp[i][j]);
+			maximum = max(maximum, temp[i][j]);
+		}
+	}
+
+	// Convert to 16 bits image
+	cv::Mat image(height, width, CV_16U);
+
+#pragma omp parallel for shared(image)
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			const double value = Remap(temp[i][j], minimum, maximum, 0.0, 65535.0);
+
+			image.at<uint16_t>(i, j) = uint16_t(value);
 		}
 	}
 
@@ -99,8 +121,6 @@ int main(int argc, char* argv[])
 	// cv::Mat imagePerlin = PerlinImage(perlinTopLeft, perlinBottomRight, WIDTH, HEIGHT);
 	cv::Mat imageNoise = NoiseImage(noise, noiseTopLeft, noiseBottomRight, WIDTH, HEIGHT);
 
-	// RemapImage(imagePerlin);
-	// RemapImage(imageNoise);
 	// cv::Mat image = MergePerlinAndNoise(imagePerlin, imageNoise);
 
 	cv::imwrite(FILENAME, imageNoise);
