@@ -177,7 +177,10 @@ void Noise::SubdivideSegments(const array<Segment3D, 25>& segments, array<Segmen
 		Segment3D currSegment = segments[i];
 
 		// Segments ending in A and starting in B
-		vector<Segment3D> endingInA, startingInB;
+		int numberSegmentEndingInA = 0;
+		Segment3D lastEndingInA;
+		int numberStartingInB = 0;
+		Segment3D lastStartingInB;
 		for (const Segment3D& segment : segments)
 		{
 			// If the segment's length is more than 0
@@ -185,30 +188,32 @@ void Noise::SubdivideSegments(const array<Segment3D, 25>& segments, array<Segmen
 			{
 				if (segment.b == currSegment.a)
 				{
-					endingInA.push_back(segment);
+					numberSegmentEndingInA++;
+					lastEndingInA = segment;
 				}
 				else if (segment.a == currSegment.b)
 				{
-					startingInB.push_back(segment);
+					numberStartingInB++;
+					lastStartingInB = segment;
 				}
 			}
 		}
-
+		
 		Point3D midPoint = MidPoint(segments[i]);
 
-		if (endingInA.size() == 1 && startingInB.size() == 1)
+		if (numberSegmentEndingInA == 1 && numberStartingInB == 1)
 		{
-			midPoint = SubdivideCatmullRomSpline(endingInA.front().a, currSegment.a, currSegment.b, startingInB.front().b);
+			midPoint = SubdivideCatmullRomSpline(lastEndingInA.a, currSegment.a, currSegment.b, lastStartingInB.b);
 		}
-		else if (endingInA.size() != 1 && startingInB.size() == 1)
+		else if (numberSegmentEndingInA != 1 && numberStartingInB == 1)
 		{
 			Point3D fakeStartingPoint = 2.0 * currSegment.a - currSegment.b;
-			midPoint = SubdivideCatmullRomSpline(fakeStartingPoint, currSegment.a, currSegment.b, startingInB.front().b);
+			midPoint = SubdivideCatmullRomSpline(fakeStartingPoint, currSegment.a, currSegment.b, lastStartingInB.b);
 		}
-		else if (endingInA.size() == 1 && startingInB.size() != 1)
+		else if (numberSegmentEndingInA == 1 && numberStartingInB != 1)
 		{
 			Point3D fakeEndingPoint = 2.0 * currSegment.b - currSegment.a;
-			midPoint = SubdivideCatmullRomSpline(endingInA.front().a, currSegment.a, currSegment.b, fakeEndingPoint);
+			midPoint = SubdivideCatmullRomSpline(lastEndingInA.a, currSegment.a, currSegment.b, fakeEndingPoint);
 		}
 
 		segmentsBegin[i] = Segment3D(segments[i].a, midPoint);
