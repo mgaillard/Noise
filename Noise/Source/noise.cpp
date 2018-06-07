@@ -178,12 +178,21 @@ void Noise::SubdivideSegments(const array<Segment3D, 25>& segments, array<Segmen
 
 		// Segments ending in A and starting in B
 		vector<Segment3D> endingInA, startingInB;
-		copy_if(segments.begin(), segments.end(), back_inserter(endingInA), [&currSegment](const Segment3D& s) {
-			return (s.a != s.b) && s.b == currSegment.a;
-		});
-		copy_if(segments.begin(), segments.end(), back_inserter(startingInB), [&currSegment](const Segment3D& s) {
-			return (s.a != s.b) && s.a == currSegment.b;
-		});
+		for (const Segment3D& segment : segments)
+		{
+			// If the segment's length is more than 0
+			if (segment.a != segment.b)
+			{
+				if (segment.b == currSegment.a)
+				{
+					endingInA.push_back(segment);
+				}
+				else if (segment.a == currSegment.b)
+				{
+					startingInB.push_back(segment);
+				}
+			}
+		}
 
 		Point3D midPoint = MidPoint(segments[i]);
 
