@@ -132,11 +132,11 @@ array<array<double, 7>, 7> Noise::ComputeElevations(const array<array<Point2D, 7
 	return elevations;
 }
 
-array<Segment3D, 25> Noise::GenerateSegments(const array<array<Point2D, 7>, 7>& points) const 
+array<array<Segment3D, 5>, 5> Noise::GenerateSegments(const array<array<Point2D, 7>, 7>& points) const
 {
 	const array<array<double, 7>, 7> elevations = ComputeElevations(points);
 
-	array<Segment3D, 25> segments;
+	array<array<Segment3D, 5>, 5> segments;
 	for (int i = 1; i < points.size() - 1; i++)
 	{
 		for (int j = 1; j < points[i].size() - 1; j++)
@@ -162,74 +162,111 @@ array<Segment3D, 25> Noise::GenerateSegments(const array<array<Point2D, 7>, 7>& 
 			const Point3D a(points[i][j].x, points[i][j].y, elevations[i][j]);
 			const Point3D b(points[lowestNeighborI][lowestNeighborJ].x, points[lowestNeighborI][lowestNeighborJ].y, lowestNeighborElevation);
 
-			segments[5 * (i - 1) + j - 1] = Segment3D(a, b);
+			segments[i - 1][j - 1] = Segment3D(a, b);
 		}
 	}
 
 	return segments;
 }
 
-void Noise::SubdivideSegments(const array<Segment3D, 25>& segments, array<Segment3D, 25>& segmentsBegin, array<array<Point2D, 5>, 5>& midPoints, array<Segment3D, 25>& segmentsEnd) const
+void Noise::SubdivideSegments(double cx, double cy, const array<array<Segment3D, 5>, 5>& segments, array<array<Segment3D, 5>, 5>& segmentsBegin, array<array<Point2D, 5>, 5>& midPoints, array<array<Segment3D, 5>, 5>& segmentsEnd) const
 {
+	const int cellX = int(cx);
+	const int cellY = int(cy);
+
 	// Subdivide segments
 	for (int i = 0; i < segments.size(); i++)
 	{
-		Segment3D currSegment = segments[i];
-
-		Point3D midPoint = MidPoint(segments[i]);
-
-		// If the current segment's length is more than 0, we can subdivide and smooth it
-		if (currSegment.a != currSegment.b)
+		for (int j = 0; j < segments[i].size(); j++)
 		{
-			// Segments ending in A and starting in B
-			int numberSegmentEndingInA = 0;
-			Segment3D lastEndingInA;
-			int numberStartingInB = 0;
-			Segment3D lastStartingInB;
-			for (const Segment3D& segment : segments)
+			Segment3D currSegment = segments[i][j];
+
+			Point3D midPoint = MidPoint(currSegment);
+
+			// If the current segment's length is more than 0, we can subdivide and smooth it
+			if (currSegment.a != currSegment.b)
 			{
-				// If the segment's length is more than 0
-				if (segment.a != segment.b)
+				// Segments ending in A 
+				int numberSegmentEndingInA = 0;
+				Segment3D lastEndingInA;
+
+				// Cell of currSegment.a
+				const int cellAX = int(floor(currSegment.a.x));
+				const int cellAY = int(floor(currSegment.a.y));
+				
+				// Segments ending in A are in a cell adjacent to A
+				int ck = (int(segments.size()) / 2) - cellY + cellAY;
+				int cl = (int(segments.front().size()) / 2) - cellX + cellAX;
+				for (int k = ck - 1; k <= ck + 1; k++)
 				{
-					if (segment.b == currSegment.a)
+					for (int l = cl - 1; l <= cl + 1; l++)
 					{
-						numberSegmentEndingInA++;
-						lastEndingInA = segment;
+						if (k >= 0 && k < segments.size() && l >= 0 && l < segments.front().size())
+						{
+							// If the segment's length is more than 0
+							if (segments[k][l].a != segments[k][l].b)
+							{
+								if (segments[k][l].b == currSegment.a)
+								{
+									numberSegmentEndingInA++;
+									lastEndingInA = segments[k][l];
+								}
+							}
+						}
 					}
-					else if (segment.a == currSegment.b)
+				}
+
+				// Segments starting in B
+				int numberStartingInB = 0;
+				Segment3D lastStartingInB;
+
+				// Cell of currSegment.b
+				const int cellBX = int(floor(currSegment.b.x));
+				const int cellBY = int(floor(currSegment.b.y));
+
+				// Segments starting in B are in the same cell as B
+				int m = (int(segments.size()) / 2) - cellY + cellBY;
+				int n = (int(segments.front().size()) / 2) - cellX + cellBX;
+				if (m >= 0 && m < segments.size() && n >= 0 && n < segments.front().size())
+				{
+					// If the segment's length is more than 0
+					if (segments[m][n].a != segments[m][n].b)
 					{
-						numberStartingInB++;
-						lastStartingInB = segment;
+						if (segments[m][n].a == currSegment.b)
+						{
+							numberStartingInB++;
+							lastStartingInB = segments[m][n];
+						}
 					}
+				}
+
+				if (numberSegmentEndingInA == 1 && numberStartingInB == 1)
+				{
+					midPoint = SubdivideCatmullRomSpline(lastEndingInA.a, currSegment.a, currSegment.b, lastStartingInB.b);
+				}
+				else if (numberSegmentEndingInA != 1 && numberStartingInB == 1)
+				{
+					Point3D fakeStartingPoint = 2.0 * currSegment.a - currSegment.b;
+					midPoint = SubdivideCatmullRomSpline(fakeStartingPoint, currSegment.a, currSegment.b, lastStartingInB.b);
+				}
+				else if (numberSegmentEndingInA == 1 && numberStartingInB != 1)
+				{
+					Point3D fakeEndingPoint = 2.0 * currSegment.b - currSegment.a;
+					midPoint = SubdivideCatmullRomSpline(lastEndingInA.a, currSegment.a, currSegment.b, fakeEndingPoint);
 				}
 			}
 
-			if (numberSegmentEndingInA == 1 && numberStartingInB == 1)
-			{
-				midPoint = SubdivideCatmullRomSpline(lastEndingInA.a, currSegment.a, currSegment.b, lastStartingInB.b);
-			}
-			else if (numberSegmentEndingInA != 1 && numberStartingInB == 1)
-			{
-				Point3D fakeStartingPoint = 2.0 * currSegment.a - currSegment.b;
-				midPoint = SubdivideCatmullRomSpline(fakeStartingPoint, currSegment.a, currSegment.b, lastStartingInB.b);
-			}
-			else if (numberSegmentEndingInA == 1 && numberStartingInB != 1)
-			{
-				Point3D fakeEndingPoint = 2.0 * currSegment.b - currSegment.a;
-				midPoint = SubdivideCatmullRomSpline(lastEndingInA.a, currSegment.a, currSegment.b, fakeEndingPoint);
-			}
+			segmentsBegin[i][j] = Segment3D(currSegment.a, midPoint);
+			midPoints[i][j] = Point2D(ProjectionZ(midPoint));
+			segmentsEnd[i][j] = Segment3D(midPoint, currSegment.b);
 		}
-
-		segmentsBegin[i] = Segment3D(segments[i].a, midPoint);
-		midPoints[i / 5][i % 5] = Point2D(ProjectionZ(midPoint));
-		segmentsEnd[i] = Segment3D(midPoint, segments[i].b);
 	}
 }
 
-array<Segment3D, 25> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd) const
+array<array<Segment3D, 5>, 5> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5>& points, const array<array<Segment3D, 5>, 5>& segmentsBegin, const array<array<Segment3D, 5>, 5>& segmentsEnd) const
 {
 	// Connect each point to the nearest segment
-	array<Segment3D, 25> subSegments;
+	array<array<Segment3D, 5>, 5> subSegments;
 	for (int i = 0; i < points.size(); i++)
 	{
 		for (int j = 0; j < points[i].size(); j++)
@@ -238,26 +275,32 @@ array<Segment3D, 25> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5
 			double nearestSegmentDist = numeric_limits<double>::max();
 			Segment3D nearestSegment;
 
-			for (const Segment3D& segment : segmentsBegin)
+			for (int k = 0; k < segmentsBegin.size(); k++)
 			{
-				Point2D segmentNearestPoint;
-				double dist = distToLineSegment(points[i][j], ProjectionZ(segment), segmentNearestPoint);
-
-				if (dist < nearestSegmentDist)
+				for (int l = 0; l < segmentsBegin[k].size(); l++)
 				{
-					nearestSegmentDist = dist;
-					nearestSegment = segment;
+					Point2D segmentNearestPoint;
+					double dist = distToLineSegment(points[i][j], ProjectionZ(segmentsBegin[k][l]), segmentNearestPoint);
+
+					if (dist < nearestSegmentDist)
+					{
+						nearestSegmentDist = dist;
+						nearestSegment = segmentsBegin[k][l];
+					}
 				}
 			}
-			for (const Segment3D& segment : segmentsEnd)
+			for (int k = 0; k < segmentsEnd.size(); k++)
 			{
-				Point2D segmentNearestPoint;
-				double dist = distToLineSegment(points[i][j], ProjectionZ(segment), segmentNearestPoint);
-
-				if (dist < nearestSegmentDist)
+				for (int l = 0; l < segmentsEnd[k].size(); l++)
 				{
-					nearestSegmentDist = dist;
-					nearestSegment = segment;
+					Point2D segmentNearestPoint;
+					double dist = distToLineSegment(points[i][j], ProjectionZ(segmentsEnd[k][l]), segmentNearestPoint);
+
+					if (dist < nearestSegmentDist)
+					{
+						nearestSegmentDist = dist;
+						nearestSegment = segmentsEnd[k][l];
+					}
 				}
 			}
 
@@ -291,7 +334,7 @@ array<Segment3D, 25> Noise::GenerateSubSegments(const array<array<Point2D, 5>, 5
 			const Point3D segmentEnd(lerp(nearestSegment, u));
 			const Point3D segmentStart(points[i][j].x, points[i][j].y, segmentEnd.z);
 
-			subSegments[5 * i + j] = Segment3D(segmentStart, segmentEnd);
+			subSegments[i][j] = Segment3D(segmentStart, segmentEnd);
 		}
 	}
 
@@ -303,6 +346,19 @@ double Noise::ComputeColorPoint(double x, double y, const Point2D& point, double
 	double value = 0.0;
 
 	if (dist(Point2D(x, y), point) < radius)
+	{
+		value = 1.0;
+	}
+
+	return value;
+}
+
+double Noise::ComputeColorSegment(double x, double y, const Segment2D& segment, double radius) const
+{
+	double value = 0.0;
+
+	Point2D c;
+	if (distToLineSegment(Point2D(x, y), segment, c) < radius)
 	{
 		value = 1.0;
 	}
@@ -342,38 +398,16 @@ double Noise::ComputeColorPoints7(double x, double y, const array<array<Point2D,
 	return value;
 }
 
-double Noise::ComputeColorSegment9(double x, double y, const array<Segment3D, 9>& segments, double radius) const
+double Noise::ComputeColorSegment25(double x, double y, const array<array<Segment3D, 5>, 5>& segments, double radius) const
 {
 	double value = 0.0;
 
 	// White when near to a segment
-	for (const Segment3D& segment : segments)
+	for (int i = 0; i < segments.size(); i++)
 	{
-		Point2D c;
-		double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segment), c);
-
-		if (dist < radius)
+		for (int j = 0; j < segments[i].size(); j++)
 		{
-			value = 1.0;
-		}
-	}
-
-	return value;
-}
-
-double Noise::ComputeColorSegment25(double x, double y, const array<Segment3D, 25>& segments, double radius) const
-{
-	double value = 0.0;
-
-	// White when near to a segment
-	for (const Segment3D& segment : segments)
-	{
-		Point2D c;
-		double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segment), c);
-
-		if (dist < radius)
-		{
-			value = 1.0;
+			value = max(value, ComputeColorSegment(x, y, ProjectionZ(segments[i][j]), radius));
 		}
 	}
 
@@ -393,7 +427,7 @@ double Noise::ComputeColorGrid(double x, double y, double deltaX, double deltaY,
 	return value;
 }
 
-double Noise::ComputeColor(double x, double y, const array<array<Point2D, 7>, 7>& points, const array<array<Point2D, 5>, 5>& midPoints, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd) const
+double Noise::ComputeColor(double x, double y, const array<array<Point2D, 7>, 7>& points, const array<array<Point2D, 5>, 5>& midPoints, const array<array<Segment3D, 5>, 5>& segmentsBegin, const array<array<Segment3D, 5>, 5>& segmentsEnd) const
 {
 	// Find color
 	double value = 0.0;
@@ -418,7 +452,7 @@ double Noise::ComputeColor(double x, double y, const array<array<Point2D, 7>, 7>
 	return value;
 }
 
-double Noise::ComputeColorSub(double x, double y, const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 25>& segments) const
+double Noise::ComputeColorSub(double x, double y, const array<array<Point2D, 5>, 5>& points, const array<array<Segment3D, 5>, 5>& segments) const
 {
 	// Find color
 	double value = 0.0;
@@ -441,46 +475,55 @@ double Noise::ComputeColorSub(double x, double y, const array<array<Point2D, 5>,
 	return value;
 }
 
-double Noise::ComputeColorWorley(double x, double y, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd, const array<Segment3D, 25>& subSegments) const
+double Noise::ComputeColorWorley(double x, double y, const array<array<Segment3D, 5>, 5>& segmentsBegin, const array<array<Segment3D, 5>, 5>& segmentsEnd, const array<array<Segment3D, 5>, 5>& subSegments) const
 {
 	// Distance to the nearest segment
 	double nearestSegmentDistance = numeric_limits<double>::max();
 	Segment3D nearestSegment;
 
 	// For each level 1 segment
-	for (const Segment3D& segment : segmentsBegin)
+	for (int i = 0; i < segmentsBegin.size(); i++)
 	{
-		Point2D c;
-		double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segment), c);
-
-		if (dist < nearestSegmentDistance)
+		for (int j = 0; j < segmentsBegin[i].size(); j++)
 		{
-			nearestSegmentDistance = dist;
-			nearestSegment = segment;
+			Point2D c;
+			double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segmentsBegin[i][j]), c);
+
+			if (dist < nearestSegmentDistance)
+			{
+				nearestSegmentDistance = dist;
+				nearestSegment = segmentsBegin[i][j];
+			}
 		}
 	}
-	for (const Segment3D& segment : segmentsEnd)
+	for (int i = 0; i < segmentsEnd.size(); i++)
 	{
-		Point2D c;
-		double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segment), c);
-
-		if (dist < nearestSegmentDistance)
+		for (int j = 0; j < segmentsEnd[i].size(); j++)
 		{
-			nearestSegmentDistance = dist;
-			nearestSegment = segment;
+			Point2D c;
+			double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segmentsEnd[i][j]), c);
+
+			if (dist < nearestSegmentDistance)
+			{
+				nearestSegmentDistance = dist;
+				nearestSegment = segmentsEnd[i][j];
+			}
 		}
 	}
 
 	// For each level 2 segment
-	for (const Segment3D& segment : subSegments)
+	for (int i = 0; i < subSegments.size(); i++)
 	{
-		Point2D c;
-		double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segment), c);
-
-		if (dist < nearestSegmentDistance)
+		for (int j = 0; j < subSegments[i].size(); j++)
 		{
-			nearestSegmentDistance = dist;
-			nearestSegment = segment;
+			Point2D c;
+			double dist = distToLineSegment(Point2D(x, y), ProjectionZ(subSegments[i][j]), c);
+
+			if (dist < nearestSegmentDistance)
+			{
+				nearestSegmentDistance = dist;
+				nearestSegment = subSegments[i][j];
+			}
 		}
 	}
 
@@ -578,17 +621,17 @@ double Noise::evaluate(double x, double y) const
 	// Level 1: Points in neighboring cells
 	array<array<Point2D, 7>, 7> points = GenerateNeighboringPoints7(cxInt, cyInt);
 	// Level 1: List of segments 
-	array<Segment3D, 25> segments = GenerateSegments(points);
+	array<array<Segment3D,5>, 5> segments = GenerateSegments(points);
 
 	// Subdivide segments of level 1
-	array<Segment3D, 25> segmentsBegin, segmentsEnd;
+	array<array<Segment3D, 5>, 5> segmentsBegin, segmentsEnd;
 	array<array<Point2D, 5>, 5> midPoints;
-	SubdivideSegments(segments, segmentsBegin, midPoints, segmentsEnd);
+	SubdivideSegments(cx, cy, segments, segmentsBegin, midPoints, segmentsEnd);
 
 	// Level 2: Points in neighboring cells
 	array<array<Point2D, 5>, 5> subPoints = GenerateNeighboringSubPoints(cx, cy, x, y, points);
 	// Level 2: List of segments
-	array<Segment3D, 25> subSegments = GenerateSubSegments(subPoints, segmentsBegin, segmentsEnd);
+	array<array<Segment3D, 5>, 5> subSegments = GenerateSubSegments(subPoints, segmentsBegin, segmentsEnd);
 
 	return max(
 		ComputeColorWorley(x, y, segmentsBegin, segmentsEnd, subSegments),

@@ -34,27 +34,27 @@ private:
 
 	array<array<double, 7>, 7> ComputeElevations(const array<array<Point2D, 7>, 7>& points) const;
 
-	array<Segment3D, 25> GenerateSegments(const array<array<Point2D, 7>, 7>& points) const;
+	array<array<Segment3D, 5>, 5> GenerateSegments(const array<array<Point2D, 7>, 7>& points) const;
 
-	void SubdivideSegments(const array<Segment3D, 25>& segments, array<Segment3D, 25>& segmentsBegin, array<array<Point2D, 5>, 5>& midPoints, array<Segment3D, 25>& segmentsEnd) const;
+	void SubdivideSegments(double cx, double cy, const array<array<Segment3D, 5>, 5>& segments, array<array<Segment3D, 5>, 5>& segmentsBegin, array<array<Point2D, 5>, 5>& midPoints, array<array<Segment3D, 5>, 5>& segmentsEnd) const;
 
-	array<Segment3D, 25> GenerateSubSegments(const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd) const;
+	array<array<Segment3D, 5>, 5> GenerateSubSegments(const array<array<Point2D, 5>, 5>& points, const array<array<Segment3D, 5>, 5>& segmentsBegin, const array<array<Segment3D, 5>, 5>& segmentsEnd) const;
 
 	double ComputeColorPoint(double x, double y, const Point2D& point, double radius) const;
+	double ComputeColorSegment(double x, double y, const Segment2D& segment, double radius) const;
 
 	double ComputeColorPoints5(double x, double y, const array<array<Point2D, 5>, 5>& points, double radius) const;
 	double ComputeColorPoints7(double x, double y, const array<array<Point2D, 7>, 7>& points, double radius) const;
 
-	double ComputeColorSegment9(double x, double y, const array<Segment3D, 9>& segments, double radius) const;
-	double ComputeColorSegment25(double x, double y, const array<Segment3D, 25>& segments, double radius) const;
+	double ComputeColorSegment25(double x, double y, const array<array<Segment3D, 5>, 5>& segments, double radius) const;
 
 	double ComputeColorGrid(double x, double y, double deltaX, double deltaY, double radius) const;
 
-	double ComputeColor(double x, double y, const array<array<Point2D, 7>, 7>& points, const array<array<Point2D, 5>, 5>& midPoints, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd) const;
+	double ComputeColor(double x, double y, const array<array<Point2D, 7>, 7>& points, const array<array<Point2D, 5>, 5>& midPoints, const array<array<Segment3D, 5>, 5>& segmentsBegin, const array<array<Segment3D, 5>, 5>& segmentsEnd) const;
 
-	double ComputeColorSub(double x, double y, const array<array<Point2D, 5>, 5>& points, const array<Segment3D, 25>& segments) const;
+	double ComputeColorSub(double x, double y, const array<array<Point2D, 5>, 5>& points, const array<array<Segment3D, 5>, 5>& segments) const;
 
-	double ComputeColorWorley(double x, double y, const array<Segment3D, 25>& segmentsBegin, const array<Segment3D, 25>& segmentsEnd, const array<Segment3D, 25>& subSegments) const;
+	double ComputeColorWorley(double x, double y, const array<array<Segment3D, 5>, 5>& segmentsBegin, const array<array<Segment3D, 5>, 5>& segmentsEnd, const array<array<Segment3D, 5>, 5>& subSegments) const;
 	
 	// Random generator used by the class
 	typedef minstd_rand RandomGenerator;
