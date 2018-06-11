@@ -44,7 +44,8 @@ inline const T& clamp(const T& v, const T& lo, const T& hi)
 template<typename T>
 inline T lerp(const T& a, const T& b, const T& x)
 {
-	return (1 - x) * a + x * b;
+	// FMA friendly
+	return x * b + (a - a * x);
 }
 
 template<typename T>
