@@ -1,21 +1,5 @@
 #include "noise.h"
 
-#include <iostream>
-#include <vector>
-#include <cstdint>
-#include <limits>
-#include <cmath>
-#include <tuple>
-#include <cassert>
-
-#include "perlin.h"
-#include "math2d.h"
-#include "math3d.h"
-#include "spline.h"
-#include "utils.h"
-
-using namespace std;
-
 Noise::Noise(const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D& perlinTopLeft, const Point2D& perlinBottomRight, int seed, double eps, bool displayPoints, bool displaySegments, bool displayGrid) :
 	m_seed(seed),
 	m_displayPoints(displayPoints),
@@ -48,7 +32,7 @@ void Noise::InitPointCache()
 int Noise::GenerateSeedNoise(int i, int j) const
 {
 	// TODO: implement a better permutation method
-	return (541 * i + 79 * j + m_seed) % numeric_limits<int>::max();
+	return (541 * i + 79 * j + m_seed) % std::numeric_limits<int>::max();
 }
 
 Point2D Noise::GeneratePoint(int x, int y) const
@@ -57,7 +41,7 @@ Point2D Noise::GeneratePoint(int x, int y) const
 	const int seed = GenerateSeedNoise(x, y);
 	RandomGenerator generator(seed);
 
-	uniform_real_distribution<double> distribution(m_eps, 1.0 - m_eps);
+	std::uniform_real_distribution<double> distribution(m_eps, 1.0 - m_eps);
 	const double px = distribution(generator);
 	const double py = distribution(generator);
 
@@ -114,7 +98,7 @@ double Noise::ComputeColorGrid(double x, double y, double deltaX, double deltaY,
 	return value;
 }
 
-tuple<int, int> Noise::GetSubQuadrant(double cx, double cy, double x, double y) const
+std::tuple<int, int> Noise::GetSubQuadrant(double cx, double cy, double x, double y) const
 {
 	// Return the coordinates of the quadrant in which (x, y) if we divide the cell (cx, cy) in 4 quadrants
 	//      cx    cx+1    cx+2
@@ -143,7 +127,7 @@ tuple<int, int> Noise::GetSubQuadrant(double cx, double cy, double x, double y) 
 	int quadrantX = int(floor(2.0 *(x - cx)));
 	int quadrantY = int(floor(2.0 *(y - cy)));
 
-	return make_tuple(quadrantX, quadrantY);
+	return std::make_tuple(quadrantX, quadrantY);
 }
 
 double Noise::evaluate(double x, double y) const
@@ -169,9 +153,9 @@ double Noise::evaluate(double x, double y) const
 	// Level 2: List of segments
 	Segment3DArray<5> subSegments = GenerateSubSegments<5, 5>(cx, cy, subPoints, segmentsBegin, segmentsEnd);
 
-	return max(
+	return std::max(
 		ComputeColorWorley<5, 5>(x, y, segmentsBegin, segmentsEnd, subSegments),
-		max(
+		std::max(
 			ComputeColor<9>(x, y, points, midPoints, segmentsBegin, segmentsEnd),
 			ComputeColorSub<5>(x, y, subPoints, subSegments)
 		)

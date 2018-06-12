@@ -4,11 +4,16 @@
 #include <array>
 #include <vector>
 #include <random>
+#include <tuple>
+#include <limits>
+#include <cmath>
+#include <cassert>
 
+#include "perlin.h"
 #include "math2d.h"
 #include "math3d.h"
-
-using namespace std;
+#include "spline.h"
+#include "utils.h"
 
 class Noise
 {
@@ -19,13 +24,13 @@ public:
 
 private:
 	template <size_t N>
-	using DoubleArray = array<array<double, N>, N>;
+	using DoubleArray = std::array<std::array<double, N>, N>;
 
 	template <size_t N>
-	using Point2DArray = array<array<Point2D, N>, N>;
+	using Point2DArray = std::array<std::array<Point2D, N>, N>;
 
 	template <size_t N>
-	using Segment3DArray = array<array<Segment3D, N>, N>;
+	using Segment3DArray = std::array<std::array<Segment3D, N>, N>;
 
 	void InitPointCache();
 
@@ -34,7 +39,7 @@ private:
 	Point2D GeneratePoint(int x, int y) const;
 	Point2D GeneratePointCached(int x, int y) const;
 
-	tuple<int, int> GetSubQuadrant(double cx, double cy, double x, double y) const;
+	std::tuple<int, int> GetSubQuadrant(double cx, double cy, double x, double y) const;
 
 	template <size_t N>
 	Point2DArray<N> GenerateNeighboringPoints(int cx, int cy) const;
@@ -76,7 +81,7 @@ private:
 	double ComputeColorWorley(double x, double y, const Segment3DArray<N>& segmentsBegin, const Segment3DArray<N>& segmentsEnd, const Segment3DArray<M>& subSegments) const;
 	
 	// Random generator used by the class
-	typedef minstd_rand RandomGenerator;
+	typedef std::minstd_rand RandomGenerator;
 
 	// Seed of the noise
 	const int m_seed;
@@ -95,7 +100,7 @@ private:
 
 	const int CACHE_X = 32;
 	const int CACHE_Y = 32;
-	vector<vector<Point2D> > m_pointCache;
+	std::vector<std::vector<Point2D> > m_pointCache;
 };
 
 template <size_t N>
@@ -130,7 +135,7 @@ Noise::Point2DArray<N> Noise::GenerateNeighboringSubPoints(double cx, double cy,
 
 	// Detect in which quadrant is the current point (x, y)
 	int quadrantX, quadrantY;
-	tie(quadrantX, quadrantY) = GetSubQuadrant(cx, cy, x, y);
+	std::tie(quadrantX, quadrantY) = GetSubQuadrant(cx, cy, x, y);
 	Point2DArray<N> subPoints = GenerateNeighboringPoints<N>(2 * cxInt + quadrantX, 2 * cyInt + quadrantY);
 
 	// Divide point coordinates by 2
@@ -154,7 +159,7 @@ Noise::Point2DArray<N> Noise::GenerateNeighboringSubPoints(double cx, double cy,
 		for (int j = offset; j < points[i].size() - offset; j++)
 		{
 			int qX, qY;
-			tie(qX, qY) = GetSubQuadrant(cx, cy, points[i][j].x, points[i][j].y);
+			std::tie(qX, qY) = GetSubQuadrant(cx, cy, points[i][j].x, points[i][j].y);
 
 			int k = (int(subPoints.size()) / 2) - quadrantY + qY;
 			int l = (int(subPoints.front().size()) / 2) - quadrantX + qX;
@@ -199,7 +204,7 @@ Noise::Segment3DArray<N - 2> Noise::GenerateSegments(const Point2DArray<N>& poin
 		for (int j = 1; j < points[i].size() - 1; j++)
 		{
 			// Lowest neighbor
-			double lowestNeighborElevation = numeric_limits<double>::max();
+			double lowestNeighborElevation = std::numeric_limits<double>::max();
 			int lowestNeighborI = i;
 			int lowestNeighborJ = j;
 
@@ -338,7 +343,7 @@ Noise::Segment3DArray<N> Noise::GenerateSubSegments(double cx, double cy, const 
 		for (int j = 0; j < points[i].size(); j++)
 		{
 			// Find the nearest segment
-			double nearestSegmentDist = numeric_limits<double>::max();
+			double nearestSegmentDist = std::numeric_limits<double>::max();
 			Segment3D nearestSegment;
 
 			// In which cell is the point
@@ -423,7 +428,7 @@ double Noise::ComputeColorPoints(double x, double y, const Point2DArray<N>& poin
 	{
 		for (int j = center - 1; j <= center + 1; j++)
 		{
-			value = max(value, ComputeColorPoint(x, y, points[i][j], radius));
+			value = std::max(value, ComputeColorPoint(x, y, points[i][j], radius));
 		}
 	}
 
@@ -440,7 +445,7 @@ double Noise::ComputeColorSegments(double x, double y, const Segment3DArray<N>& 
 	{
 		for (int j = 0; j < segments[i].size(); j++)
 		{
-			value = max(value, ComputeColorSegment(x, y, ProjectionZ(segments[i][j]), radius));
+			value = std::max(value, ComputeColorSegment(x, y, ProjectionZ(segments[i][j]), radius));
 		}
 	}
 
@@ -455,19 +460,19 @@ double Noise::ComputeColor(double x, double y, const Point2DArray<N>& points, co
 
 	if (m_displayPoints)
 	{
-		value = max(value, ComputeColorPoints<N>(x, y, points, 0.0625));
-		value = max(value, ComputeColorPoints<N - 4>(x, y, midPoints, 0.03125));
+		value = std::max(value, ComputeColorPoints<N>(x, y, points, 0.0625));
+		value = std::max(value, ComputeColorPoints<N - 4>(x, y, midPoints, 0.03125));
 	}
 
 	if (m_displaySegments)
 	{
-		value = max(value, ComputeColorSegments<N - 4>(x, y, segmentsBegin, 0.015625));
-		value = max(value, ComputeColorSegments<N - 4>(x, y, segmentsEnd, 0.015625));
+		value = std::max(value, ComputeColorSegments<N - 4>(x, y, segmentsBegin, 0.015625));
+		value = std::max(value, ComputeColorSegments<N - 4>(x, y, segmentsEnd, 0.015625));
 	}
 
 	if (m_displayGrid)
 	{
-		value = max(value, ComputeColorGrid(x, y, 0.0, 0.0, 0.0078125));
+		value = std::max(value, ComputeColorGrid(x, y, 0.0, 0.0, 0.0078125));
 	}
 
 	return value;
@@ -481,17 +486,17 @@ double Noise::ComputeColorSub(double x, double y, const Point2DArray<N>& points,
 
 	if (m_displayPoints)
 	{
-		value = max(value, ComputeColorPoints<N>(x, y, points, 0.03125));
+		value = std::max(value, ComputeColorPoints<N>(x, y, points, 0.03125));
 	}
 
 	if (m_displaySegments)
 	{
-		value = max(value, ComputeColorSegments<N>(x, y, segments, 0.0078125));
+		value = std::max(value, ComputeColorSegments<N>(x, y, segments, 0.0078125));
 	}
 
 	if (m_displayGrid)
 	{
-		value = max(value, ComputeColorGrid(x, y, 0.5, 0.5, 0.00390625));
+		value = std::max(value, ComputeColorGrid(x, y, 0.5, 0.5, 0.00390625));
 	}
 
 	return value;
@@ -501,7 +506,7 @@ template <size_t N, size_t M>
 double Noise::ComputeColorWorley(double x, double y, const Segment3DArray<N>& segmentsBegin, const Segment3DArray<N>& segmentsEnd, const Segment3DArray<M>& subSegments) const
 {
 	// Distance to the nearest segment
-	double nearestSegmentDistance = numeric_limits<double>::max();
+	double nearestSegmentDistance = std::numeric_limits<double>::max();
 	Segment3D nearestSegment;
 
 	// For each level 1 segment
