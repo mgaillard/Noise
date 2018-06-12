@@ -2,6 +2,7 @@
 #define MATH2D_H
 
 #include <cmath>
+#include <array>
 
 #include "utils.h"
 
@@ -230,6 +231,20 @@ inline Point2D MidPoint(const Segment2D& s) {
 		(s.a.x + s.b.x) / 2.0,
 		(s.a.y + s.b.y) / 2.0
 	);
+}
+
+template <size_t N>
+std::array<Point2D, N> Subdivide(const Segment2D& s)
+{
+	std::array<Point2D, N> points;
+
+	for (int n = 0; n < points.size(); n++)
+	{
+		const double t = double(n + 1) / (N + 1);
+		points[n] = lerp(s.a, s.b, t);
+	}
+
+	return points;
 }
 
 double pointLineProjection(const Point2D& p, const Point2D& a, const Point2D& b);

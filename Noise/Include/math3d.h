@@ -2,6 +2,7 @@
 #define MATH3D_H
 
 #include <cmath>
+#include <array>
 
 #include "utils.h"
 #include "math2d.h"
@@ -225,6 +226,20 @@ inline Point3D MidPoint(const Segment3D& s) {
 		(s.a.y + s.b.y) / 2.0,
 		(s.a.z + s.b.z) / 2.0
 	);
+}
+
+template <size_t N>
+std::array<Point3D, N> Subdivide(const Segment3D& s)
+{
+	std::array<Point3D, N> points;
+
+	for (int n = 0; n < points.size(); n++)
+	{
+		const double t = double(n + 1) / (N + 1);
+		points[n] = lerp(s.a, s.b, t);
+	}
+
+	return points;
 }
 
 inline Segment2D ProjectionZ(const Segment3D& s) {

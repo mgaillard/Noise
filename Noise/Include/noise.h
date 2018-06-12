@@ -24,6 +24,9 @@ public:
 
 private:
 	template <size_t N>
+	using Segment3DChain = std::array<Segment3D, N>;
+
+	template <size_t N>
 	using DoubleArray = std::array<std::array<double, N>, N>;
 
 	template <size_t N>
@@ -31,6 +34,9 @@ private:
 
 	template <size_t N>
 	using Segment3DArray = std::array<std::array<Segment3D, N>, N>;
+
+	template <size_t N, size_t M>
+	using Segment3DChainArray = std::array<std::array<Segment3DChain<M>, N>, N>;
 
 	void InitPointCache();
 
@@ -53,32 +59,43 @@ private:
 	template <size_t N>
 	Segment3DArray<N - 2> GenerateSegments(const Point2DArray<N>& points) const;
 
-	template <size_t N>
-	void SubdivideSegments(double cx, double cy, const Segment3DArray<N>& segments, Segment3DArray<N - 2>& segmentsBegin, Point2DArray<N - 2>& midPoints, Segment3DArray<N - 2>& segmentsEnd) const;
+	// Subdivide all segments in a Segment3DArray<N> in D smaller segments
+	// Require a Segment3DArray<N> to generate a Segment3DChainArray<N - 2, D> because to subdivide a segment we need its predecessors and successors.
+	template <size_t N, size_t D>
+	void SubdivideSegments(double cx, double cy, const Segment3DArray<N>& segments, Segment3DChainArray<N - 2, D>& subdividedSegments) const;
 
-	template <size_t N, size_t M>
-	Segment3DArray<N> GenerateSubSegments(double cx, double cy, const Point2DArray<N>& points, const Segment3DArray<M>& segmentsBegin, const Segment3DArray<M>& segmentsEnd) const;
+	template <size_t N, size_t M, size_t D>
+	Segment3DArray<N> GenerateSubSegments(double cx, double cy, const Point2DArray<N>& points, const Segment3DChainArray<M, D>& subdividedSegments) const;
 
 	double ComputeColorPoint(double x, double y, const Point2D& point, double radius) const;
 
 	template <size_t N>
 	double ComputeColorPoints(double x, double y, const Point2DArray<N>& points, double radius) const;
 
+	template <size_t N>
+	double ComputeColorPoints(double x, double y, const Segment3DArray<N>& segments, double radius) const;
+
+	template <size_t N, size_t D>
+	double ComputeColorPoints(double x, double y, const Segment3DChainArray<N, D>& segments, double radius) const;
+
 	double ComputeColorSegment(double x, double y, const Segment2D& segment, double radius) const;
 
 	template <size_t N>
 	double ComputeColorSegments(double x, double y, const Segment3DArray<N>& segments, double radius) const;
 
+	template <size_t N, size_t D>
+	double ComputeColorSegments(double x, double y, const Segment3DChainArray<N, D>& segments, double radius) const;
+
 	double ComputeColorGrid(double x, double y, double deltaX, double deltaY, double radius) const;
 
-	template <size_t N>
-	double ComputeColor(double x, double y, const Point2DArray<N>& points, const Point2DArray<N - 4>& midPoints, const Segment3DArray<N - 4>& segmentsBegin, const Segment3DArray<N - 4>& segmentsEnd) const;
+	template <size_t N, size_t D>
+	double ComputeColor(double x, double y, const Point2DArray<N>& points, const Segment3DChainArray<N- 4, D>& subdividedSegments) const;
 
 	template <size_t N>
 	double ComputeColorSub(double x, double y, const Point2DArray<N>& points, const Segment3DArray<N>& segments) const;
 
-	template <size_t N, size_t M>
-	double ComputeColorWorley(double x, double y, const Segment3DArray<N>& segmentsBegin, const Segment3DArray<N>& segmentsEnd, const Segment3DArray<M>& subSegments) const;
+	template <size_t N, size_t D, size_t M>
+	double ComputeColorWorley(double x, double y, const Segment3DChainArray<N, D>& subdividedSegments, const Segment3DArray<M>& subSegments) const;
 	
 	// Random generator used by the class
 	typedef std::minstd_rand RandomGenerator;
@@ -231,9 +248,12 @@ Noise::Segment3DArray<N - 2> Noise::GenerateSegments(const Point2DArray<N>& poin
 	return segments;
 }
 
-template <size_t N>
-void Noise::SubdivideSegments(double cx, double cy, const Segment3DArray<N>& segments, Segment3DArray<N - 2>& segmentsBegin, Point2DArray<N - 2>& midPoints, Segment3DArray<N - 2>& segmentsEnd) const
+template <size_t N, size_t D>
+void Noise::SubdivideSegments(double cx, double cy, const Segment3DArray<N>& segments, Segment3DChainArray<N - 2, D>& subdividedSegments) const
 {
+	// Ensire that segments are subdivided.
+	static_assert(D > 1, "Segments should be subdivided in more than 1 part.");
+
 	const int cellX = int(cx);
 	const int cellY = int(cy);
 
@@ -244,7 +264,7 @@ void Noise::SubdivideSegments(double cx, double cy, const Segment3DArray<N>& seg
 		{
 			Segment3D currSegment = segments[i][j];
 
-			Point3D midPoint = MidPoint(currSegment);
+			std::array<Point3D, D - 1> midPoints = Subdivide<D - 1>(currSegment);
 
 			// If the current segment's length is more than 0, we can subdivide and smooth it
 			if (currSegment.a != currSegment.b)
@@ -306,29 +326,35 @@ void Noise::SubdivideSegments(double cx, double cy, const Segment3DArray<N>& seg
 
 				if (numberSegmentEndingInA == 1 && numberStartingInB == 1)
 				{
-					midPoint = SubdivideCatmullRomSpline(lastEndingInA.a, currSegment.a, currSegment.b, lastStartingInB.b);
+					midPoints = SubdivideCatmullRomSpline<D - 1>(lastEndingInA.a, currSegment.a, currSegment.b, lastStartingInB.b);
 				}
 				else if (numberSegmentEndingInA != 1 && numberStartingInB == 1)
 				{
 					Point3D fakeStartingPoint = 2.0 * currSegment.a - currSegment.b;
-					midPoint = SubdivideCatmullRomSpline(fakeStartingPoint, currSegment.a, currSegment.b, lastStartingInB.b);
+					midPoints = SubdivideCatmullRomSpline<D - 1>(fakeStartingPoint, currSegment.a, currSegment.b, lastStartingInB.b);
 				}
 				else if (numberSegmentEndingInA == 1 && numberStartingInB != 1)
 				{
 					Point3D fakeEndingPoint = 2.0 * currSegment.b - currSegment.a;
-					midPoint = SubdivideCatmullRomSpline(lastEndingInA.a, currSegment.a, currSegment.b, fakeEndingPoint);
+					midPoints = SubdivideCatmullRomSpline<D - 1>(lastEndingInA.a, currSegment.a, currSegment.b, fakeEndingPoint);
 				}
 			}
-
-			segmentsBegin[i - 1][j - 1] = Segment3D(currSegment.a, midPoint);
-			midPoints[i - 1][j - 1] = Point2D(ProjectionZ(midPoint));
-			segmentsEnd[i - 1][j - 1] = Segment3D(midPoint, currSegment.b);
+			
+			// First subdivided segment
+			subdividedSegments[i - 1][j - 1].front().a = currSegment.a;
+			for (int d = 0; d < midPoints.size(); d++)
+			{
+				subdividedSegments[i - 1][j - 1][d].b = midPoints[d];
+				subdividedSegments[i - 1][j - 1][d + 1].a = midPoints[d];
+			}
+			// Last subdivided segment
+			subdividedSegments[i - 1][j - 1].back().b = currSegment.b;
 		}
 	}
 }
 
-template <size_t N, size_t M>
-Noise::Segment3DArray<N> Noise::GenerateSubSegments(double cx, double cy, const Point2DArray<N>& points, const Segment3DArray<M>& segmentsBegin, const Segment3DArray<M>& segmentsEnd) const
+template <size_t N, size_t M, size_t D>
+Noise::Segment3DArray<N> Noise::GenerateSubSegments(double cx, double cy, const Point2DArray<N>& points, const Segment3DChainArray<M, D>& subdividedSegments) const
 {
 	// Ensure that there is enough segments around to connect sub points
 	static_assert(M >= (2 * ((N + 1) / 4) + 3), "Not enough segments in the vicinity to connect sub points.");
@@ -350,8 +376,8 @@ Noise::Segment3DArray<N> Noise::GenerateSubSegments(double cx, double cy, const 
 			int cellPX = int(floor(points[i][j].x));
 			int cellPY = int(floor(points[i][j].y));
 
-			int ck = (int(segmentsBegin.size()) / 2) - cellY + cellPY;
-			int cl = (int(segmentsBegin.front().size()) / 2) - cellX + cellPX;
+			int ck = (int(subdividedSegments.size()) / 2) - cellY + cellPY;
+			int cl = (int(subdividedSegments.front().size()) / 2) - cellX + cellPX;
 
 			for (int k = ck - 1; k <= ck + 1; k++)
 			{
@@ -362,19 +388,16 @@ Noise::Segment3DArray<N> Noise::GenerateSubSegments(double cx, double cy, const 
 					assert(k >= 0 && k < segmentsEnd.size());
 					assert(l >= 0 && l < segmentsEnd.front().size());
 
-					Point2D c;
-					double distBegin = distToLineSegment(points[i][j], ProjectionZ(segmentsBegin[k][l]), c);
-					double distEnd = distToLineSegment(points[i][j], ProjectionZ(segmentsEnd[k][l]), c);
+					for (int m = 0; m < subdividedSegments[k][l].size(); m++)
+					{
+						Point2D c;
+						double dist = distToLineSegment(points[i][j], ProjectionZ(subdividedSegments[k][l][m]), c);
 
-					if (distBegin < nearestSegmentDist)
-					{
-						nearestSegmentDist = distBegin;
-						nearestSegment = segmentsBegin[k][l];
-					}
-					if (distEnd < nearestSegmentDist)
-					{
-						nearestSegmentDist = distEnd;
-						nearestSegment = segmentsEnd[k][l];
+						if (dist < nearestSegmentDist)
+						{
+							nearestSegmentDist = dist;
+							nearestSegment = subdividedSegments[k][l][m];
+						}
 					}
 				}
 			}
@@ -436,6 +459,45 @@ double Noise::ComputeColorPoints(double x, double y, const Point2DArray<N>& poin
 }
 
 template <size_t N>
+double Noise::ComputeColorPoints(double x, double y, const Segment3DArray<N>& segments, double radius) const
+{
+	double value = 0.0;
+
+	// White when near to a segment
+	for (int i = 0; i < segments.size(); i++)
+	{
+		for (int j = 0; j < segments[i].size(); j++)
+		{
+			value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(segments[i][j].a), radius));
+			value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(segments[i][j].b), radius));
+		}
+	}
+
+	return value;
+}
+
+template <size_t N, size_t D>
+double Noise::ComputeColorPoints(double x, double y, const Segment3DChainArray<N, D>& segments, double radius) const
+{
+	double value = 0.0;
+
+	// White when near to a segment
+	for (int i = 0; i < segments.size(); i++)
+	{
+		for (int j = 0; j < segments[i].size(); j++)
+		{
+			for (int k = 0; k < segments[i][j].size(); k++)
+			{
+				value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(segments[i][j][k].a), radius));
+				value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(segments[i][j][k].b), radius));
+			}
+		}
+	}
+
+	return value;
+}
+
+template <size_t N>
 double Noise::ComputeColorSegments(double x, double y, const Segment3DArray<N>& segments, double radius) const
 {
 	double value = 0.0;
@@ -452,8 +514,28 @@ double Noise::ComputeColorSegments(double x, double y, const Segment3DArray<N>& 
 	return value;
 }
 
-template <size_t N>
-double Noise::ComputeColor(double x, double y, const Point2DArray<N>& points, const Point2DArray<N - 4>& midPoints, const Segment3DArray<N - 4>& segmentsBegin, const Segment3DArray<N - 4>& segmentsEnd) const
+template <size_t N, size_t D>
+double Noise::ComputeColorSegments(double x, double y, const Segment3DChainArray<N, D>& segments, double radius) const
+{
+	double value = 0.0;
+
+	// White when near to a segment
+	for (int i = 0; i < segments.size(); i++)
+	{
+		for (int j = 0; j < segments[i].size(); j++)
+		{
+			for (int k = 0; k < segments[i][j].size(); k++)
+			{
+				value = std::max(value, ComputeColorSegment(x, y, ProjectionZ(segments[i][j][k]), radius));
+			}
+		}
+	}
+
+	return value;
+}
+
+template <size_t N, size_t D>
+double Noise::ComputeColor(double x, double y, const Point2DArray<N>& points, const Segment3DChainArray<N - 4, D>& subdividedSegments) const
 {
 	// Find color
 	double value = 0.0;
@@ -461,13 +543,12 @@ double Noise::ComputeColor(double x, double y, const Point2DArray<N>& points, co
 	if (m_displayPoints)
 	{
 		value = std::max(value, ComputeColorPoints<N>(x, y, points, 0.0625));
-		value = std::max(value, ComputeColorPoints<N - 4>(x, y, midPoints, 0.03125));
+		value = std::max(value, ComputeColorPoints<N - 4, D>(x, y, subdividedSegments, 0.03125));
 	}
 
 	if (m_displaySegments)
 	{
-		value = std::max(value, ComputeColorSegments<N - 4>(x, y, segmentsBegin, 0.015625));
-		value = std::max(value, ComputeColorSegments<N - 4>(x, y, segmentsEnd, 0.015625));
+		value = std::max(value, ComputeColorSegments<N - 4>(x, y, subdividedSegments, 0.015625));
 	}
 
 	if (m_displayGrid)
@@ -502,39 +583,28 @@ double Noise::ComputeColorSub(double x, double y, const Point2DArray<N>& points,
 	return value;
 }
 
-template <size_t N, size_t M>
-double Noise::ComputeColorWorley(double x, double y, const Segment3DArray<N>& segmentsBegin, const Segment3DArray<N>& segmentsEnd, const Segment3DArray<M>& subSegments) const
+template <size_t N, size_t D, size_t M>
+double Noise::ComputeColorWorley(double x, double y, const Segment3DChainArray<N, D>& subdividedSegments, const Segment3DArray<M>& subSegments) const
 {
 	// Distance to the nearest segment
 	double nearestSegmentDistance = std::numeric_limits<double>::max();
 	Segment3D nearestSegment;
 
 	// For each level 1 segment
-	for (int i = 0; i < segmentsBegin.size(); i++)
+	for (int i = 0; i < subdividedSegments.size(); i++)
 	{
-		for (int j = 0; j < segmentsBegin[i].size(); j++)
+		for (int j = 0; j < subdividedSegments[i].size(); j++)
 		{
-			Point2D c;
-			double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segmentsBegin[i][j]), c);
-
-			if (dist < nearestSegmentDistance)
+			for (int k = 0; k < subdividedSegments[i][j].size(); k++)
 			{
-				nearestSegmentDistance = dist;
-				nearestSegment = segmentsBegin[i][j];
-			}
-		}
-	}
-	for (int i = 0; i < segmentsEnd.size(); i++)
-	{
-		for (int j = 0; j < segmentsEnd[i].size(); j++)
-		{
-			Point2D c;
-			double dist = distToLineSegment(Point2D(x, y), ProjectionZ(segmentsEnd[i][j]), c);
+				Point2D c;
+				double dist = distToLineSegment(Point2D(x, y), ProjectionZ(subdividedSegments[i][j][k]), c);
 
-			if (dist < nearestSegmentDistance)
-			{
-				nearestSegmentDistance = dist;
-				nearestSegment = segmentsEnd[i][j];
+				if (dist < nearestSegmentDistance)
+				{
+					nearestSegmentDistance = dist;
+					nearestSegment = subdividedSegments[i][j][k];
+				}
 			}
 		}
 	}

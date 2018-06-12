@@ -141,23 +141,23 @@ double Noise::evaluate(double x, double y) const
 	// Level 1: Points in neighboring cells
 	Point2DArray<9> points = GenerateNeighboringPoints<9>(cxInt, cyInt);
 	// Level 1: List of segments 
-	Segment3DArray<7> segments = GenerateSegments<9>(points);
+	Segment3DArray<7> segments = GenerateSegments(points);
 
 	// Subdivide segments of level 1
-	Segment3DArray<5> segmentsBegin, segmentsEnd;
+	Segment3DChainArray<5, 2> subdividedSegments;
 	Point2DArray<5> midPoints;
-	SubdivideSegments<7>(cx, cy, segments, segmentsBegin, midPoints, segmentsEnd);
+	SubdivideSegments(cx, cy, segments, subdividedSegments);
 
 	// Level 2: Points in neighboring cells
 	Point2DArray<5> subPoints = GenerateNeighboringSubPoints<5, 9>(cx, cy, x, y, points);
 	// Level 2: List of segments
-	Segment3DArray<5> subSegments = GenerateSubSegments<5, 5>(cx, cy, subPoints, segmentsBegin, segmentsEnd);
+	Segment3DArray<5> subSegments = GenerateSubSegments<5, 5>(cx, cy, subPoints, subdividedSegments);
 
-	return std::max(
-		ComputeColorWorley<5, 5>(x, y, segmentsBegin, segmentsEnd, subSegments),
-		std::max(
-			ComputeColor<9>(x, y, points, midPoints, segmentsBegin, segmentsEnd),
-			ComputeColorSub<5>(x, y, subPoints, subSegments)
-		)
-	);
+	double value = 0.0;
+
+	value = std::max(value, ComputeColorWorley(x, y, subdividedSegments, subSegments));
+	value = std::max(value, ComputeColor(x, y, points, subdividedSegments));
+	value = std::max(value, ComputeColorSub(x, y, subPoints, subSegments));
+
+	return value;
 }
