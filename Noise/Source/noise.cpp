@@ -60,6 +60,45 @@ Point2D Noise::GeneratePointCached(int x, int y) const
 	}
 }
 
+std::tuple<int, int> Noise::GetCell(double x, double y, int resolution) const
+{
+	// Return the coordinates of the cell in which (x, y)
+	// For example, for resolution 1:
+	// 
+	//      0   1   2   3   
+	//    0 -----------------
+	//      |0;0|1;0|2;0|3;0|
+	//    1 -----------------
+	//      |0;1|1;1|2;1|3;1|
+	//    2 -----------------
+	//      |0;2|1;2|2;2|3;2|
+	//    3 -----------------
+	//      |0;3|1;3|2;3|3;3|
+	//      -----------------
+	//
+	// If x is in [0, 1[ and y is in [0, 1[, then the cell is (0, 0)
+	//
+	// For example, for resolution 2:
+	// 
+	//      0       1       2  
+	//    0 -----------------
+	//      |0;0|1;0|2;0|3;0|
+	//      -----------------
+	//      |0;1|1;1|2;1|3;1|
+	//    1 -----------------
+	//      |0;2|1;2|2;2|3;2|
+	//      -----------------
+	//      |0;3|1;3|2;3|3;3|
+	//    2 -----------------
+	//
+	// If x is in [0, 0.5[ and y is in [0, 0.5[, then the cell is (0, 0)
+
+	int cellX = int(floor(x * resolution));
+	int cellY = int(floor(y * resolution));
+
+	return std::make_tuple(cellX, cellY);
+}
+
 double Noise::ComputeColorPoint(double x, double y, const Point2D& point, double radius) const
 {
 	double value = 0.0;
@@ -98,64 +137,34 @@ double Noise::ComputeColorGrid(double x, double y, double deltaX, double deltaY,
 	return value;
 }
 
-std::tuple<int, int> Noise::GetSubQuadrant(double cx, double cy, double x, double y) const
-{
-	// Return the coordinates of the quadrant in which (x, y) if we divide the cell (cx, cy) in 4 quadrants
-	//      cx    cx+1    cx+2
-	//   cy -----------------
-	//      |0;0|1;0|2;0|3;0|
-	//      -----------------
-	//      |0;1|1;1|2;1|3;1|
-	// cy+1 -----------------
-	//      |0;2|1;2|2;2|3;2|
-	//      -----------------
-	//      |0;3|1;3|2;3|3;3|
-	// cy+2 -----------------
-	// 
-	// If x is in [cx, cx + 0.5[ and y is in [cy, cy + 0.5[, then the quadrant is (0, 0)
-	// In the same way, if (x - cx) is in [0, 0.5[ and (y - cy) is in [0, 0.5[, then the quadrant is (0, 0) as well
-
-	// ----- int(floor(2.0 * a)) -----
-	// If a is in [-1.5, -1[ return -3
-	// If a is in [-1, -0.5[ return -2
-	// If a is in [-0.5, 0[  return -1
-	// If a is in [0, 0.5[   return  0
-	// If a is in [0.5, 1[   return  1
-	// If a is in [1, 1.5[   return  2
-	// Etc...
-
-	int quadrantX = int(floor(2.0 *(x - cx)));
-	int quadrantY = int(floor(2.0 *(y - cy)));
-
-	return std::make_tuple(quadrantX, quadrantY);
-}
-
 double Noise::evaluate(double x, double y) const
 {
 	// In which cell is the point (x, y)
-	const double cx = floor(x);
-	const double cy = floor(y);
-	const int cxInt = int(cx);
-	const int cyInt = int(cy);
+	int cellX, cellY;
+	std::tie(cellX, cellY) = GetCell(x, y, 1);
 
 	// Level 1: Points in neighboring cells
-	Point2DArray<9> points = GenerateNeighboringPoints<9>(cxInt, cyInt);
+	Point2DArray<9> points = GenerateNeighboringPoints<9>(cellX, cellY, 1);
 	// Level 1: List of segments 
 	Segment3DArray<7> segments = GenerateSegments(points);
 
 	// Subdivide segments of level 1
 	Segment3DChainArray<5, 2> subdividedSegments;
 	Point2DArray<5> midPoints;
-	SubdivideSegments(cx, cy, segments, subdividedSegments);
+	SubdivideSegments(cellX, cellY, segments, subdividedSegments);
+
+	// Detect in which subcell is the current point (x, y)
+	int subCellX, subCellY;
+	std::tie(subCellX, subCellY) = GetCell(x, y, 2);
 
 	// Level 2: Points in neighboring cells
-	Point2DArray<5> subPoints = GenerateNeighboringSubPoints<5, 9>(cx, cy, x, y, points);
+	Point2DArray<5> subPoints = GenerateNeighboringSubPoints<5, 9>(cellX, cellY, points, subCellX, subCellY);
 	// Level 2: List of segments
-	Segment3DArray<5> subSegments = GenerateSubSegments<5, 5>(cx, cy, subPoints, subdividedSegments);
+	Segment3DArray<5> subSegments = GenerateSubSegments<5, 5>(cellX, cellY, subPoints, subdividedSegments);
 
 	double value = 0.0;
 
-	value = std::max(value, ComputeColorWorley(x, y, subdividedSegments, subSegments));
+	value = std::max(value, ComputeColorWorley(x, y, cellX, cellY, subdividedSegments, subCellX, subCellY, subSegments));
 	value = std::max(value, ComputeColor(x, y, points, subdividedSegments));
 	value = std::max(value, ComputeColorSub(x, y, subPoints, subSegments));
 

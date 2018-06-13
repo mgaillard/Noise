@@ -23,20 +23,23 @@ public:
 	double evaluate(double x, double y) const;
 
 private:
+	template <typename T, size_t N>
+	using Array2d = std::array<std::array<T, N>, N>;
+
 	template <size_t N>
 	using Segment3DChain = std::array<Segment3D, N>;
 
 	template <size_t N>
-	using DoubleArray = std::array<std::array<double, N>, N>;
+	using DoubleArray = Array2d<double, N>;
 
 	template <size_t N>
-	using Point2DArray = std::array<std::array<Point2D, N>, N>;
+	using Point2DArray = Array2d<Point2D, N>;
 
 	template <size_t N>
-	using Segment3DArray = std::array<std::array<Segment3D, N>, N>;
+	using Segment3DArray = Array2d<Segment3D, N>;
 
 	template <size_t N, size_t M>
-	using Segment3DChainArray = std::array<std::array<Segment3DChain<M>, N>, N>;
+	using Segment3DChainArray = Array2d<Segment3DChain<M>, N>;
 
 	void InitPointCache();
 
@@ -45,13 +48,25 @@ private:
 	Point2D GeneratePoint(int x, int y) const;
 	Point2D GeneratePointCached(int x, int y) const;
 
-	std::tuple<int, int> GetSubQuadrant(double cx, double cy, double x, double y) const;
+	std::tuple<int, int> GetCell(double x, double y, int resolution) const;
+
+	template<typename T, size_t N>
+	std::tuple<int, int> GetArrayCell(int arrCellX, int arrCellY, const Array2d<T, N>& arr, int cellX, int cellY) const;
+
+	template<typename T, size_t N>
+	std::tuple<int, int> GetArrayCell(int arrCellX, int arrCellY, const Array2d<T, N>& arr, const std::tuple<int, int>& cell) const;
+
+	template<size_t N>
+	double NearestSegmentProjectionZ(int cellX, int cellY, const Segment3DArray<N>& segments, const Point2D& point, Segment3D& nearestSegmentOut) const;
+
+	template<size_t N, size_t M>
+	double NearestSegmentProjectionZ(int cellX, int cellY, const Segment3DChainArray<N, M>& segments, const Point2D& point, Segment3D& nearestSegmentOut) const;
 
 	template <size_t N>
-	Point2DArray<N> GenerateNeighboringPoints(int cx, int cy) const;
+	Point2DArray<N> GenerateNeighboringPoints(int cx, int cy, int resolution) const;
 
 	template <size_t N, size_t M>
-	Point2DArray<N> GenerateNeighboringSubPoints(double cx, double cy, double x, double y, const Point2DArray<M>& points) const;
+	Point2DArray<N> GenerateNeighboringSubPoints(int cellX, int cellY, const Point2DArray<M>& points, int subCellX, int subCellY) const;
 
 	template <size_t N>
 	DoubleArray<N> ComputeElevations(const Point2DArray<N>& points) const;
@@ -62,10 +77,10 @@ private:
 	// Subdivide all segments in a Segment3DArray<N> in D smaller segments
 	// Require a Segment3DArray<N> to generate a Segment3DChainArray<N - 2, D> because to subdivide a segment we need its predecessors and successors.
 	template <size_t N, size_t D>
-	void SubdivideSegments(double cx, double cy, const Segment3DArray<N>& segments, Segment3DChainArray<N - 2, D>& subdividedSegments) const;
+	void SubdivideSegments(int cellX, int cellY, const Segment3DArray<N>& segments, Segment3DChainArray<N - 2, D>& subdividedSegments) const;
 
 	template <size_t N, size_t M, size_t D>
-	Segment3DArray<N> GenerateSubSegments(double cx, double cy, const Point2DArray<N>& points, const Segment3DChainArray<M, D>& subdividedSegments) const;
+	Segment3DArray<N> GenerateSubSegments(int cellX, int cellY, const Point2DArray<N>& points, const Segment3DChainArray<M, D>& subdividedSegments) const;
 
 	double ComputeColorPoint(double x, double y, const Point2D& point, double radius) const;
 
@@ -95,7 +110,7 @@ private:
 	double ComputeColorSub(double x, double y, const Point2DArray<N>& points, const Segment3DArray<N>& segments) const;
 
 	template <size_t N, size_t D, size_t M>
-	double ComputeColorWorley(double x, double y, const Segment3DChainArray<N, D>& subdividedSegments, const Segment3DArray<M>& subSegments) const;
+	double ComputeColorWorley(double x, double y, int cellX, int cellY, const Segment3DChainArray<N, D>& subdividedSegments, int subCellX, int subCellY, const Segment3DArray<M>& subSegments) const;
 	
 	// Random generator used by the class
 	typedef std::minstd_rand RandomGenerator;
@@ -120,8 +135,74 @@ private:
 	std::vector<std::vector<Point2D> > m_pointCache;
 };
 
+template<typename T, size_t N>
+std::tuple<int, int> Noise::GetArrayCell(int arrCellX, int arrCellY, const Array2d<T, N>& arr, int cellX, int cellY) const
+{
+	int i = (int(arr.size()) / 2) - arrCellY + cellY;
+	int j = (int(arr.front().size()) / 2) - arrCellX + cellX;
+
+	return std::make_tuple(i, j);
+}
+
+template<typename T, size_t N>
+std::tuple<int, int> Noise::GetArrayCell(int arrCellX, int arrCellY, const Array2d<T, N>& arr, const std::tuple<int, int>& cell) const
+{
+	return GetArrayCell(arrCellX, arrCellY, arr, std::get<0>(cell), std::get<1>(cell));
+}
+
+template<size_t N>
+double Noise::NearestSegmentProjectionZ(int cellX, int cellY, const Segment3DArray<N>& segments, const Point2D& point, Segment3D& nearestSegmentOut) const
+{
+	// Distance to the nearest segment
+	double nearestSegmentDistance = std::numeric_limits<double>::max();
+
+	for (int i = 0; i < segments.size(); i++)
+	{
+		for (int j = 0; j < segments[i].size(); j++)
+		{
+			Point2D c;
+			double dist = distToLineSegment(point, ProjectionZ(segments[i][j]), c);
+
+			if (dist < nearestSegmentDistance)
+			{
+				nearestSegmentDistance = dist;
+				nearestSegmentOut = segments[i][j];
+			}
+		}
+	}
+
+	return nearestSegmentDistance;
+}
+
+template<size_t N, size_t M>
+double Noise::NearestSegmentProjectionZ(int cellX, int cellY, const Segment3DChainArray<N, M>& segments, const Point2D& point, Segment3D& nearestSegmentOut) const
+{
+	// Distance to the nearest segment
+	double nearestSegmentDistance = std::numeric_limits<double>::max();
+
+	for (int i = 0; i < segments.size(); i++)
+	{
+		for (int j = 0; j < segments[i].size(); j++)
+		{
+			for (int k = 0; k < segments[i][j].size(); k++)
+			{
+				Point2D c;
+				double dist = distToLineSegment(point, ProjectionZ(segments[i][j][k]), c);
+
+				if (dist < nearestSegmentDistance)
+				{
+					nearestSegmentDistance = dist;
+					nearestSegmentOut = segments[i][j][k];
+				}
+			}
+		}
+	}
+
+	return nearestSegmentDistance;
+}
+
 template <size_t N>
-Noise::Point2DArray<N> Noise::GenerateNeighboringPoints(int cx, int cy) const
+Noise::Point2DArray<N> Noise::GenerateNeighboringPoints(int cx, int cy, int resolution) const
 {
 	Point2DArray<N> points;
 
@@ -133,7 +214,7 @@ Noise::Point2DArray<N> Noise::GenerateNeighboringPoints(int cx, int cy) const
 			const int x = cx + j - int(points[i].size()) / 2;
 			const int y = cy + i - int(points.size()) / 2;
 
-			points[i][j] = GeneratePointCached(x, y);
+			points[i][j] = GeneratePointCached(x, y) / resolution;
 		}
 	}
 
@@ -141,30 +222,12 @@ Noise::Point2DArray<N> Noise::GenerateNeighboringPoints(int cx, int cy) const
 }
 
 template <size_t N, size_t M>
-Noise::Point2DArray<N> Noise::GenerateNeighboringSubPoints(double cx, double cy, double x, double y, const Point2DArray<M>& points) const
+Noise::Point2DArray<N> Noise::GenerateNeighboringSubPoints(int cellX, int cellY, const Point2DArray<M>& points, int subCellX, int subCellY) const
 {
 	// Ensure that there is enough points around to replace subpoints
 	static_assert(M >= (2 * ((N + 1) / 4) + 1), "Not enough points in the vicinity to replace the sub points.");
 
-	// In which cell is the point (x, y)
-	const int cxInt = int(cx);
-	const int cyInt = int(cy);
-
-	// Detect in which quadrant is the current point (x, y)
-	int quadrantX, quadrantY;
-	std::tie(quadrantX, quadrantY) = GetSubQuadrant(cx, cy, x, y);
-	Point2DArray<N> subPoints = GenerateNeighboringPoints<N>(2 * cxInt + quadrantX, 2 * cyInt + quadrantY);
-
-	// Divide point coordinates by 2
-	for (int i = 0; i < subPoints.size(); i++)
-	{
-		for (int j = 0; j < subPoints[i].size(); j++)
-		{
-			subPoints[i][j].x /= 2.0;
-			subPoints[i][j].y /= 2.0;
-		}
-	}
-
+	Point2DArray<N> subPoints = GenerateNeighboringPoints<N>(subCellX, subCellY, 2);
 	
 	// Number of cells (or points) to consider in the upper resolution
 	int pointsUpRes = 2 * ((N + 1) / 4) + 1;
@@ -175,11 +238,8 @@ Noise::Point2DArray<N> Noise::GenerateNeighboringSubPoints(double cx, double cy,
 	{
 		for (int j = offset; j < points[i].size() - offset; j++)
 		{
-			int qX, qY;
-			std::tie(qX, qY) = GetSubQuadrant(cx, cy, points[i][j].x, points[i][j].y);
-
-			int k = (int(subPoints.size()) / 2) - quadrantY + qY;
-			int l = (int(subPoints.front().size()) / 2) - quadrantX + qX;
+			int k, l;
+			std::tie(k, l) = GetArrayCell(subCellX, subCellY, subPoints, GetCell(points[i][j].x, points[i][j].y, 2));
 
 			if (k >= 0 && k < subPoints.size() && l >= 0 && l < subPoints.front().size())
 			{
@@ -249,13 +309,10 @@ Noise::Segment3DArray<N - 2> Noise::GenerateSegments(const Point2DArray<N>& poin
 }
 
 template <size_t N, size_t D>
-void Noise::SubdivideSegments(double cx, double cy, const Segment3DArray<N>& segments, Segment3DChainArray<N - 2, D>& subdividedSegments) const
+void Noise::SubdivideSegments(int cellX, int cellY, const Segment3DArray<N>& segments, Segment3DChainArray<N - 2, D>& subdividedSegments) const
 {
-	// Ensire that segments are subdivided.
+	// Ensure that segments are subdivided.
 	static_assert(D > 1, "Segments should be subdivided in more than 1 part.");
-
-	const int cellX = int(cx);
-	const int cellY = int(cy);
 
 	// Subdivide segments
 	for (int i = 1; i < segments.size() - 1; i++)
@@ -273,13 +330,9 @@ void Noise::SubdivideSegments(double cx, double cy, const Segment3DArray<N>& seg
 				int numberSegmentEndingInA = 0;
 				Segment3D lastEndingInA;
 
-				// Cell of currSegment.a
-				const int cellAX = int(floor(currSegment.a.x));
-				const int cellAY = int(floor(currSegment.a.y));
-
-				// Segments ending in A are in a cell adjacent to A
-				int ck = (int(segments.size()) / 2) - cellY + cellAY;
-				int cl = (int(segments.front().size()) / 2) - cellX + cellAX;
+				// In which cell of segments is A
+				int ck, cl;
+				std::tie(ck, cl) = GetArrayCell(cellX, cellY, segments, GetCell(currSegment.a.x, currSegment.a.y, 1));
 				for (int k = ck - 1; k <= ck + 1; k++)
 				{
 					for (int l = cl - 1; l <= cl + 1; l++)
@@ -303,13 +356,9 @@ void Noise::SubdivideSegments(double cx, double cy, const Segment3DArray<N>& seg
 				int numberStartingInB = 0;
 				Segment3D lastStartingInB;
 
-				// Cell of currSegment.b
-				const int cellBX = int(floor(currSegment.b.x));
-				const int cellBY = int(floor(currSegment.b.y));
-
-				// Segments starting in B are in the same cell as B
-				int m = (int(segments.size()) / 2) - cellY + cellBY;
-				int n = (int(segments.front().size()) / 2) - cellX + cellBX;
+				// In which cell of segments is B
+				int m, n;
+				std::tie(m, n) = GetArrayCell(cellX, cellY, segments, GetCell(currSegment.b.x, currSegment.b.y, 1));
 
 				assert(m >= 0 && m < segments.size());
 				assert(n >= 0 && n < segments.front().size());
@@ -354,13 +403,10 @@ void Noise::SubdivideSegments(double cx, double cy, const Segment3DArray<N>& seg
 }
 
 template <size_t N, size_t M, size_t D>
-Noise::Segment3DArray<N> Noise::GenerateSubSegments(double cx, double cy, const Point2DArray<N>& points, const Segment3DChainArray<M, D>& subdividedSegments) const
+Noise::Segment3DArray<N> Noise::GenerateSubSegments(int cellX, int cellY, const Point2DArray<N>& points, const Segment3DChainArray<M, D>& subdividedSegments) const
 {
 	// Ensure that there is enough segments around to connect sub points
 	static_assert(M >= (2 * ((N + 1) / 4) + 3), "Not enough segments in the vicinity to connect sub points.");
-
-	const int cellX = int(cx);
-	const int cellY = int(cy);
 
 	// Connect each point to the nearest segment
 	Segment3DArray<N> subSegments;
@@ -372,21 +418,15 @@ Noise::Segment3DArray<N> Noise::GenerateSubSegments(double cx, double cy, const 
 			double nearestSegmentDist = std::numeric_limits<double>::max();
 			Segment3D nearestSegment;
 
-			// In which cell is the point
-			int cellPX = int(floor(points[i][j].x));
-			int cellPY = int(floor(points[i][j].y));
-
-			int ck = (int(subdividedSegments.size()) / 2) - cellY + cellPY;
-			int cl = (int(subdividedSegments.front().size()) / 2) - cellX + cellPX;
-
+			// In which cell of subdividedSegments is the point
+			int ck, cl;
+			std::tie(ck, cl) = GetArrayCell(cellX, cellY, subdividedSegments, GetCell(points[i][j].x, points[i][j].y, 1));
 			for (int k = ck - 1; k <= ck + 1; k++)
 			{
 				for (int l = cl - 1; l <= cl + 1; l++)
 				{
-					assert(k >= 0 && k < segmentsBegin.size());
-					assert(l >= 0 && l < segmentsBegin.front().size());
-					assert(k >= 0 && k < segmentsEnd.size());
-					assert(l >= 0 && l < segmentsEnd.front().size());
+					assert(k >= 0 && k < subdividedSegments.size());
+					assert(l >= 0 && l < subdividedSegments.front().size());
 
 					for (int m = 0; m < subdividedSegments[k][l].size(); m++)
 					{
@@ -584,45 +624,21 @@ double Noise::ComputeColorSub(double x, double y, const Point2DArray<N>& points,
 }
 
 template <size_t N, size_t D, size_t M>
-double Noise::ComputeColorWorley(double x, double y, const Segment3DChainArray<N, D>& subdividedSegments, const Segment3DArray<M>& subSegments) const
+double Noise::ComputeColorWorley(double x, double y, int cellX, int cellY, const Segment3DChainArray<N, D>& subdividedSegments, int subCellX, int subCellY, const Segment3DArray<M>& subSegments) const
 {
-	// Distance to the nearest segment
-	double nearestSegmentDistance = std::numeric_limits<double>::max();
+	// Find the nearest segment
+	
+	// Distance to level 1 segments
 	Segment3D nearestSegment;
+	double nearestSegmentDistance = NearestSegmentProjectionZ(cellX, cellY, subdividedSegments, Point2D(x, y), nearestSegment);
 
-	// For each level 1 segment
-	for (int i = 0; i < subdividedSegments.size(); i++)
+	// Distance to level 2 segments
+	Segment3D nearestSubSegment;
+	double nearestSubSegmentDistance = NearestSegmentProjectionZ(subCellX, subCellY, subSegments, Point2D(x, y), nearestSubSegment);
+	if (nearestSubSegmentDistance < nearestSegmentDistance)
 	{
-		for (int j = 0; j < subdividedSegments[i].size(); j++)
-		{
-			for (int k = 0; k < subdividedSegments[i][j].size(); k++)
-			{
-				Point2D c;
-				double dist = distToLineSegment(Point2D(x, y), ProjectionZ(subdividedSegments[i][j][k]), c);
-
-				if (dist < nearestSegmentDistance)
-				{
-					nearestSegmentDistance = dist;
-					nearestSegment = subdividedSegments[i][j][k];
-				}
-			}
-		}
-	}
-
-	// For each level 2 segment
-	for (int i = 0; i < subSegments.size(); i++)
-	{
-		for (int j = 0; j < subSegments[i].size(); j++)
-		{
-			Point2D c;
-			double dist = distToLineSegment(Point2D(x, y), ProjectionZ(subSegments[i][j]), c);
-
-			if (dist < nearestSegmentDistance)
-			{
-				nearestSegmentDistance = dist;
-				nearestSegment = subSegments[i][j];
-			}
-		}
+		nearestSegmentDistance = nearestSubSegmentDistance;
+		nearestSegment = nearestSubSegment;
 	}
 
 	// Elevation in on the nearest segment
