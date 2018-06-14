@@ -35,6 +35,13 @@ int Noise::GenerateSeedNoise(int i, int j) const
 	return (541 * i + 79 * j + m_seed) % std::numeric_limits<int>::max();
 }
 
+/// <summary>
+/// Generate a point in a cell.
+/// This function is reproducible.
+/// </summary>
+/// <param name="x">x coordinate of the cell</param>
+/// <param name="y">y coordinate of the cell</param>
+/// <returns>A Point2D in this cell</returns>
 Point2D Noise::GeneratePoint(int x, int y) const
 {
 	// Fixed seed for internal consistency
@@ -48,6 +55,14 @@ Point2D Noise::GeneratePoint(int x, int y) const
 	return Point2D(double(x) + px, double(y) + py);
 }
 
+/// <summary>
+/// Generate a point in a cell.
+/// This function is reproducible.
+/// Use the point cache if possible.
+/// </summary>
+/// <param name="x">x coordinate of the cell</param>
+/// <param name="y">y coordinate of the cell</param>
+/// <returns>A Point2D in this cell</returns>
 Point2D Noise::GeneratePointCached(int x, int y) const
 {
 	if (x >= -CACHE_X / 2 && x < CACHE_X / 2 && y >= -CACHE_Y / 2 && y < CACHE_Y / 2)
@@ -92,11 +107,49 @@ std::tuple<int, int> Noise::GetCell(double x, double y, int resolution) const
 	//    2 -----------------
 	//
 	// If x is in [0, 0.5[ and y is in [0, 0.5[, then the cell is (0, 0)
+	
+	// Resolution is strictly positive
+	assert(resolution > 0);
 
 	int cellX = int(floor(x * resolution));
 	int cellY = int(floor(y * resolution));
 
 	return std::make_tuple(cellX, cellY);
+}
+
+Segment3D Noise::ConnectPointToSegment(const Point2D& point, double segmentDist, const Segment3D& segment) const
+{
+	// Find an intersection on the segment with respect to constraints
+	// u = 0 is point A of the segment ; u = 1 is point B of the segment
+	double u = pointLineProjection(point, ProjectionZ(segment));
+	// The intersection must lie on the segment
+	u = clamp(u, 0.0, 1.0);
+
+	// If, on the segment, the nearest point is between A and B, we shift it so that the angle constraint is respected
+	if (u > 0.0 && u < 1.0)
+	{
+		// Find the intersection so that the angle between the two segments is 45°
+		// v designates the ratio of the segment on which the intersection is located
+		// v = 0 is point A of the segment ; v = 1 is point B of the segment
+		double v = u + segmentDist / length(ProjectionZ(segment));
+
+		if (v > 1.0)
+		{
+			// If the intersection is farther than B, simply take B as intersection
+			u = 1.0;
+		}
+		else
+		{
+			// Otherwise take a point on the segment
+			u = v;
+		}
+	}
+
+	// TODO compute the elevation of segmentStart in a better way
+	const Point3D segmentEnd(lerp(segment, u));
+	const Point3D segmentStart(point.x, point.y, segmentEnd.z);
+
+	return Segment3D(segmentStart, segmentEnd);
 }
 
 double Noise::ComputeColorPoint(double x, double y, const Point2D& point, double radius) const
@@ -165,8 +218,8 @@ double Noise::evaluate(double x, double y) const
 	double value = 0.0;
 
 	value = std::max(value, ComputeColorWorley(x, y, cellX, cellY, subdividedSegments, subCellX, subCellY, subSegments));
-	value = std::max(value, ComputeColor(x, y, points, subdividedSegments));
-	value = std::max(value, ComputeColorSub(x, y, subPoints, subSegments));
+	value = std::max(value, ComputeColor(cellX, cellY, subdividedSegments, x, y, points));
+	value = std::max(value, ComputeColorSub(subCellX, subCellY, subSegments, x, y, subPoints));
 
 	return value;
 }
