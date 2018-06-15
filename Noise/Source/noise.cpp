@@ -197,30 +197,39 @@ double Noise::evaluate(double x, double y) const
 {
 	// In which level 1 cell is the point (x, y)
 	Cell cell = GetCell(x, y, 1);
-
 	// Level 1: Points in neighboring cells
 	Point2DArray<9> points = GenerateNeighboringPoints<9>(cell);
 	// Level 1: List of segments 
 	Segment3DArray<7> segments = GenerateSegments(points);
-
 	// Subdivide segments of level 1
-	Segment3DChainArray<5, 2> subdividedSegments;
+	Segment3DChainArray<5, 4> subdividedSegments;
 	Point2DArray<5> midPoints;
 	SubdivideSegments(cell, segments, subdividedSegments);
 
+
 	// In which level 2 cell is the point (x, y)
 	Cell subCell = GetCell(x, y, 2);
-
 	// Level 2: Points in neighboring cells
-	Point2DArray<5> subPoints = GenerateNeighboringSubPoints<5, 9>(cell, points, subCell);
+	Point2DArray<5> subPoints = GenerateNeighboringPoints<5>(subCell);
+	ReplaceNeighboringPoints(cell, points, subCell, subPoints);
 	// Level 2: List of segments
-	Segment3DArray<5> subSegments = GenerateSubSegments<5, 5>(cell, subdividedSegments, subPoints);
+	Segment3DArray<5> subSegments = GenerateSubSegments(cell, subdividedSegments, subPoints);
+
+
+	// In which level 3 cell is the point (x, y)
+	Cell subSubCell = GetCell(x, y, 4);
+	// Level 3: Points in neighboring cells
+	Point2DArray<5> subSubPoints = GenerateNeighboringPoints<5>(subSubCell);
+	ReplaceNeighboringPoints(subCell, subPoints, subSubCell, subSubPoints);
+	// Level 2: List of segments
+	Segment3DArray<5> subSubSegments = GenerateSubSubSegments(cell, subdividedSegments, subCell, subSegments, subSubPoints);
 
 	double value = 0.0;
 
-	value = std::max(value, ComputeColorWorley(cell, subdividedSegments, subCell, subSegments, x, y));
+	value = std::max(value, ComputeColorWorley(cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, x, y));
 	value = std::max(value, ComputeColor(cell, subdividedSegments, points, x, y));
 	value = std::max(value, ComputeColorSub(subCell, subSegments, subPoints, x, y));
+	value = std::max(value, ComputeColorSubSub(subSubCell, subSubSegments, subSubPoints, x, y));
 
 	return value;
 }
