@@ -75,7 +75,7 @@ Point2D Noise::GeneratePointCached(int x, int y) const
 	}
 }
 
-std::tuple<int, int> Noise::GetCell(double x, double y, int resolution) const
+Noise::Cell Noise::GetCell(double x, double y, int resolution) const
 {
 	// Return the coordinates of the cell in which (x, y)
 	// For example, for resolution 1:
@@ -111,10 +111,13 @@ std::tuple<int, int> Noise::GetCell(double x, double y, int resolution) const
 	// Resolution is strictly positive
 	assert(resolution > 0);
 
-	int cellX = int(floor(x * resolution));
-	int cellY = int(floor(y * resolution));
+	Cell c;
+	
+	c.x = int(floor(x * resolution));
+	c.y = int(floor(y * resolution));
+	c.resolution = resolution;
 
-	return std::make_tuple(cellX, cellY);
+	return c;
 }
 
 Segment3D Noise::ConnectPointToSegment(const Point2D& point, double segmentDist, const Segment3D& segment) const
@@ -192,34 +195,32 @@ double Noise::ComputeColorGrid(double x, double y, double deltaX, double deltaY,
 
 double Noise::evaluate(double x, double y) const
 {
-	// In which cell is the point (x, y)
-	int cellX, cellY;
-	std::tie(cellX, cellY) = GetCell(x, y, 1);
+	// In which level 1 cell is the point (x, y)
+	Cell cell = GetCell(x, y, 1);
 
 	// Level 1: Points in neighboring cells
-	Point2DArray<9> points = GenerateNeighboringPoints<9>(cellX, cellY, 1);
+	Point2DArray<9> points = GenerateNeighboringPoints<9>(cell);
 	// Level 1: List of segments 
 	Segment3DArray<7> segments = GenerateSegments(points);
 
 	// Subdivide segments of level 1
 	Segment3DChainArray<5, 2> subdividedSegments;
 	Point2DArray<5> midPoints;
-	SubdivideSegments(cellX, cellY, segments, subdividedSegments);
+	SubdivideSegments(cell, segments, subdividedSegments);
 
-	// Detect in which subcell is the current point (x, y)
-	int subCellX, subCellY;
-	std::tie(subCellX, subCellY) = GetCell(x, y, 2);
+	// In which level 2 cell is the point (x, y)
+	Cell subCell = GetCell(x, y, 2);
 
 	// Level 2: Points in neighboring cells
-	Point2DArray<5> subPoints = GenerateNeighboringSubPoints<5, 9>(cellX, cellY, points, subCellX, subCellY);
+	Point2DArray<5> subPoints = GenerateNeighboringSubPoints<5, 9>(cell, points, subCell);
 	// Level 2: List of segments
-	Segment3DArray<5> subSegments = GenerateSubSegments<5, 5>(cellX, cellY, subPoints, subdividedSegments);
+	Segment3DArray<5> subSegments = GenerateSubSegments<5, 5>(cell, subdividedSegments, subPoints);
 
 	double value = 0.0;
 
-	value = std::max(value, ComputeColorWorley(x, y, cellX, cellY, subdividedSegments, subCellX, subCellY, subSegments));
-	value = std::max(value, ComputeColor(cellX, cellY, subdividedSegments, x, y, points));
-	value = std::max(value, ComputeColorSub(subCellX, subCellY, subSegments, x, y, subPoints));
+	value = std::max(value, ComputeColorWorley(cell, subdividedSegments, subCell, subSegments, x, y));
+	value = std::max(value, ComputeColor(cell, subdividedSegments, points, x, y));
+	value = std::max(value, ComputeColorSub(subCell, subSegments, subPoints, x, y));
 
 	return value;
 }
