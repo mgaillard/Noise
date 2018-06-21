@@ -148,9 +148,9 @@ Segment3D Noise::ConnectPointToSegmentAngle(const Point2D& point, double segment
 		}
 	}
 
-	// TODO compute the elevation of segmentStart in a better way
 	const Point3D segmentEnd(lerp(segment, u));
-	const Point3D segmentStart(point.x, point.y, segmentEnd.z);
+	const double length = dist(point, ProjectionZ(segmentEnd));
+	const Point3D segmentStart(point.x, point.y, segmentEnd.z + 0.1 * length);
 
 	return Segment3D(segmentStart, segmentEnd);
 }
@@ -168,9 +168,9 @@ Segment3D Noise::ConnectPointToSegmentAngleMid(const Point2D& point, double segm
 	// The intersection must lie on the segment
 	v = clamp(v, 0.0, 1.0);
 
-	// TODO compute the elevation of segmentStart in a better way
-	const Point3D segmentEnd(lerp(segment, v));
-	const Point3D segmentStart(point.x, point.y, segmentEnd.z);
+	const Point3D segmentEnd(lerp(segment, u));
+	const double length = dist(point, ProjectionZ(segmentEnd));
+	const Point3D segmentStart(point.x, point.y, segmentEnd.z + 0.1 * length);
 
 	return Segment3D(segmentStart, segmentEnd);
 }
@@ -184,9 +184,9 @@ Segment3D Noise::ConnectPointToSegmentNearestPoint(const Point2D& point, double 
 	// The intersection must lie on the segment
 	u = clamp(u, 0.0, 1.0);
 
-	// TODO compute the elevation of segmentStart in a better way
 	const Point3D segmentEnd(lerp(segment, u));
-	const Point3D segmentStart(point.x, point.y, segmentEnd.z);
+	const double length = dist(point, ProjectionZ(segmentEnd));
+	const Point3D segmentStart(point.x, point.y, segmentEnd.z + 0.1 * length);
 
 	return Segment3D(segmentStart, segmentEnd);
 }
