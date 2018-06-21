@@ -120,7 +120,7 @@ Noise::Cell Noise::GetCell(double x, double y, int resolution) const
 	return c;
 }
 
-Segment3D Noise::ConnectPointToSegment(const Point2D& point, double segmentDist, const Segment3D& segment) const
+Segment3D Noise::ConnectPointToSegmentAngle(const Point2D& point, double segmentDist, const Segment3D& segment) const
 {
 	// Find an intersection on the segment with respect to constraints
 	// u = 0 is point A of the segment ; u = 1 is point B of the segment
@@ -147,6 +147,42 @@ Segment3D Noise::ConnectPointToSegment(const Point2D& point, double segmentDist,
 			u = v;
 		}
 	}
+
+	// TODO compute the elevation of segmentStart in a better way
+	const Point3D segmentEnd(lerp(segment, u));
+	const Point3D segmentStart(point.x, point.y, segmentEnd.z);
+
+	return Segment3D(segmentStart, segmentEnd);
+}
+
+Segment3D Noise::ConnectPointToSegmentAngleMid(const Point2D& point, double segmentDist, const Segment3D& segment) const
+{
+	// Find an intersection on the segment with respect to constraints
+	// u = 0 is point A of the segment ; u = 1 is point B of the segment
+	double u = pointLineProjection(point, ProjectionZ(segment));
+
+	// Find the intersection so that the angle between the two segments is 45°
+	// v designates the ratio of the segment on which the intersection is located
+	// v = 0 is point A of the segment ; v = 1 is point B of the segment
+	double v = u + segmentDist / length(ProjectionZ(segment));
+	// The intersection must lie on the segment
+	v = clamp(v, 0.0, 1.0);
+
+	// TODO compute the elevation of segmentStart in a better way
+	const Point3D segmentEnd(lerp(segment, v));
+	const Point3D segmentStart(point.x, point.y, segmentEnd.z);
+
+	return Segment3D(segmentStart, segmentEnd);
+}
+
+Segment3D Noise::ConnectPointToSegmentNearestPoint(const Point2D& point, double segmentDist, const Segment3D& segment) const
+{
+	// Find an intersection on the segment with respect to constraints
+	// u = 0 is point A of the segment ; u = 1 is point B of the segment
+	double u = pointLineProjection(point, ProjectionZ(segment));
+
+	// The intersection must lie on the segment
+	u = clamp(u, 0.0, 1.0);
 
 	// TODO compute the elevation of segmentStart in a better way
 	const Point3D segmentEnd(lerp(segment, u));

@@ -69,7 +69,11 @@ private:
 
 	Cell GetCell(double x, double y, int resolution) const;
 
-	Segment3D ConnectPointToSegment(const Point2D& point, double segmentDist, const Segment3D& segment) const;
+	Segment3D ConnectPointToSegmentAngle(const Point2D& point, double segmentDist, const Segment3D& segment) const;
+
+	Segment3D ConnectPointToSegmentAngleMid(const Point2D& point, double segmentDist, const Segment3D& segment) const;
+
+	Segment3D ConnectPointToSegmentNearestPoint(const Point2D& point, double segmentDist, const Segment3D& segment) const;
 
 	template<typename T, size_t N>
 	std::tuple<int, int> GetArrayCell(const Cell& arrCell, const Array2d<T, N>& arr, const Cell& cell) const;
@@ -474,7 +478,7 @@ Noise::Segment3DArray<N> Noise::GenerateSubSegments(const Cell& cell, const Segm
 			Segment3D nearestSegment;
 			double nearestSegmentDist = NearestSegmentProjectionZ(cell, segments, 1, points[i][j], nearestSegment);
 
-			subSegments[i][j] = ConnectPointToSegment(points[i][j], nearestSegmentDist, nearestSegment);
+			subSegments[i][j] = ConnectPointToSegmentAngle(points[i][j], nearestSegmentDist, nearestSegment);
 		}
 	}
 
@@ -506,7 +510,7 @@ Noise::Segment3DArray<N> Noise::GenerateSubSubSegments(const Cell& cell, const S
 				nearestSegment = nearestSubSegment;
 			}
 
-			subSubSegments[i][j] = ConnectPointToSegment(points[i][j], nearestSegmentDist, nearestSegment);
+			subSubSegments[i][j] = ConnectPointToSegmentAngle(points[i][j], nearestSegmentDist, nearestSegment);
 		}
 	}
 
