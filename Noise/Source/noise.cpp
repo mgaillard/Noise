@@ -120,13 +120,11 @@ Noise::Cell Noise::GetCell(double x, double y, int resolution) const
 	return c;
 }
 
-Segment3D Noise::ConnectPointToSegmentAngle(const Point2D& point, double segmentDist, const Segment3D& segment) const
+Segment3D Noise::ConnectPointToSegmentAngle(const Point3D & point, double segmentDist, const Segment3D& segment) const
 {
 	// Find an intersection on the segment with respect to constraints
 	// u = 0 is point A of the segment ; u = 1 is point B of the segment
-	double u = pointLineProjection(point, ProjectionZ(segment));
-	// The intersection must lie on the segment
-	u = clamp(u, 0.0, 1.0);
+	double u = pointLineSegmentProjection(ProjectionZ(point), ProjectionZ(segment));
 
 	// If, on the segment, the nearest point is between A and B, we shift it so that the angle constraint is respected
 	if (u > 0.0 && u < 1.0)
@@ -149,17 +147,15 @@ Segment3D Noise::ConnectPointToSegmentAngle(const Point2D& point, double segment
 	}
 
 	const Point3D segmentEnd(lerp(segment, u));
-	const double length = dist(point, ProjectionZ(segmentEnd));
-	const Point3D segmentStart(point.x, point.y, segmentEnd.z + 0.1 * length);
 
-	return Segment3D(segmentStart, segmentEnd);
+	return Segment3D(point, segmentEnd);
 }
 
-Segment3D Noise::ConnectPointToSegmentAngleMid(const Point2D& point, double segmentDist, const Segment3D& segment) const
+Segment3D Noise::ConnectPointToSegmentAngleMid(const Point3D& point, double segmentDist, const Segment3D& segment) const
 {
 	// Find an intersection on the segment with respect to constraints
 	// u = 0 is point A of the segment ; u = 1 is point B of the segment
-	double u = pointLineProjection(point, ProjectionZ(segment));
+	double u = pointLineProjection(ProjectionZ(point), ProjectionZ(segment));
 
 	// Find the intersection so that the angle between the two segments is 45°
 	// v designates the ratio of the segment on which the intersection is located
@@ -169,26 +165,19 @@ Segment3D Noise::ConnectPointToSegmentAngleMid(const Point2D& point, double segm
 	v = clamp(v, 0.0, 1.0);
 
 	const Point3D segmentEnd(lerp(segment, u));
-	const double length = dist(point, ProjectionZ(segmentEnd));
-	const Point3D segmentStart(point.x, point.y, segmentEnd.z + 0.1 * length);
 
-	return Segment3D(segmentStart, segmentEnd);
+	return Segment3D(point, segmentEnd);
 }
 
-Segment3D Noise::ConnectPointToSegmentNearestPoint(const Point2D& point, double segmentDist, const Segment3D& segment) const
+Segment3D Noise::ConnectPointToSegmentNearestPoint(const Point3D& point, double segmentDist, const Segment3D& segment) const
 {
 	// Find an intersection on the segment with respect to constraints
 	// u = 0 is point A of the segment ; u = 1 is point B of the segment
-	double u = pointLineProjection(point, ProjectionZ(segment));
-
-	// The intersection must lie on the segment
-	u = clamp(u, 0.0, 1.0);
+	double u = pointLineSegmentProjection(ProjectionZ(point), ProjectionZ(segment));
 
 	const Point3D segmentEnd(lerp(segment, u));
-	const double length = dist(point, ProjectionZ(segmentEnd));
-	const Point3D segmentStart(point.x, point.y, segmentEnd.z + 0.1 * length);
 
-	return Segment3D(segmentStart, segmentEnd);
+	return Segment3D(point, segmentEnd);
 }
 
 double Noise::ComputeColorPoint(double x, double y, const Point2D& point, double radius) const

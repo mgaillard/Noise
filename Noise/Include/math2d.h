@@ -250,6 +250,9 @@ std::array<Point2D, N> Subdivide(const Segment2D& s)
 double pointLineProjection(const Point2D& p, const Point2D& a, const Point2D& b);
 double pointLineProjection(const Point2D& p, const Segment2D& s);
 
+double pointLineSegmentProjection(const Point2D& p, const Point2D& a, const Point2D& b);
+double pointLineSegmentProjection(const Point2D& p, const Segment2D& s);
+
 double distToLine(const Point2D& p, const Point2D& a, const Point2D& b, Point2D& c);
 
 double distToLineSegment(const Point2D& p, const Point2D& a, const Point2D& b, Point2D& c);

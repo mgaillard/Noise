@@ -34,6 +34,17 @@ double pointLineProjection(const Point2D& p, const Segment2D& s)
 	return pointLineProjection(p, s.a, s.b);
 }
 
+double pointLineSegmentProjection(const Point2D& p, const Point2D& a, const Point2D& b)
+{
+	const double u = pointLineProjection(p, a, b);
+	return clamp(u, 0.0, 1.0);
+}
+
+double pointLineSegmentProjection(const Point2D& p, const Segment2D& s)
+{
+	return pointLineSegmentProjection(p, s.a, s.b);
+}
+
 double distToLine(const Point2D& p, const Point2D& a, const Point2D& b, Point2D& c)
 {
 	const Vec2D ap(a, p);

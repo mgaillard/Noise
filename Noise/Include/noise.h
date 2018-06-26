@@ -69,11 +69,11 @@ private:
 
 	Cell GetCell(double x, double y, int resolution) const;
 
-	Segment3D ConnectPointToSegmentAngle(const Point2D& point, double segmentDist, const Segment3D& segment) const;
+	Segment3D ConnectPointToSegmentAngle(const Point3D& point, double segmentDist, const Segment3D& segment) const;
 
-	Segment3D ConnectPointToSegmentAngleMid(const Point2D& point, double segmentDist, const Segment3D& segment) const;
+	Segment3D ConnectPointToSegmentAngleMid(const Point3D& point, double segmentDist, const Segment3D& segment) const;
 
-	Segment3D ConnectPointToSegmentNearestPoint(const Point2D& point, double segmentDist, const Segment3D& segment) const;
+	Segment3D ConnectPointToSegmentNearestPoint(const Point3D& point, double segmentDist, const Segment3D& segment) const;
 
 	template<typename T, size_t N>
 	std::tuple<int, int> GetArrayCell(const Cell& arrCell, const Array2d<T, N>& arr, const Cell& cell) const;
@@ -83,6 +83,12 @@ private:
 
 	template<size_t N, size_t M>
 	double NearestSegmentProjectionZ(const Cell& cell, const Segment3DChainArray<N, M>& segments, int neighborhood, const Point2D& point, Segment3D& nearestSegmentOut) const;
+
+	template<size_t M, size_t D, size_t N>
+	double NearestSegmentProjectionZ(const Cell& cell, const Segment3DChainArray<M, D>& segments, const Cell& subCell, const Segment3DArray<N>& subSegments, int neighborhood, const Point2D& point, Segment3D& nearestSegmentOut) const;
+
+	template<size_t M, size_t D, size_t N, size_t K>
+	double NearestSegmentProjectionZ(const Cell& cell, const Segment3DChainArray<M, D>& segments, const Cell& subCell, const Segment3DArray<N>& subSegments, const Cell& subSubCell, const Segment3DArray<K>& subSubSegments, int neighborhood, const Point2D& point, Segment3D& nearestSegmentOut) const;
 
 	template <size_t N>
 	int SegmentsEndingInP(const Cell& cell, const Segment3DArray<N>& segments, const Point3D& point, Segment3D& lastSegmentEndingInP) const;
@@ -240,6 +246,46 @@ double Noise::NearestSegmentProjectionZ(const Cell& cell, const Segment3DChainAr
 				}
 			}
 		}
+	}
+
+	return nearestSegmentDistance;
+}
+
+template<size_t M, size_t D, size_t N>
+double Noise::NearestSegmentProjectionZ(const Cell& cell, const Segment3DChainArray<M, D>& segments, const Cell& subCell, const Segment3DArray<N>& subSegments, int neighborhood, const Point2D& point, Segment3D& nearestSegmentOut) const
+{
+	assert(neighborhood >= 0);
+
+	// Distance to segments
+	double nearestSegmentDistance = NearestSegmentProjectionZ(cell, segments, neighborhood, point, nearestSegmentOut);
+
+	// Distance to sub segments
+	Segment3D nearestSubSegment;
+	double nearestSubSegmentDistance = NearestSegmentProjectionZ(subCell, subSegments, neighborhood, point, nearestSubSegment);
+	if (nearestSubSegmentDistance < nearestSegmentDistance)
+	{
+		nearestSegmentDistance = nearestSubSegmentDistance;
+		nearestSegmentOut = nearestSubSegment;
+	}
+
+	return nearestSegmentDistance;
+}
+
+template<size_t M, size_t D, size_t N, size_t K>
+double Noise::NearestSegmentProjectionZ(const Cell& cell, const Segment3DChainArray<M, D>& segments, const Cell& subCell, const Segment3DArray<N>& subSegments, const Cell& subSubCell, const Segment3DArray<K>& subSubSegments, int neighborhood, const Point2D& point, Segment3D& nearestSegmentOut) const
+{
+	assert(neighborhood >= 0);
+
+	// Distance to segments
+	double nearestSegmentDistance = NearestSegmentProjectionZ(cell, segments, subCell, subSegments, neighborhood, point, nearestSegmentOut);
+
+	// Distance to sub segments
+	Segment3D nearestSubSegment;
+	double nearestSubSegmentDistance = NearestSegmentProjectionZ(subSubCell, subSubSegments, neighborhood, point, nearestSubSegment);
+	if (nearestSubSegmentDistance < nearestSegmentDistance)
+	{
+		nearestSegmentDistance = nearestSubSegmentDistance;
+		nearestSegmentOut = nearestSubSegment;
 	}
 
 	return nearestSegmentDistance;
@@ -477,8 +523,20 @@ Noise::Segment3DArray<N> Noise::GenerateSubSegments(const Cell& cell, const Segm
 			// Find the nearest segment
 			Segment3D nearestSegment;
 			double nearestSegmentDist = NearestSegmentProjectionZ(cell, segments, 1, points[i][j], nearestSegment);
+			
+			double u = pointLineSegmentProjection(points[i][j], ProjectionZ(nearestSegment));
 
-			subSegments[i][j] = ConnectPointToSegmentAngle(points[i][j], nearestSegmentDist, nearestSegment);
+			// Compute elevation of the point
+			double x = Remap(points[i][j].x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_perlinTopLeft.x, m_perlinBottomRight.x);
+			double y = Remap(points[i][j].y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_perlinTopLeft.y, m_perlinBottomRight.y);
+			double perlin = (Perlin(cell.resolution * x, cell.resolution * y) + 1.0) / 4.0;
+
+			// minimum slope 5 degrees, tan(5 degrees) = 0.09 
+			double elevation = lerp(nearestSegment.a.z, nearestSegment.b.z, u) + std::max(0.09 * nearestSegmentDist, perlin);
+
+			Point3D p(points[i][j].x, points[i][j].y, elevation);
+
+			subSegments[i][j] = ConnectPointToSegmentAngle(p, nearestSegmentDist, nearestSegment);
 		}
 	}
 
@@ -500,17 +558,13 @@ Noise::Segment3DArray<N> Noise::GenerateSubSubSegments(const Cell& cell, const S
 		{
 			// Find the nearest segment
 			Segment3D nearestSegment;
-			double nearestSegmentDist = NearestSegmentProjectionZ(cell, segments, 1, points[i][j], nearestSegment);
+			double nearestSegmentDist = NearestSegmentProjectionZ(cell, segments, subCell, subSegments, 1, points[i][j], nearestSegment);
 
-			Segment3D nearestSubSegment;
-			double nearestSubSegmentDist = NearestSegmentProjectionZ(subCell, subSegments, 1, points[i][j], nearestSubSegment);
-			if (nearestSubSegmentDist < nearestSegmentDist)
-			{
-				nearestSegmentDist = nearestSubSegmentDist;
-				nearestSegment = nearestSubSegment;
-			}
+			double u = pointLineSegmentProjection(points[i][j], ProjectionZ(nearestSegment));
+			double elevation = lerp(nearestSegment.a.z, nearestSegment.b.z, u);
+			Point3D p(points[i][j].x, points[i][j].y, elevation);
 
-			subSubSegments[i][j] = ConnectPointToSegmentAngle(points[i][j], nearestSegmentDist, nearestSegment);
+			subSubSegments[i][j] = ConnectPointToSegmentAngle(p, nearestSegmentDist, nearestSegment);
 		}
 	}
 
@@ -689,37 +743,16 @@ double Noise::ComputeColorSubSub(const Cell& cell, const Segment3DArray<N>& segm
 template <size_t N, size_t D, size_t M, size_t K>
 double Noise::ComputeColorWorley(const Cell& cell, const Segment3DChainArray<N, D>& subdividedSegments, const Cell& subCell, const Segment3DArray<M>& subSegments, const Cell& subSubCell, const Segment3DArray<K>& subSubSegments, double x, double y) const
 {
-	// Find the nearest segment
+	const Point2D point(x, y);
 	
-	// Distance to level 1 segments
 	Segment3D nearestSegment;
-	double nearestSegmentDistance = NearestSegmentProjectionZ(cell, subdividedSegments, 2, Point2D(x, y), nearestSegment);
-
-	// Distance to level 2 segments
-	Segment3D nearestSubSegment;
-	double nearestSubSegmentDistance = NearestSegmentProjectionZ(subCell, subSegments, 2, Point2D(x, y), nearestSubSegment);
-	if (nearestSubSegmentDistance < nearestSegmentDistance)
-	{
-		nearestSegmentDistance = nearestSubSegmentDistance;
-		nearestSegment = nearestSubSegment;
-	}
-
-	// Distance to level 3 segments
-	Segment3D nearestSubSubSegment;
-	double nearestSubSubSegmentDistance = NearestSegmentProjectionZ(subSubCell, subSubSegments, 2, Point2D(x, y), nearestSubSubSegment);
-	if (nearestSubSubSegmentDistance < nearestSegmentDistance)
-	{
-		nearestSegmentDistance = nearestSubSubSegmentDistance;
-		nearestSegment = nearestSubSubSegment;
-	}
+	double distance = NearestSegmentProjectionZ(cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, 1, point, nearestSegment);
 
 	// Elevation in on the nearest segment
-	const double elevationA = nearestSegment.a.z;
-	const double elevationB = nearestSegment.b.z;
-	const double u = pointLineProjection(Point2D(x, y), ProjectionZ(nearestSegment));
-	const double elevation = lerp_clamp(elevationA, elevationB, u);
+	const double u = pointLineProjection(point, ProjectionZ(nearestSegment));
+	const double elevation = lerp(nearestSegment, u).z;
 
-	return nearestSegmentDistance + elevation;
+	return distance; // Otherwise: distance + elevation;
 }
 
 #endif // NOISE_H
