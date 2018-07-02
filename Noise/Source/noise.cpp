@@ -246,7 +246,7 @@ double Noise::evaluate(double x, double y) const
 	// Level 3: Points in neighboring cells
 	Point2DArray<5> subSubPoints = GenerateNeighboringPoints<5>(subSubCell);
 	ReplaceNeighboringPoints(subCell, subPoints, subSubCell, subSubPoints);
-	// Level 2: List of segments
+	// Level 3: List of segments
 	Segment3DArray<5> subSubSegments = GenerateSubSubSegments(cell, subdividedSegments, subCell, subSegments, subSubPoints);
 
 	double value = 0.0;

@@ -38,6 +38,9 @@
     <ClCompile Include="Source\spline.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\height.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\noise.h">
@@ -59,6 +62,9 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="Include\spline.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\height.h">
       <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
