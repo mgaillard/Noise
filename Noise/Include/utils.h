@@ -65,4 +65,13 @@ inline T lerp_clamp(const T& a, const T& b, const T& x)
 	}
 }
 
+template<typename T>
+inline T smootherstep(const T& edge0, const T& edge1, const T& x)
+{
+	// Scale, and clamp x to 0..1 range
+	const T t = Remap(x, edge0, edge1, 0.0, 1.0);
+	// Evaluate polynomial
+	return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+}
+
 #endif // UTILS_H
