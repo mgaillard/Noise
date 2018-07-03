@@ -251,7 +251,7 @@ double Noise::evaluate(double x, double y) const
 
 	double value = 0.0;
 
-	value = std::max(value, ComputeColorWorley(cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, x, y));
+	value = std::max(value, ComputeColorPrimitives(cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, subSubPoints, x, y));
 	value = std::max(value, ComputeColor(cell, subdividedSegments, points, x, y));
 	value = std::max(value, ComputeColorSub(subCell, subSegments, subPoints, x, y));
 	value = std::max(value, ComputeColorSubSub(subSubCell, subSubSegments, subSubPoints, x, y));

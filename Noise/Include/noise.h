@@ -152,7 +152,7 @@ private:
 	double ComputeColorSubSub(const Cell& cell, const Segment3DArray<N>& segments, const Point2DArray<N>& points, double x, double y) const;
 
 	template <size_t N, size_t D, size_t M, size_t K>
-	double ComputeColorWorley(const Cell& cell, const Segment3DChainArray<N, D>& subdividedSegments, const Cell& subCell, const Segment3DArray<M>& subSegments, const Cell& subSubCell, const Segment3DArray<K>& subSubSegments, double x, double y) const;
+	double ComputeColorPrimitives(const Cell& cell, const Segment3DChainArray<N, D>& subdividedSegments, const Cell& subCell, const Segment3DArray<M>& subSegments, const Cell& subSubCell, const Segment3DArray<K>& subSubSegments, const Point2DArray<K>& subSubPoints, double x, double y) const;
 	
 	// Random generator used by the class
 	typedef std::minstd_rand RandomGenerator;
@@ -741,18 +741,54 @@ double Noise::ComputeColorSubSub(const Cell& cell, const Segment3DArray<N>& segm
 }
 
 template <size_t N, size_t D, size_t M, size_t K>
-double Noise::ComputeColorWorley(const Cell& cell, const Segment3DChainArray<N, D>& subdividedSegments, const Cell& subCell, const Segment3DArray<M>& subSegments, const Cell& subSubCell, const Segment3DArray<K>& subSubSegments, double x, double y) const
+double Noise::ComputeColorPrimitives(const Cell& cell, const Segment3DChainArray<N, D>& subdividedSegments, const Cell& subCell, const Segment3DArray<M>& subSegments, const Cell& subSubCell, const Segment3DArray<K>& subSubSegments, const Point2DArray<K>& subSubPoints, double x, double y) const
 {
 	const Point2D point(x, y);
-	
-	Segment3D nearestSegment;
-	double distance = NearestSegmentProjectionZ(cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, 1, point, nearestSegment);
 
-	// Elevation in on the nearest segment
-	const double u = pointLineProjection(point, ProjectionZ(nearestSegment));
-	const double elevation = lerp(nearestSegment, u).z;
+	const int resolutionSteps = 3;
 
-	return distance; // Otherwise: distance + elevation;
+	Cell higherResCell = subSubCell;
+	Point2DArray<5> points = subSubPoints;
+	for (int i = 0; i < resolutionSteps; i++)
+	{
+		Cell newCell = GetCell(x, y, 2 * higherResCell.resolution);
+		Point2DArray<5> newPoints = GenerateNeighboringPoints<5>(newCell);
+		ReplaceNeighboringPoints(higherResCell, subSubPoints, newCell, newPoints);
+
+		higherResCell = newCell;
+		points = newPoints;
+	}
+
+	// Radius of primitives
+	const double R = 2.0 / higherResCell.resolution;
+	// Power to the Wyvill-Galin function
+	const double N = 3.0;
+
+	double numerator = 0.0;
+	double denominator = 0.0;
+
+	for (int i = 0; i < points.size(); i++)
+	{
+		for (int j = 0; j < points[i].size(); j++)
+		{
+			// Nearest segment to points[i][j] and nearest point on this segment
+			Segment3D nearestSegment;
+			double distance = NearestSegmentProjectionZ(cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, 1, points[i][j], nearestSegment);
+			double u = pointLineSegmentProjection(points[i][j], ProjectionZ(nearestSegment));
+			Point3D nearestPoint = lerp(nearestSegment, u);
+
+			double d = dist(point, points[i][j]);
+
+			if (d < R) {
+				double alpha = pow(1 - (d / R) * (d / R), N);
+
+				numerator += alpha * (nearestPoint.z + distance);
+				denominator += alpha;
+			}
+		}
+	}
+
+	return numerator / denominator;
 }
 
 #endif // NOISE_H
