@@ -152,11 +152,13 @@ double TestConvolution(double x, double y)
 
 	std::array<Segment3D, 2> segments = { {
 		{ a, b },
-	{ b, c }
-		} };
+		{ b, c }
+	} };
 
-	double d1 = distToLineSegment(point, ProjectionZ(segments[0]), Point2D());
-	double d2 = distToLineSegment(point, ProjectionZ(segments[1]), Point2D());
+	Point2D placeholderPoint;
+
+	double d1 = distToLineSegment(point, ProjectionZ(segments[0]), placeholderPoint);
+	double d2 = distToLineSegment(point, ProjectionZ(segments[1]), placeholderPoint);
 
 	// Closed-form
 	for (const Segment3D& segment : segments)
