@@ -69,6 +69,8 @@ private:
 
 	Cell GetCell(double x, double y, int resolution) const;
 
+	double ControlFunction(const Point2D& point) const;
+
 	Segment3D ConnectPointToSegmentAngle(const Point3D& point, double segmentDist, const Segment3D& segment) const;
 
 	Segment3D ConnectPointToSegmentAngleMid(const Point3D& point, double segmentDist, const Segment3D& segment) const;
@@ -404,10 +406,7 @@ Noise::DoubleArray<N> Noise::ComputeElevations(const Point2DArray<N>& points) co
 	{
 		for (int j = 0; j < elevations[i].size(); j++)
 		{
-			const double x = Remap(points[i][j].x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_perlinTopLeft.x, m_perlinBottomRight.x);
-			const double y = Remap(points[i][j].y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_perlinTopLeft.y, m_perlinBottomRight.y);
-
-			elevations[i][j] = (Perlin(x, y) + 1.0) / 2.0;
+			elevations[i][j] = ControlFunction(points[i][j]);
 		}
 	}
 
@@ -529,13 +528,15 @@ Noise::Segment3DArray<N> Noise::GenerateSubSegments(const Cell& cell, const Segm
 			
 			double u = pointLineSegmentProjection(points[i][j], ProjectionZ(nearestSegment));
 
-			// Compute elevation of the point
-			double x = Remap(points[i][j].x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_perlinTopLeft.x, m_perlinBottomRight.x);
-			double y = Remap(points[i][j].y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_perlinTopLeft.y, m_perlinBottomRight.y);
-			double perlin = (Perlin(cell.resolution * x, cell.resolution * y) + 1.0) / 4.0;
+			// Compute elevation of the point on the control function
+			double elevationControlFunction = ControlFunction(points[i][j]);
+			// Compute elevation with a constraint on slope
+			// Warning: the distance taken to compute the slope is the distance to the nearest segment
+			// The final segment will have a flatter slope
+			// Minimum slope 0.5 deg, tan(0.5 deg) = 0.01
+			double elevationWithMinSlope = lerp(nearestSegment.a.z, nearestSegment.b.z, u) + 0.01 * nearestSegmentDist;
 
-			// minimum slope 5 degrees, tan(5 degrees) = 0.09 
-			double elevation = lerp(nearestSegment.a.z, nearestSegment.b.z, u) + std::max(0.09 * nearestSegmentDist, perlin);
+			double elevation = std::max(elevationWithMinSlope, elevationControlFunction);
 
 			Point3D p(points[i][j].x, points[i][j].y, elevation);
 
@@ -564,7 +565,17 @@ Noise::Segment3DArray<N> Noise::GenerateSubSubSegments(const Cell& cell, const S
 			double nearestSegmentDist = NearestSegmentProjectionZ(cell, segments, subCell, subSegments, 1, points[i][j], nearestSegment);
 
 			double u = pointLineSegmentProjection(points[i][j], ProjectionZ(nearestSegment));
-			double elevation = lerp(nearestSegment.a.z, nearestSegment.b.z, u);
+
+			// Compute elevation of the point on the control function
+			double elevationControlFunction = ControlFunction(points[i][j]);
+			// Compute elevation with a constraint on slope
+			// Warning: the distance taken to compute the slope is the distance to the nearest segment
+			// The final segment will have a flatter slope
+			// Minimum slope 0.5 deg, tan(0.5 deg) = 0.01
+			double elevationWithMinSlope = lerp(nearestSegment.a.z, nearestSegment.b.z, u) + 0.01 * nearestSegmentDist;
+
+			double elevation = std::max(elevationWithMinSlope, elevationControlFunction);
+
 			Point3D p(points[i][j].x, points[i][j].y, elevation);
 
 			subSubSegments[i][j] = ConnectPointToSegmentAngle(p, nearestSegmentDist, nearestSegment);
