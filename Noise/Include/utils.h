@@ -74,4 +74,17 @@ inline T smootherstep(const T& edge0, const T& edge1, const T& x)
 	return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
 }
 
+template<typename T>
+inline T WyvillGalinFunction(const T& distance, const T& R, const T& N)
+{
+	double alpha = 0.0;
+
+	if (distance < R)
+	{
+		alpha = pow(1 - (distance / R) * (distance / R), N);
+	}
+
+	return alpha;
+}
+
 #endif // UTILS_H

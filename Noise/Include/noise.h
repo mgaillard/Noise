@@ -761,6 +761,7 @@ double Noise::ComputeColorPrimitives(const Cell& cell, const Segment3DChainArray
 
 	const int resolutionSteps = 3;
 
+	// Generate higher resolution points, which are going to be the centers of primitives
 	Cell higherResCell = subSubCell;
 	Point2DArray<5> points = subSubPoints;
 	for (int i = 0; i < resolutionSteps; i++)
@@ -778,42 +779,38 @@ double Noise::ComputeColorPrimitives(const Cell& cell, const Segment3DChainArray
 	// Power to the Wyvill-Galin function
 	const double N = 3.0;
 
+	// Numerator and denominator used to compute the blend of primitives
 	double numerator = 0.0;
 	double denominator = 0.0;
 
-	// Nearest segment to point and nearest point on this segment
 	Segment3D nearestSegment;
+	Point3D nearestPoint;
+
+	// Nearest segment to point and nearest point on this segment
 	double distance = NearestSegmentProjectionZ(cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, 1, point, nearestSegment);
 	double u = pointLineSegmentProjection(point, ProjectionZ(nearestSegment));
-	Point3D nearestPoint = lerp(nearestSegment, u);
+	nearestPoint = lerp(nearestSegment, u);
 
-	if (distance < R) {
-		double alpha = pow(1 - (distance / R) * (distance / R), N);
-
-		// Slope of approximately 45 deg, tan(45 deg) = 1.00
-		numerator += alpha * (nearestPoint.z + 1.0 * distance);
-		denominator += alpha;
-	}
+	double alpha = WyvillGalinFunction(distance, R, N);
+	// Slope of approximately 45 deg, tan(45 deg) = 1.00
+	numerator += alpha * (nearestPoint.z + 1.0 * distance);
+	denominator += alpha;
 
 	for (int i = 0; i < points.size(); i++)
 	{
 		for (int j = 0; j < points[i].size(); j++)
 		{
 			// Nearest segment to points[i][j] and nearest point on this segment
-			Segment3D nearestSegment;
 			double distance = NearestSegmentProjectionZ(cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, 1, points[i][j], nearestSegment);
 			double u = pointLineSegmentProjection(points[i][j], ProjectionZ(nearestSegment));
-			Point3D nearestPoint = lerp(nearestSegment, u);
+			nearestPoint = lerp(nearestSegment, u);
 
 			double d = dist(point, points[i][j]);
 
-			if (d < R) {
-				double alpha = pow(1 - (d / R) * (d / R), N);
-
-				// Slope of approximately 45 deg, tan(45 deg) = 1.00
-				numerator += alpha * (nearestPoint.z + 1.0 * distance);
-				denominator += alpha;
-			}
+			double alpha = WyvillGalinFunction(distance, R, N);
+			// Slope of approximately 45 deg, tan(45 deg) = 1.00
+			numerator += alpha * (nearestPoint.z + 1.0 * distance);
+			denominator += alpha;
 		}
 	}
 
