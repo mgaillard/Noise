@@ -814,10 +814,7 @@ double Noise::ComputeColorControlFunction(const Cell& cell, const Segment3DChain
 	}
 	else
 	{
-		const double x = Remap(point.x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_perlinTopLeft.x, m_perlinBottomRight.x);
-		const double y = Remap(point.y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_perlinTopLeft.y, m_perlinBottomRight.y);
-
-		// value = (Perlin(x, y) + 1.0) / 2.0;
+		value = ControlFunction(point);
 	}
 
 	return value;
