@@ -817,7 +817,7 @@ double Noise::ComputeColorControlFunction(const Cell& cell, const Segment3DChain
 
 	double value = 0.0;
 
-	if (d < (1.0 / 128.0))
+	if (d < (1.0 / 32.0))
 	{
 		double u = pointLineSegmentProjection(point, ProjectionZ(nearestSegment));
 		// Elevation of the nearest point
