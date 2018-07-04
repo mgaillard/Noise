@@ -781,6 +781,20 @@ double Noise::ComputeColorPrimitives(const Cell& cell, const Segment3DChainArray
 	double numerator = 0.0;
 	double denominator = 0.0;
 
+	// Nearest segment to point and nearest point on this segment
+	Segment3D nearestSegment;
+	double distance = NearestSegmentProjectionZ(cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, 1, point, nearestSegment);
+	double u = pointLineSegmentProjection(point, ProjectionZ(nearestSegment));
+	Point3D nearestPoint = lerp(nearestSegment, u);
+
+	if (distance < R) {
+		double alpha = pow(1 - (distance / R) * (distance / R), N);
+
+		// Slope of approximately 45 deg, tan(45 deg) = 1.00
+		numerator += alpha * (nearestPoint.z + 1.0 * distance);
+		denominator += alpha;
+	}
+
 	for (int i = 0; i < points.size(); i++)
 	{
 		for (int j = 0; j < points[i].size(); j++)
@@ -802,6 +816,9 @@ double Noise::ComputeColorPrimitives(const Cell& cell, const Segment3DChainArray
 			}
 		}
 	}
+
+	// denominator shouldn't be equal to zero if there is enough primitives around the point.
+	assert(denominator != 0.0);
 
 	return numerator / denominator;
 }
