@@ -782,7 +782,8 @@ double Noise::ComputeColorPrimitives(const Cell& cell, const Segment3DChainArray
 			if (d < R) {
 				double alpha = pow(1 - (d / R) * (d / R), N);
 
-				numerator += alpha * (nearestPoint.z + distance);
+				// Slope of approximately 45 deg, tan(45 deg) = 1.00
+				numerator += alpha * (nearestPoint.z + 1.0 * distance);
 				denominator += alpha;
 			}
 		}
