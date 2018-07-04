@@ -153,6 +153,9 @@ private:
 
 	template <size_t N, size_t D, size_t M, size_t K>
 	double ComputeColorPrimitives(const Cell& cell, const Segment3DChainArray<N, D>& subdividedSegments, const Cell& subCell, const Segment3DArray<M>& subSegments, const Cell& subSubCell, const Segment3DArray<K>& subSubSegments, const Point2DArray<K>& subSubPoints, double x, double y) const;
+
+	template <size_t N, size_t D, size_t M, size_t K>
+	double ComputeColorControlFunction(const Cell& cell, const Segment3DChainArray<N, D>& subdividedSegments, const Cell& subCell, const Segment3DArray<M>& subSegments, const Cell& subSubCell, const Segment3DArray<K>& subSubSegments, double x, double y) const;
 	
 	// Random generator used by the class
 	typedef std::minstd_rand RandomGenerator;
@@ -790,6 +793,34 @@ double Noise::ComputeColorPrimitives(const Cell& cell, const Segment3DChainArray
 	}
 
 	return numerator / denominator;
+}
+
+template <size_t N, size_t D, size_t M, size_t K>
+double Noise::ComputeColorControlFunction(const Cell& cell, const Segment3DChainArray<N, D>& subdividedSegments, const Cell& subCell, const Segment3DArray<M>& subSegments, const Cell& subSubCell, const Segment3DArray<K>& subSubSegments, double x, double y) const
+{
+	const Point2D point(x, y);
+
+	// nearest segment
+	Segment3D nearestSegment;
+	double d = NearestSegmentProjectionZ(cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, 1, point, nearestSegment);
+
+	double value = 0.0;
+
+	if (d < (1.0 / 128.0))
+	{
+		double u = pointLineSegmentProjection(point, ProjectionZ(nearestSegment));
+		// Elevation of the nearest point
+		value = lerp(nearestSegment.a.z, nearestSegment.b.z, u);
+	}
+	else
+	{
+		const double x = Remap(point.x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_perlinTopLeft.x, m_perlinBottomRight.x);
+		const double y = Remap(point.y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_perlinTopLeft.y, m_perlinBottomRight.y);
+
+		// value = (Perlin(x, y) + 1.0) / 2.0;
+	}
+
+	return value;
 }
 
 #endif // NOISE_H
