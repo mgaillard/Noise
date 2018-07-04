@@ -77,7 +77,7 @@ inline T smootherstep(const T& edge0, const T& edge1, const T& x)
 template<typename T>
 inline T WyvillGalinFunction(const T& distance, const T& R, const T& N)
 {
-	double alpha = 0.0;
+	T alpha = 0.0;
 
 	if (distance < R)
 	{
