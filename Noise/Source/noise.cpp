@@ -120,6 +120,14 @@ Noise::Cell Noise::GetCell(double x, double y, int resolution) const
 	return c;
 }
 
+double Noise::ControlFunction(const Point2D& point) const
+{
+	const double x = Remap(point.x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_perlinTopLeft.x, m_perlinBottomRight.x);
+	const double y = Remap(point.y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_perlinTopLeft.y, m_perlinBottomRight.y);
+
+	return (Perlin(x, y) + 1.0) / 2.0;
+}
+
 Segment3D Noise::ConnectPointToSegmentAngle(const Point3D & point, double segmentDist, const Segment3D& segment) const
 {
 	// Find an intersection on the segment with respect to constraints
