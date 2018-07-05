@@ -785,16 +785,6 @@ double Noise::ComputeColorPrimitives(const Cell& cell, const Segment3DChainArray
 	double numerator = 0.0;
 	double denominator = 0.0;
 
-	// Nearest segment to point and nearest point on this segment
-	Segment3D pointNearestSegment;
-	double distancePoint = NearestSegmentProjectionZ(cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, 1, point, pointNearestSegment);
-	double uPoint = pointLineSegmentProjection(point, ProjectionZ(pointNearestSegment));
-
-	double alphaPoint = WyvillGalinFunction(distancePoint, R, P);
-	// Slope of approximately arctan(tanSlope) deg
-	numerator += alphaPoint * (lerp(pointNearestSegment.a.z, pointNearestSegment.b.z, uPoint) + tanSlope * distancePoint);
-	denominator += alphaPoint;
-
 	for (int i = 0; i < points.size(); i++)
 	{
 		for (int j = 0; j < points[i].size(); j++)
