@@ -798,7 +798,8 @@ double Noise::ComputeColorPrimitives(const Cell& cell, const Segment3DChainArray
 
 			double alphaPrimitive = WyvillGalinFunction(distancePrimitive, R, P);
 			// Slope of approximately arctan(tanSlope) deg
-			numerator += alphaPrimitive * (lerp(primitiveNearestSegment.a.z, primitiveNearestSegment.b.z, uPrimitive) + tanSlope * distancePrimitiveCenter);
+			double elevation = lerp(primitiveNearestSegment.a.z, primitiveNearestSegment.b.z, uPrimitive) + tanSlope * distancePrimitiveCenter;
+			numerator += alphaPrimitive * elevation;
 			denominator += alphaPrimitive;
 		}
 	}
