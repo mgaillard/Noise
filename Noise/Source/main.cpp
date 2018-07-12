@@ -10,6 +10,7 @@
 #include "noise.h"
 #include "math2d.h"
 #include "utils.h"
+#include "perlincontrolfunction.h"
 
 using namespace std;
 
@@ -32,7 +33,8 @@ cv::Mat PerlinImage(const Point2D& a, const Point2D&b, int width, int height)
 	return image;
 }
 
-cv::Mat NoiseImage(const Noise& noise, const Point2D& a, const Point2D&b, int width, int height)
+template<typename I>
+cv::Mat NoiseImage(const Noise<I>& noise, const Point2D& a, const Point2D&b, int width, int height)
 {
 	vector<vector<double> > temp(height, vector<double>(width));
 
@@ -108,15 +110,17 @@ int main(int argc, char* argv[])
 	const int WIDTH = 512;
 	const int HEIGHT = 512;
 	const string FILENAME = "output.png";
+
+	PerlinControlFunction perlinControlFunction;
 	
 	const int seed = 0;
 	const double eps = 0.0;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(8.0, 8.0);
-	const Point2D perlinTopLeft(0.0, 0.0);
-	const Point2D perlinBottomRight(1.0, 1.0);
+	const Point2D controlFunctionTopLeft(0.0, 0.0);
+	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
-	Noise noise(noiseTopLeft, noiseBottomRight, perlinTopLeft, perlinBottomRight, seed, eps, false, false, false);
+	Noise<decltype(perlinControlFunction)> noise(&perlinControlFunction, noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, false, false, false);
 
 	// cv::Mat imagePerlin = PerlinImage(perlinTopLeft, perlinBottomRight, WIDTH, HEIGHT);
 	cv::Mat imageNoise = NoiseImage(noise, noiseTopLeft, noiseBottomRight, WIDTH, HEIGHT);

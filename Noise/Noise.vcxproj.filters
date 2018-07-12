@@ -67,5 +67,11 @@
     <ClInclude Include="Include\height.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="Include\controlfunction.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\perlincontrolfunction.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
