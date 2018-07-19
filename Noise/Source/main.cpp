@@ -11,6 +11,7 @@
 #include "math2d.h"
 #include "utils.h"
 #include "perlincontrolfunction.h"
+#include "planecontrolfunction.h"
 
 using namespace std;
 
