@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <cassert>
 
 #include <opencv2/core/core.hpp>
@@ -112,7 +113,9 @@ int main(int argc, char* argv[])
 	const int HEIGHT = 512;
 	const string FILENAME = "output.png";
 
-	PerlinControlFunction perlinControlFunction;
+	// To change the type of control function, change the following line
+	typedef PerlinControlFunction ControlFunctionType;
+	unique_ptr<ControlFunctionType> perlinControlFunction(make_unique<ControlFunctionType>());
 	
 	const int seed = 0;
 	const double eps = 0.0;
@@ -121,7 +124,7 @@ int main(int argc, char* argv[])
 	const Point2D controlFunctionTopLeft(0.0, 0.0);
 	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
-	Noise<decltype(perlinControlFunction)> noise(&perlinControlFunction, noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, false, false, false);
+	Noise<ControlFunctionType> noise(move(perlinControlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, false, false, false);
 
 	// cv::Mat imagePerlin = PerlinImage(perlinTopLeft, perlinBottomRight, WIDTH, HEIGHT);
 	cv::Mat imageNoise = NoiseImage(noise, noiseTopLeft, noiseBottomRight, WIDTH, HEIGHT);

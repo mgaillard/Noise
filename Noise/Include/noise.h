@@ -8,6 +8,7 @@
 #include <limits>
 #include <cmath>
 #include <cassert>
+#include <memory>
 
 #include "math2d.h"
 #include "math3d.h"
@@ -19,7 +20,7 @@ template <typename I>
 class Noise
 {
 public:
-	Noise(const ControlFunction<I>* controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed = 0, double eps = 0.0, bool displayPoints = true, bool displaySegments = true, bool displayGrid = true);
+	Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed = 0, double eps = 0.0, bool displayPoints = true, bool displaySegments = true, bool displayGrid = true);
 
 	double evaluate(double x, double y) const;
 
@@ -167,7 +168,7 @@ private:
 	const int m_seed;
 
 	// A control function
-	const ControlFunction<I>* m_controlFunction;
+	const std::unique_ptr<ControlFunction<I> > m_controlFunction;
 
 	const bool m_displayPoints;
 	const bool m_displaySegments;
@@ -187,9 +188,9 @@ private:
 };
 
 template <typename I>
-Noise<I>::Noise(const ControlFunction<I>* controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, bool displayPoints, bool displaySegments, bool displayGrid) :
+Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, bool displayPoints, bool displaySegments, bool displayGrid) :
 	m_seed(seed),
-	m_controlFunction(controlFunction),
+	m_controlFunction(std::move(controlFunction)),
 	m_displayPoints(displayPoints),
 	m_displaySegments(displaySegments),
 	m_displayGrid(displayGrid),
@@ -324,7 +325,14 @@ double Noise<I>::EvaluateControlFunction(const Point2D& point) const
 	const double x = Remap(point.x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_controlFunctionTopLeft.x, m_controlFunctionBottomRight.x);
 	const double y = Remap(point.y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_controlFunctionTopLeft.y, m_controlFunctionBottomRight.y);
 
-	return m_controlFunction->evaluate(x, y);
+	double value = 0.0;
+
+	if (m_controlFunction)
+	{
+		value = m_controlFunction->evaluate(x, y);
+	}
+
+	return value;
 }
 
 template <typename I>
