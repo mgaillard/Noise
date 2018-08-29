@@ -70,11 +70,14 @@ private:
 
 	double EvaluateControlFunction(const Point2D& point) const;
 
-	Segment3D ConnectPointToSegmentAngle(const Point3D& point, double segmentDist, const Segment3D& segment) const;
+	template <size_t D>
+	Segment3DChain<D> ConnectPointToSegmentAngle(const Point3D& point, double segmentDist, const Segment3D& segment) const;
 
-	Segment3D ConnectPointToSegmentAngleMid(const Point3D& point, double segmentDist, const Segment3D& segment) const;
+	template <size_t D>
+	Segment3DChain<D> ConnectPointToSegmentAngleMid(const Point3D& point, double segmentDist, const Segment3D& segment) const;
 
-	Segment3D ConnectPointToSegmentNearestPoint(const Point3D& point, double segmentDist, const Segment3D& segment) const;
+	template <size_t D>
+	Segment3DChain<D> ConnectPointToSegmentNearestPoint(const Point3D& point, double segmentDist, const Segment3D& segment) const;
 
 	template <typename T, size_t N>
 	std::tuple<int, int> GetArrayCell(const Cell& arrCell, const Array2d<T, N>& arr, const Cell& cell) const;
@@ -105,6 +108,9 @@ private:
 	template <size_t N>
 	Segment3DChainArray<N - 2, 1> GenerateSegments(const Point2DArray<N>& points) const;
 
+	template <size_t D>
+	void SegmentChainFromPoints(const Point3D& start, const std::array<Point3D, D - 1>& midPoints, const Point3D& end, Segment3DChain<D>& outSegmentChain) const;
+
 	template <size_t N, size_t D>
 	void SubdivideSegments(const Cell& cell, const Segment3DChainArray<N, 1>& segments, Segment3DChainArray<N - 2, D>& subdividedSegments) const;
 
@@ -132,7 +138,7 @@ private:
 	double ComputeColorGrid(double x, double y, double deltaX, double deltaY, double radius) const;
 
 	template <size_t N, size_t D>
-	double ComputeColor(const Cell& cell, const Segment3DChainArray<N- 4, D>& subdividedSegments, const Point2DArray<N>& points, double x, double y) const;
+	double ComputeColor(const Cell& cell, const Segment3DChainArray<N - 4,D>& segments, const Point2DArray<N>& points, double x, double y) const;
 
 	template <size_t N, size_t D>
 	double ComputeColorSub(const Cell& cell, const Segment3DChainArray<N, D>& segments, const Point2DArray<N>& points, double x, double y) const;
@@ -321,8 +327,11 @@ double Noise<I>::EvaluateControlFunction(const Point2D& point) const
 }
 
 template <typename I>
-Segment3D Noise<I>::ConnectPointToSegmentAngle(const Point3D & point, double segmentDist, const Segment3D& segment) const
+template <size_t D>
+typename Noise<I>::Segment3DChain<D> Noise<I>::ConnectPointToSegmentAngle(const Point3D & point, double segmentDist, const Segment3D& segment) const
 {
+	Segment3DChain<D> generatedSegment;
+
 	// Find an intersection on the segment with respect to constraints
 	// u = 0 is point A of the segment ; u = 1 is point B of the segment
 	double u = pointLineSegmentProjection(ProjectionZ(point), ProjectionZ(segment));
@@ -347,14 +356,22 @@ Segment3D Noise<I>::ConnectPointToSegmentAngle(const Point3D & point, double seg
 		}
 	}
 
-	const Point3D segmentEnd(lerp(segment, u));
+	const Point3D straightSegmentEnd(lerp(segment, u));
+	const Segment3D straightSegment(point, straightSegmentEnd);
 
-	return Segment3D(point, segmentEnd);
+	// Subdivide the straightSegment into D smaller segments
+	std::array<Point3D, D - 1> generatedSegmentPoints = Subdivide<D - 1>(straightSegment);
+	SegmentChainFromPoints(straightSegment.a, generatedSegmentPoints, straightSegment.b, generatedSegment);
+	
+	return generatedSegment;
 }
 
 template <typename I>
-Segment3D Noise<I>::ConnectPointToSegmentAngleMid(const Point3D& point, double segmentDist, const Segment3D& segment) const
+template <size_t D>
+typename Noise<I>::Segment3DChain<D> Noise<I>::ConnectPointToSegmentAngleMid(const Point3D& point, double segmentDist, const Segment3D& segment) const
 {
+	Segment3DChain<D> generatedSegment;
+
 	// Find an intersection on the segment with respect to constraints
 	// u = 0 is point A of the segment ; u = 1 is point B of the segment
 	double u = pointLineProjection(ProjectionZ(point), ProjectionZ(segment));
@@ -367,20 +384,33 @@ Segment3D Noise<I>::ConnectPointToSegmentAngleMid(const Point3D& point, double s
 	v = clamp(v, 0.0, 1.0);
 
 	const Point3D segmentEnd(lerp(segment, u));
+	const Segment3D straightSegment(point, segmentEnd);
 
-	return Segment3D(point, segmentEnd);
+	// Subdivide the straightSegment into D smaller segments
+	std::array<Point3D, D - 1> generatedSegmentPoints = Subdivide<D - 1>(straightSegment);
+	SegmentChainFromPoints(straightSegment.a, generatedSegmentPoints, straightSegment.b, generatedSegment);
+
+	return generatedSegment;
 }
 
 template <typename I>
-Segment3D Noise<I>::ConnectPointToSegmentNearestPoint(const Point3D& point, double segmentDist, const Segment3D& segment) const
+template <size_t D>
+typename Noise<I>::Segment3DChain<D> Noise<I>::ConnectPointToSegmentNearestPoint(const Point3D& point, double segmentDist, const Segment3D& segment) const
 {
+	Segment3DChain<D> generatedSegment;
+
 	// Find an intersection on the segment with respect to constraints
 	// u = 0 is point A of the segment ; u = 1 is point B of the segment
 	double u = pointLineSegmentProjection(ProjectionZ(point), ProjectionZ(segment));
 
 	const Point3D segmentEnd(lerp(segment, u));
+	const Segment3D straightSegment(point, segmentEnd);
 
-	return Segment3D(point, segmentEnd);
+	// Subdivide the straightSegment into D smaller segments
+	std::array<Point3D, D - 1> generatedSegmentPoints = Subdivide<D - 1>(straightSegment);
+	SegmentChainFromPoints(straightSegment.a, generatedSegmentPoints, straightSegment.b, generatedSegment);
+
+	return generatedSegment;
 }
 
 template <typename I>
@@ -445,7 +475,7 @@ double Noise<I>::evaluate(double x, double y) const
 	Point2DArray<5> subPoints = GenerateNeighboringPoints<5>(subCell);
 	ReplaceNeighboringPoints(cell, points, subCell, subPoints);
 	// Level 2: List of segments
-	Segment3DChainArray<5, 1> subSegments = GenerateSubSegments<5, 1>(cell, subdividedSegments, subPoints);
+	Segment3DChainArray<5, 2> subSegments = GenerateSubSegments<5, 2>(cell, subdividedSegments, subPoints);
 
 
 	// In which level 3 cell is the point (x, y)
@@ -454,7 +484,7 @@ double Noise<I>::evaluate(double x, double y) const
 	Point2DArray<5> subSubPoints = GenerateNeighboringPoints<5>(subSubCell);
 	ReplaceNeighboringPoints(subCell, subPoints, subSubCell, subSubPoints);
 	// Level 3: List of segments
-	Segment3DChainArray<5, 1> subSubSegments = GenerateSubSubSegments<5, 1>(cell, subdividedSegments, subCell, subSegments, subSubPoints);
+	Segment3DChainArray<5, 2> subSubSegments = GenerateSubSubSegments<5, 2>(cell, subdividedSegments, subCell, subSegments, subSubPoints);
 
 	double value = 0.0;
 
@@ -695,6 +725,21 @@ typename Noise<I>::Segment3DChainArray<N - 2, 1> Noise<I>::GenerateSegments(cons
 	return segments;
 }
 
+template <typename I>
+template <size_t D>
+void Noise<I>::SegmentChainFromPoints(const Point3D& start, const std::array<Point3D, D - 1>& midPoints, const Point3D& end, Segment3DChain<D>& outSegmentChain) const
+{
+	// First subdivided segment
+	outSegmentChain.front().a = start;
+	for (int d = 0; d < midPoints.size(); d++)
+	{
+		outSegmentChain[d].b = midPoints[d];
+		outSegmentChain[d + 1].a = midPoints[d];
+	}
+	// Last subdivided segment
+	outSegmentChain.back().b = end;
+}
+
 /// <summary>
 /// Subdivide all segments in a Segment3DArray&lt;N&gt; in D smaller segments using an interpolant spline.
 /// </summary>
@@ -742,15 +787,7 @@ void Noise<I>::SubdivideSegments(const Cell& cell, const Segment3DChainArray<N, 
 				}
 			}
 			
-			// First subdivided segment
-			subdividedSegments[i - 1][j - 1].front().a = currSegment.a;
-			for (int d = 0; d < midPoints.size(); d++)
-			{
-				subdividedSegments[i - 1][j - 1][d].b = midPoints[d];
-				subdividedSegments[i - 1][j - 1][d + 1].a = midPoints[d];
-			}
-			// Last subdivided segment
-			subdividedSegments[i - 1][j - 1].back().b = currSegment.b;
+			SegmentChainFromPoints(currSegment.a, midPoints, currSegment.b, subdividedSegments[i - 1][j - 1]);
 		}
 	}
 }
@@ -786,7 +823,7 @@ typename Noise<I>::Segment3DChainArray<N2, D2> Noise<I>::GenerateSubSegments(con
 
 			Point3D p(points[i][j].x, points[i][j].y, elevation);
 
-			subSegments[i][j][0] = ConnectPointToSegmentAngle(p, nearestSegmentDist, nearestSegment);
+			subSegments[i][j] = ConnectPointToSegmentAngle<D2>(p, nearestSegmentDist, nearestSegment);
 		}
 	}
 
@@ -825,7 +862,7 @@ typename Noise<I>::Segment3DChainArray<N3, D3> Noise<I>::GenerateSubSubSegments(
 
 			Point3D p(points[i][j].x, points[i][j].y, elevation);
 
-			subSubSegments[i][j][0] = ConnectPointToSegmentAngle(p, nearestSegmentDist, nearestSegment);
+			subSubSegments[i][j] = ConnectPointToSegmentAngle<D3>(p, nearestSegmentDist, nearestSegment);
 		}
 	}
 
@@ -894,7 +931,7 @@ double Noise<I>::ComputeColorSegments(const Cell& cell, const Segment3DChainArra
 
 template <typename I>
 template <size_t N, size_t D>
-double Noise<I>::ComputeColor(const Cell& cell, const Segment3DChainArray<N - 4, D>& subdividedSegments, const Point2DArray<N>& points, double x, double y) const
+double Noise<I>::ComputeColor(const Cell& cell, const Segment3DChainArray<N - 4,D>& segments, const Point2DArray<N>& points, double x, double y) const
 {
 	// Find color
 	double value = 0.0;
@@ -902,12 +939,12 @@ double Noise<I>::ComputeColor(const Cell& cell, const Segment3DChainArray<N - 4,
 	if (m_displayPoints)
 	{
 		value = std::max(value, ComputeColorPoints<N>(x, y, points, 0.0625));
-		value = std::max(value, ComputeColorPoints<N - 4, D>(x, y, subdividedSegments, 0.03125));
+		value = std::max(value, ComputeColorPoints<N - 4, D>(x, y, segments, 0.03125));
 	}
 
 	if (m_displaySegments)
 	{
-		value = std::max(value, ComputeColorSegments<N - 4>(cell, subdividedSegments, 1, x, y, 0.015625));
+		value = std::max(value, ComputeColorSegments<N - 4>(cell, segments, 1, x, y, 0.015625));
 	}
 
 	if (m_displayGrid)
@@ -928,6 +965,7 @@ double Noise<I>::ComputeColorSub(const Cell& cell, const Segment3DChainArray<N, 
 	if (m_displayPoints)
 	{
 		value = std::max(value, ComputeColorPoints<N>(x, y, points, 0.03125));
+		value = std::max(value, ComputeColorPoints<N, D>(x, y, segments, 0.015625));
 	}
 
 	if (m_displaySegments)
@@ -954,11 +992,12 @@ double Noise<I>::ComputeColorSubSub(const Cell& cell, const Segment3DChainArray<
 	if (m_displayPoints)
 	{
 		value = std::max(value, ComputeColorPoints<N>(x, y, points, 0.015625));
+		value = std::max(value, ComputeColorPoints<N, D>(x, y, segments, 0.0078125));
 	}
 
 	if (m_displaySegments)
 	{
-		value = std::max(value, ComputeColorSegments<N>(cell, segments, 2, x, y, 0.0078125));
+		value = std::max(value, ComputeColorSegments<N>(cell, segments, 2, x, y, 0.00390625));
 	}
 
 	if (m_displayGrid)
