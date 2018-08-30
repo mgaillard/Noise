@@ -326,6 +326,15 @@ double Noise<I>::EvaluateControlFunction(const Point2D& point) const
 	return value;
 }
 
+/// <summary>
+/// Connect a point to a segment
+/// If the nearest point lies on the segment (between A and B), the point is connected to the segment to form a 45 degrees angle
+/// If the nearest point on the segment is A or B, connect to it.
+/// </summary>
+/// <param name="point">Coordinates of the point to connect</param>
+/// <param name="segmentDist">Distance from the point to the segment</param>
+/// <param name="segment">Segment with which connect the point</param>
+/// <returns>A chain of segments connecting the point with the segment</returns>
 template <typename I>
 template <size_t D>
 typename Noise<I>::Segment3DChain<D> Noise<I>::ConnectPointToSegmentAngle(const Point3D & point, double segmentDist, const Segment3D& segment) const
@@ -360,12 +369,34 @@ typename Noise<I>::Segment3DChain<D> Noise<I>::ConnectPointToSegmentAngle(const 
 	const Segment3D straightSegment(point, straightSegmentEnd);
 
 	// Subdivide the straightSegment into D smaller segments
-	std::array<Point3D, D - 1> generatedSegmentPoints = Subdivide<D - 1>(straightSegment);
+	std::array<Point3D, D - 1> generatedSegmentPoints;
+	if (length_sq(straightSegment) > 0.0)
+	{
+		// If the segment exists, we can smooth it
+		Point3D splineStart = 2.0 * straightSegment.a - straightSegment.b;
+		Point3D splineEnd = 2.0 * segment.b - segment.a;
+		generatedSegmentPoints = SubdivideCatmullRomSpline<D - 1>(splineStart, straightSegment.a, straightSegment.b, splineEnd);
+	}
+	else
+	{
+		// If the segment is a point, it is impossible to smooth it
+		generatedSegmentPoints = Subdivide<D - 1>(straightSegment);
+	}
+
 	SegmentChainFromPoints(straightSegment.a, generatedSegmentPoints, straightSegment.b, generatedSegment);
 	
 	return generatedSegment;
 }
 
+/// <summary>
+/// Connect a point to a segment
+/// Most of the time, the point is connected to the segment to form a 45 degrees angle
+/// The rest of the time it is connected to either segment.a or segment.b
+/// </summary>
+/// <param name="point">Coordinates of the point to connect</param>
+/// <param name="segmentDist">Distance from the point to the segment</param>
+/// <param name="segment">Segment with which connect the point</param>
+/// <returns>A chain of segments connecting the point with the segment</returns>
 template <typename I>
 template <size_t D>
 typename Noise<I>::Segment3DChain<D> Noise<I>::ConnectPointToSegmentAngleMid(const Point3D& point, double segmentDist, const Segment3D& segment) const
@@ -383,16 +414,39 @@ typename Noise<I>::Segment3DChain<D> Noise<I>::ConnectPointToSegmentAngleMid(con
 	// The intersection must lie on the segment
 	v = clamp(v, 0.0, 1.0);
 
-	const Point3D segmentEnd(lerp(segment, u));
-	const Segment3D straightSegment(point, segmentEnd);
+	const Point3D straightSegmentEnd(lerp(segment, v));
+	const Segment3D straightSegment(point, straightSegmentEnd);
 
 	// Subdivide the straightSegment into D smaller segments
-	std::array<Point3D, D - 1> generatedSegmentPoints = Subdivide<D - 1>(straightSegment);
+	std::array<Point3D, D - 1> generatedSegmentPoints;
+	if (length_sq(straightSegment) > 0.0)
+	{
+		// If the segment exists, we can smooth it
+		Point3D splineStart = 2.0 * straightSegment.a - straightSegment.b;
+		Point3D splineEnd = 2.0 * segment.b - segment.a;
+		generatedSegmentPoints = SubdivideCatmullRomSpline<D - 1>(splineStart, straightSegment.a, straightSegment.b, splineEnd);
+	}
+	else
+	{
+		// If the segment is a point, it is impossible to smooth it
+		generatedSegmentPoints = Subdivide<D - 1>(straightSegment);
+	}
+
 	SegmentChainFromPoints(straightSegment.a, generatedSegmentPoints, straightSegment.b, generatedSegment);
 
 	return generatedSegment;
 }
 
+/// <summary>
+/// Connect a point to a segment
+/// The point is connected to the nearest point on the segment
+/// Most of the time, the generated segment is orthogonal to the segment
+/// The rest of the time it is connected to segment.a
+/// </summary>
+/// <param name="point">Coordinates of the point to connect</param>
+/// <param name="segmentDist">Distance from the point to the segment</param>
+/// <param name="segment">Segment with which connect the point</param>
+/// <returns>A chain of segments connecting the point with the segment</returns>
 template <typename I>
 template <size_t D>
 typename Noise<I>::Segment3DChain<D> Noise<I>::ConnectPointToSegmentNearestPoint(const Point3D& point, double segmentDist, const Segment3D& segment) const
