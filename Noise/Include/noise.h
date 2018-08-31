@@ -137,14 +137,11 @@ private:
 
 	double ComputeColorGrid(double x, double y, double deltaX, double deltaY, double radius) const;
 
-	template <size_t N, size_t D>
-	double ComputeColor(double x, double y, const Cell& cell, const Segment3DChainArray<N - 4,D>& segments, const Point2DArray<N>& points) const;
+	template <size_t N1, size_t D1, size_t N2>
+	double ComputeColor(double x, double y, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Point2DArray<N2>& points) const;
 
-	template <size_t N, size_t D>
-	double ComputeColorSub(double x, double y, const Cell& cell, const Segment3DChainArray<N, D>& segments, const Point2DArray<N>& points) const;
-
-	template <size_t N, size_t D>
-	double ComputeColorSubSub(double x, double y, const Cell& cell, const Segment3DChainArray<N, D>& segments, const Point2DArray<N>& points) const;
+	template <size_t N1, size_t D1, size_t N2, typename ...Tail>
+	double ComputeColor(double x, double y, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Point2DArray<N2>& points, Tail&&... tail) const;
 
 	template <size_t N1, size_t D1, size_t N2, size_t D2, size_t N3, size_t D3>
 	double ComputeColorPrimitives(double x, double y, const Cell& cell, const Segment3DChainArray<N1, D1>& subdividedSegments, const Cell& subCell, const Segment3DChainArray<N2, D2>& subSegments, const Cell& subSubCell, const Segment3DChainArray<N3, D3>& subSubSegments, const Point2DArray<N3>& subSubPoints) const;
@@ -542,11 +539,9 @@ double Noise<I>::evaluate(double x, double y) const
 
 	double value = 0.0;
 
-	// value = std::max(value, ComputeColorControlFunction(cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, x, y));
+	// value = std::max(value, ComputeColorControlFunction(x, y, cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments));
 	value = std::max(value, ComputeColorPrimitives(x, y, cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, subSubPoints));
-	value = std::max(value, ComputeColor(x, y, cell, subdividedSegments, points));
-	value = std::max(value, ComputeColorSub(x, y, subCell, subSegments, subPoints));
-	value = std::max(value, ComputeColorSubSub(x, y, subSubCell, subSubSegments, subSubPoints));
+	value = std::max(value, ComputeColor(x, y, cell, subdividedSegments, points, subCell, subSegments, subPoints, subSubCell, subSubSegments, subSubPoints));
 
 	return value;
 }
@@ -984,85 +979,45 @@ double Noise<I>::ComputeColorSegments(const Cell& cell, const Segment3DChainArra
 }
 
 template <typename I>
-template <size_t N, size_t D>
-double Noise<I>::ComputeColor(double x, double y, const Cell& cell, const Segment3DChainArray<N - 4,D>& segments, const Point2DArray<N>& points) const
+template <size_t N1, size_t D1, size_t N2>
+double Noise<I>::ComputeColor(double x, double y, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Point2DArray<N2>& points) const
 {
-	// Find color
 	double value = 0.0;
+
+	const double radius = 1.0 / (16.0 * cell.resolution);
 
 	if (m_displayPoints)
 	{
-		value = std::max(value, ComputeColorPoints<N>(x, y, points, 0.0625));
-		value = std::max(value, ComputeColorPoints<N - 4, D>(x, y, segments, 0.03125));
+		value = std::max(value, ComputeColorPoints(x, y, points, radius));
+		value = std::max(value, ComputeColorPoints(x, y, segments, radius / 2.0));
 	}
 
 	if (m_displaySegments)
 	{
-		value = std::max(value, ComputeColorSegments<N - 4>(cell, segments, 1, x, y, 0.015625));
+		value = std::max(value, ComputeColorSegments(cell, segments, 2, x, y, radius / 4.0));
 	}
 
 	if (m_displayGrid)
 	{
-		value = std::max(value, ComputeColorGrid(x, y, 0.0, 0.0, 0.0078125));
+		const double gridStep = 1.0 / cell.resolution;
+
+		for (double grid = 0.0; grid < 1.0; grid += gridStep)
+		{
+			value = std::max(value, ComputeColorGrid(x, y, grid, grid, radius / 8.0));
+		}
 	}
 
 	return value;
 }
 
 template <typename I>
-template <size_t N, size_t D>
-double Noise<I>::ComputeColorSub(double x, double y, const Cell& cell, const Segment3DChainArray<N, D>& segments, const Point2DArray<N>& points) const
+template <size_t N1, size_t D1, size_t N2, typename ...Tail>
+double Noise<I>::ComputeColor(double x, double y, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Point2DArray<N2>& points, Tail&&... tail) const
 {
-	// Find color
-	double value = 0.0;
+	double valueCurrentLevel = ComputeColor(x, y, cell, segments, points);
+	double valueTail = ComputeColor(x, y, std::forward<Tail>(tail)...);
 
-	if (m_displayPoints)
-	{
-		value = std::max(value, ComputeColorPoints<N>(x, y, points, 0.03125));
-		value = std::max(value, ComputeColorPoints<N, D>(x, y, segments, 0.015625));
-	}
-
-	if (m_displaySegments)
-	{
-		value = std::max(value, ComputeColorSegments<N>(cell, segments, 2, x, y, 0.0078125));
-	}
-
-	if (m_displayGrid)
-	{
-		value = std::max(value, ComputeColorGrid(x, y, 0.0, 0.0, 0.00390625));
-		value = std::max(value, ComputeColorGrid(x, y, 0.5, 0.5, 0.00390625));
-	}
-
-	return value;
-}
-
-template <typename I>
-template <size_t N, size_t D>
-double Noise<I>::ComputeColorSubSub(double x, double y, const Cell& cell, const Segment3DChainArray<N, D>& segments, const Point2DArray<N>& points) const
-{
-	// Find color
-	double value = 0.0;
-
-	if (m_displayPoints)
-	{
-		value = std::max(value, ComputeColorPoints<N>(x, y, points, 0.015625));
-		value = std::max(value, ComputeColorPoints<N, D>(x, y, segments, 0.0078125));
-	}
-
-	if (m_displaySegments)
-	{
-		value = std::max(value, ComputeColorSegments<N>(cell, segments, 2, x, y, 0.00390625));
-	}
-
-	if (m_displayGrid)
-	{
-		value = std::max(value, ComputeColorGrid(x, y, 0.0, 0.0, 0.001953125));
-		value = std::max(value, ComputeColorGrid(x, y, 0.25, 0.25, 0.001953125));
-		value = std::max(value, ComputeColorGrid(x, y, 0.50, 0.50, 0.001953125));
-		value = std::max(value, ComputeColorGrid(x, y, 0.75, 0.75, 0.001953125));
-	}
-
-	return value;
+	return std::max(valueCurrentLevel, valueTail);
 }
 
 template <typename I>
