@@ -529,7 +529,7 @@ double Noise<I>::evaluate(double x, double y) const
 	Point2DArray<5> subPoints = GenerateNeighboringPoints<5>(subCell);
 	ReplaceNeighboringPoints(cell, points, subCell, subPoints);
 	// Level 2: List of segments
-	Segment3DChainArray<5, 2> subSegments = GenerateSubSegments<5, 2>(cell, subdividedSegments, subPoints);
+	Segment3DChainArray<5, 3> subSegments = GenerateSubSegments<5, 3>(cell, subdividedSegments, subPoints);
 
 
 	// In which level 3 cell is the point (x, y)
