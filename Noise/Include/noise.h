@@ -1010,11 +1010,11 @@ double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& cell, co
 
 	// Generate higher resolution points, which are going to be the centers of primitives
 	Cell higherResCell = subSubCell;
-	Point2DArray<5> points = subSubPoints;
+	Point2DArray<N3> points = subSubPoints;
 	for (int i = 0; i < resolutionSteps; i++)
 	{
 		Cell newCell = GetCell(x, y, 2 * higherResCell.resolution);
-		Point2DArray<5> newPoints = GenerateNeighboringPoints<5>(newCell);
+		Point2DArray<N3> newPoints = GenerateNeighboringPoints<N3>(newCell);
 		ReplaceNeighboringPoints(higherResCell, subSubPoints, newCell, newPoints);
 
 		higherResCell = newCell;
