@@ -114,11 +114,14 @@ private:
 	template <size_t N, size_t D>
 	void SubdivideSegments(const Cell& cell, const Segment3DChainArray<N, 1>& segments, Segment3DChainArray<N - 2, D>& subdividedSegments) const;
 
-	template <size_t N2, size_t D2, size_t N1, size_t D1>
-	Segment3DChainArray<N2, D2> GenerateSubSegments(const Point2DArray<N2>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments) const;
+	template <size_t N2, size_t N1, size_t D1>
+	void CheckEnoughSegmentInVicinity(const Point2DArray<N2>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments) const;
 
-	template <size_t N3, size_t D3, size_t N1, size_t D1, size_t N2, size_t D2>
-	Segment3DChainArray<N3, D3> GenerateSubSubSegments(const Point2DArray<N3>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Cell& subCell, const Segment3DChainArray<N2, D2>& subSegments) const;
+	template <size_t N2, size_t N1, size_t D1, typename ...Tail>
+	void CheckEnoughSegmentInVicinity(const Point2DArray<N2>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, Tail&&... tail) const;
+
+	template <size_t N, size_t D, typename ...Tail>
+	Segment3DChainArray<N, D> GenerateSubSegments(const Point2DArray<N>& points, Tail&&... tail) const;
 
 	// ----- Compute Color -----
 
@@ -535,7 +538,7 @@ double Noise<I>::evaluate(double x, double y) const
 	Point2DArray<5> subSubPoints = GenerateNeighboringPoints<5>(subSubCell);
 	ReplaceNeighboringPoints(subCell, subPoints, subSubCell, subSubPoints);
 	// Level 3: List of segments
-	Segment3DChainArray<5, 2> subSubSegments = GenerateSubSubSegments<5, 2>(subSubPoints, cell, subdividedSegments, subCell, subSegments);
+	Segment3DChainArray<5, 2> subSubSegments = GenerateSubSegments<5, 2>(subSubPoints, cell, subdividedSegments, subCell, subSegments);
 
 	double value = 0.0;
 
@@ -842,21 +845,37 @@ void Noise<I>::SubdivideSegments(const Cell& cell, const Segment3DChainArray<N, 
 }
 
 template <typename I>
-template <size_t N2, size_t D2, size_t N1, size_t D1>
-typename Noise<I>::Segment3DChainArray<N2, D2> Noise<I>::GenerateSubSegments(const Point2DArray<N2>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments) const
+template <size_t N2, size_t N1, size_t D1>
+void Noise<I>::CheckEnoughSegmentInVicinity(const Point2DArray<N2>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments) const
 {
 	// Ensure that there is enough segments around to connect sub points
 	static_assert(N1 >= (2 * ((N2 + 1) / 4) + 3), "Not enough segments in the vicinity to connect sub points.");
+}
+
+template <typename I>
+template <size_t N2, size_t N1, size_t D1, typename ...Tail>
+void Noise<I>::CheckEnoughSegmentInVicinity(const Point2DArray<N2>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, Tail&&... tail) const
+{
+	CheckEnoughSegmentInVicinity(points, cell, segments);
+	CheckEnoughSegmentInVicinity(points, std::forward<Tail>(tail)...);
+}
+
+template <typename I>
+template <size_t N, size_t D, typename ...Tail>
+typename Noise<I>::Segment3DChainArray<N, D> Noise<I>::GenerateSubSegments(const Point2DArray<N>& points, Tail&&... tail) const
+{
+	// Ensure that there is enough segments around to connect sub points
+	CheckEnoughSegmentInVicinity(points, std::forward<Tail>(tail)...);
 
 	// Connect each point to the nearest segment
-	Segment3DChainArray<N2, D2> subSegments;
+	Segment3DChainArray<N, D> subSegments;
 	for (int i = 0; i < points.size(); i++)
 	{
 		for (int j = 0; j < points[i].size(); j++)
 		{
 			// Find the nearest segment
 			Segment3D nearestSegment;
-			double nearestSegmentDist = NearestSegmentProjectionZ(1, points[i][j], nearestSegment, cell, segments);
+			double nearestSegmentDist = NearestSegmentProjectionZ(1, points[i][j], nearestSegment, std::forward<Tail>(tail)...);
 
 			double u = pointLineSegmentProjection(points[i][j], ProjectionZ(nearestSegment));
 
@@ -872,50 +891,11 @@ typename Noise<I>::Segment3DChainArray<N2, D2> Noise<I>::GenerateSubSegments(con
 
 			Point3D p(points[i][j].x, points[i][j].y, elevation);
 
-			subSegments[i][j] = ConnectPointToSegmentAngle<D2>(p, nearestSegmentDist, nearestSegment);
+			subSegments[i][j] = ConnectPointToSegmentAngle<D>(p, nearestSegmentDist, nearestSegment);
 		}
 	}
 
 	return subSegments;
-}
-
-template <typename I>
-template <size_t N3, size_t D3, size_t N1, size_t D1, size_t N2, size_t D2>
-typename Noise<I>::Segment3DChainArray<N3, D3> Noise<I>::GenerateSubSubSegments(const Point2DArray<N3>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Cell& subCell, const Segment3DChainArray<N2, D2>& subSegments) const
-{
-	// Ensure that there is enough segments around to connect sub points
-	static_assert(N1 >= (2 * ((N3 + 1) / 4) + 3), "Not enough level 1 segments in the vicinity to connect sub points.");
-	static_assert(N2 >= (2 * ((N3 + 1) / 4) + 3), "Not enough level 2 segments in the vicinity to connect sub points.");
-
-	// Connect each point to the nearest segment
-	Segment3DChainArray<N3, D3> subSubSegments;
-	for (int i = 0; i < points.size(); i++)
-	{
-		for (int j = 0; j < points[i].size(); j++)
-		{
-			// Find the nearest segment
-			Segment3D nearestSegment;
-			double nearestSegmentDist = NearestSegmentProjectionZ(1, points[i][j], nearestSegment, cell, segments, subCell, subSegments);
-
-			double u = pointLineSegmentProjection(points[i][j], ProjectionZ(nearestSegment));
-
-			// Compute elevation of the point on the control function
-			double elevationControlFunction = EvaluateControlFunction(points[i][j]);
-			// Compute elevation with a constraint on slope
-			// Warning: the distance taken to compute the slope is the distance to the nearest segment
-			// The final segment will have a flatter slope
-			// Minimum slope 0.5 deg, tan(0.5 deg) = 0.01
-			double elevationWithMinSlope = lerp(nearestSegment.a.z, nearestSegment.b.z, u) + 0.01 * nearestSegmentDist;
-
-			double elevation = std::max(elevationWithMinSlope, elevationControlFunction);
-
-			Point3D p(points[i][j].x, points[i][j].y, elevation);
-
-			subSubSegments[i][j] = ConnectPointToSegmentAngle<D3>(p, nearestSegmentDist, nearestSegment);
-		}
-	}
-
-	return subSubSegments;
 }
 
 template <typename I>
