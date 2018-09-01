@@ -115,10 +115,10 @@ private:
 	void SubdivideSegments(const Cell& cell, const Segment3DChainArray<N, 1>& segments, Segment3DChainArray<N - 2, D>& subdividedSegments) const;
 
 	template <size_t N2, size_t D2, size_t N1, size_t D1>
-	Segment3DChainArray<N2, D2> GenerateSubSegments(const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Point2DArray<N2>& points) const;
+	Segment3DChainArray<N2, D2> GenerateSubSegments(const Point2DArray<N2>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments) const;
 
 	template <size_t N3, size_t D3, size_t N1, size_t D1, size_t N2, size_t D2>
-	Segment3DChainArray<N3, D3> GenerateSubSubSegments(const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Cell& subCell, const Segment3DChainArray<N2, D2>& subSegments, const Point2DArray<N3>& points) const;
+	Segment3DChainArray<N3, D3> GenerateSubSubSegments(const Point2DArray<N3>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Cell& subCell, const Segment3DChainArray<N2, D2>& subSegments) const;
 
 	// ----- Compute Color -----
 
@@ -526,7 +526,7 @@ double Noise<I>::evaluate(double x, double y) const
 	Point2DArray<5> subPoints = GenerateNeighboringPoints<5>(subCell);
 	ReplaceNeighboringPoints(cell, points, subCell, subPoints);
 	// Level 2: List of segments
-	Segment3DChainArray<5, 3> subSegments = GenerateSubSegments<5, 3>(cell, subdividedSegments, subPoints);
+	Segment3DChainArray<5, 3> subSegments = GenerateSubSegments<5, 3>(subPoints, cell, subdividedSegments);
 
 
 	// In which level 3 cell is the point (x, y)
@@ -535,7 +535,7 @@ double Noise<I>::evaluate(double x, double y) const
 	Point2DArray<5> subSubPoints = GenerateNeighboringPoints<5>(subSubCell);
 	ReplaceNeighboringPoints(subCell, subPoints, subSubCell, subSubPoints);
 	// Level 3: List of segments
-	Segment3DChainArray<5, 2> subSubSegments = GenerateSubSubSegments<5, 2>(cell, subdividedSegments, subCell, subSegments, subSubPoints);
+	Segment3DChainArray<5, 2> subSubSegments = GenerateSubSubSegments<5, 2>(subSubPoints, cell, subdividedSegments, subCell, subSegments);
 
 	double value = 0.0;
 
@@ -843,7 +843,7 @@ void Noise<I>::SubdivideSegments(const Cell& cell, const Segment3DChainArray<N, 
 
 template <typename I>
 template <size_t N2, size_t D2, size_t N1, size_t D1>
-typename Noise<I>::Segment3DChainArray<N2, D2> Noise<I>::GenerateSubSegments(const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Point2DArray<N2>& points) const
+typename Noise<I>::Segment3DChainArray<N2, D2> Noise<I>::GenerateSubSegments(const Point2DArray<N2>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments) const
 {
 	// Ensure that there is enough segments around to connect sub points
 	static_assert(N1 >= (2 * ((N2 + 1) / 4) + 3), "Not enough segments in the vicinity to connect sub points.");
@@ -881,7 +881,7 @@ typename Noise<I>::Segment3DChainArray<N2, D2> Noise<I>::GenerateSubSegments(con
 
 template <typename I>
 template <size_t N3, size_t D3, size_t N1, size_t D1, size_t N2, size_t D2>
-typename Noise<I>::Segment3DChainArray<N3, D3> Noise<I>::GenerateSubSubSegments(const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Cell& subCell, const Segment3DChainArray<N2, D2>& subSegments, const Point2DArray<N3>& points) const
+typename Noise<I>::Segment3DChainArray<N3, D3> Noise<I>::GenerateSubSubSegments(const Point2DArray<N3>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Cell& subCell, const Segment3DChainArray<N2, D2>& subSegments) const
 {
 	// Ensure that there is enough segments around to connect sub points
 	static_assert(N1 >= (2 * ((N3 + 1) / 4) + 3), "Not enough level 1 segments in the vicinity to connect sub points.");
