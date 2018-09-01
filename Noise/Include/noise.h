@@ -146,8 +146,8 @@ private:
 	template <size_t N1, size_t D1, size_t N2, typename ...Tail>
 	double ComputeColor(double x, double y, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Point2DArray<N2>& points, Tail&&... tail) const;
 
-	template <size_t N1, size_t D1, size_t N2, size_t D2, size_t N3, size_t D3>
-	double ComputeColorPrimitives(double x, double y, const Cell& cell, const Segment3DChainArray<N1, D1>& subdividedSegments, const Cell& subCell, const Segment3DChainArray<N2, D2>& subSegments, const Cell& subSubCell, const Segment3DChainArray<N3, D3>& subSubSegments, const Point2DArray<N3>& subSubPoints) const;
+	template <size_t N, typename ...Tail>
+	double ComputeColorPrimitives(double x, double y, const Cell& higherResCell, const Point2DArray<N>& higherResPoints, Tail&&... tail) const;
 
 	template <typename ...Tail>
 	double ComputeColorControlFunction(double x, double y, Tail&&... tail) const;
@@ -512,39 +512,56 @@ template <typename I>
 double Noise<I>::evaluate(double x, double y) const
 {
 	// In which level 1 cell is the point (x, y)
-	Cell cell = GetCell(x, y, 1);
+	Cell cell1 = GetCell(x, y, 1);
 	// Level 1: Points in neighboring cells
-	Point2DArray<9> points = GenerateNeighboringPoints<9>(cell);
+	Point2DArray<9> points1 = GenerateNeighboringPoints<9>(cell1);
 	// Level 1: List of segments
-	Segment3DChainArray<7, 1> segments = GenerateSegments(points);
+	const Segment3DChainArray<7, 1> straightSegments1 = GenerateSegments(points1);
 	// Subdivide segments of level 1
-	Segment3DChainArray<5, 4> subdividedSegments;
-	Point2DArray<5> midPoints;
-	SubdivideSegments(cell, segments, subdividedSegments);
+	Segment3DChainArray<5, 4> segments1;
+	SubdivideSegments(cell1, straightSegments1, segments1);
 
 
 	// In which level 2 cell is the point (x, y)
-	Cell subCell = GetCell(x, y, 2);
+	Cell cell2 = GetCell(x, y, 2);
 	// Level 2: Points in neighboring cells
-	Point2DArray<5> subPoints = GenerateNeighboringPoints<5>(subCell);
-	ReplaceNeighboringPoints(cell, points, subCell, subPoints);
+	Point2DArray<5> points2 = GenerateNeighboringPoints<5>(cell2);
+	ReplaceNeighboringPoints(cell1, points1, cell2, points2);
 	// Level 2: List of segments
-	Segment3DChainArray<5, 3> subSegments = GenerateSubSegments<5, 3>(subPoints, cell, subdividedSegments);
+	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(points2, cell1, segments1);
 
-
+	
 	// In which level 3 cell is the point (x, y)
-	Cell subSubCell = GetCell(x, y, 4);
+	Cell cell3 = GetCell(x, y, 4);
 	// Level 3: Points in neighboring cells
-	Point2DArray<5> subSubPoints = GenerateNeighboringPoints<5>(subSubCell);
-	ReplaceNeighboringPoints(subCell, subPoints, subSubCell, subSubPoints);
+	Point2DArray<5> points3 = GenerateNeighboringPoints<5>(cell3);
+	ReplaceNeighboringPoints(cell2, points2, cell3, points3);
 	// Level 3: List of segments
-	Segment3DChainArray<5, 2> subSubSegments = GenerateSubSegments<5, 2>(subSubPoints, cell, subdividedSegments, subCell, subSegments);
+	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(points3, cell1, segments1, cell2, segments2);
+
+	
+	// In which level 4 cell is the point (x, y)
+	Cell cell4 = GetCell(x, y, 8);
+	// Level 4: Points in neighboring cells
+	Point2DArray<5> points4 = GenerateNeighboringPoints<5>(cell4);
+	ReplaceNeighboringPoints(cell3, points3, cell4, points4);
+	// Level 4: List of segments
+	Segment3DChainArray<5, 1> segments4 = GenerateSubSegments<5, 1>(points4, cell1, segments1, cell2, segments2, cell3, segments3);
+
+
+	// In which level 5 cell is the point (x, y)
+	Cell cell5 = GetCell(x, y, 16);
+	// Level 5: Points in neighboring cells
+	Point2DArray<5> points5 = GenerateNeighboringPoints<5>(cell5);
+	ReplaceNeighboringPoints(cell4, points4, cell5, points5);
+	// Level 5: List of segments
+	Segment3DChainArray<5, 1> segments5 = GenerateSubSegments<5, 1>(points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4);
 
 	double value = 0.0;
 
-	// value = std::max(value, ComputeColorControlFunction(x, y, cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments));
-	value = std::max(value, ComputeColorPrimitives(x, y, cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments, subSubPoints));
-	value = std::max(value, ComputeColor(x, y, cell, subdividedSegments, points, subCell, subSegments, subPoints, subSubCell, subSubSegments, subSubPoints));
+	// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3));
+	value = std::max(value, ComputeColorPrimitives(x, y, cell5, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5));
+	value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
 
 	return value;
 }
@@ -1001,28 +1018,28 @@ double Noise<I>::ComputeColor(double x, double y, const Cell& cell, const Segmen
 }
 
 template <typename I>
-template <size_t N1, size_t D1, size_t N2, size_t D2, size_t N3, size_t D3>
-double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& cell, const Segment3DChainArray<N1, D1>& subdividedSegments, const Cell& subCell, const Segment3DChainArray<N2, D2>& subSegments, const Cell& subSubCell, const Segment3DChainArray<N3, D3>& subSubSegments, const Point2DArray<N3>& subSubPoints) const
+template <size_t N, typename ...Tail>
+double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& higherResCell, const Point2DArray<N>& higherResPoints, Tail&&... tail) const
 {
 	const Point2D point(x, y);
 
 	const int resolutionSteps = 3;
 
 	// Generate higher resolution points, which are going to be the centers of primitives
-	Cell higherResCell = subSubCell;
-	Point2DArray<N3> points = subSubPoints;
+	Cell highestResCell = higherResCell;
+	Point2DArray<N> highestResPoints = higherResPoints;
 	for (int i = 0; i < resolutionSteps; i++)
 	{
-		Cell newCell = GetCell(x, y, 2 * higherResCell.resolution);
-		Point2DArray<N3> newPoints = GenerateNeighboringPoints<N3>(newCell);
-		ReplaceNeighboringPoints(higherResCell, subSubPoints, newCell, newPoints);
+		Cell newCell = GetCell(x, y, 2 * highestResCell.resolution);
+		Point2DArray<N> newPoints = GenerateNeighboringPoints<N>(newCell);
+		ReplaceNeighboringPoints(highestResCell, higherResPoints, newCell, newPoints);
 
-		higherResCell = newCell;
-		points = newPoints;
+		highestResCell = newCell;
+		highestResPoints = newPoints;
 	}
 
 	// Radius of primitives
-	const double R = 2.0 / higherResCell.resolution;
+	const double R = 2.0 / highestResCell.resolution;
 	// Power to the Wyvill-Galin function
 	const double P = 3.0;
 	// tan(45 deg) = 1.00
@@ -1032,16 +1049,16 @@ double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& cell, co
 	double numerator = 0.0;
 	double denominator = 0.0;
 
-	for (int i = 0; i < points.size(); i++)
+	for (int i = 0; i < highestResPoints.size(); i++)
 	{
-		for (int j = 0; j < points[i].size(); j++)
+		for (int j = 0; j < highestResPoints[i].size(); j++)
 		{
 			// Nearest segment to points[i][j] and nearest point on this segment
 			Segment3D primitiveNearestSegment;
-			double distancePrimitiveCenter = NearestSegmentProjectionZ(1, points[i][j], primitiveNearestSegment, cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments);
-			double uPrimitive = pointLineSegmentProjection(points[i][j], ProjectionZ(primitiveNearestSegment));
+			double distancePrimitiveCenter = NearestSegmentProjectionZ(1, highestResPoints[i][j], primitiveNearestSegment, std::forward<Tail>(tail)...);
+			double uPrimitive = pointLineSegmentProjection(highestResPoints[i][j], ProjectionZ(primitiveNearestSegment));
 
-			double distancePrimitive = dist(point, points[i][j]);
+			double distancePrimitive = dist(point, highestResPoints[i][j]);
 
 			double alphaPrimitive = WyvillGalinFunction(distancePrimitive, R, P);
 			// Slope of approximately arctan(tanSlope) deg
