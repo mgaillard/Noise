@@ -146,8 +146,8 @@ private:
 	template <size_t N1, size_t D1, size_t N2, size_t D2, size_t N3, size_t D3>
 	double ComputeColorPrimitives(double x, double y, const Cell& cell, const Segment3DChainArray<N1, D1>& subdividedSegments, const Cell& subCell, const Segment3DChainArray<N2, D2>& subSegments, const Cell& subSubCell, const Segment3DChainArray<N3, D3>& subSubSegments, const Point2DArray<N3>& subSubPoints) const;
 
-	template <size_t N1, size_t D1, size_t N2, size_t D2, size_t N3, size_t D3>
-	double ComputeColorControlFunction(double x, double y, const Cell& cell, const Segment3DChainArray<N1, D1>& subdividedSegments, const Cell& subCell, const Segment3DChainArray<N2, D2>& subSegments, const Cell& subSubCell, const Segment3DChainArray<N3, D3>& subSubSegments) const;
+	template <typename ...Tail>
+	double ComputeColorControlFunction(double x, double y, Tail&&... tail) const;
 	
 	// Random generator used by the class
 	typedef std::minstd_rand RandomGenerator;
@@ -1078,14 +1078,14 @@ double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& cell, co
 }
 
 template <typename I>
-template <size_t N1, size_t D1, size_t N2, size_t D2, size_t N3, size_t D3>
-double Noise<I>::ComputeColorControlFunction(double x, double y, const Cell& cell, const Segment3DChainArray<N1, D1>& subdividedSegments, const Cell& subCell, const Segment3DChainArray<N2, D2>& subSegments, const Cell& subSubCell, const Segment3DChainArray<N3, D3>& subSubSegments) const
+template <typename ...Tail>
+double Noise<I>::ComputeColorControlFunction(double x, double y, Tail&&... tail) const
 {
 	const Point2D point(x, y);
 
 	// nearest segment
 	Segment3D nearestSegment;
-	double d = NearestSegmentProjectionZ(1, point, nearestSegment, cell, subdividedSegments, subCell, subSegments, subSubCell, subSubSegments);
+	double d = NearestSegmentProjectionZ(1, point, nearestSegment, std::forward<Tail>(tail)...);
 
 	double value = 0.0;
 
