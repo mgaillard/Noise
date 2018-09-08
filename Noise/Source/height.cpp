@@ -1,5 +1,7 @@
 #include "height.h"
 
+#include <limits>
+
 double ComputeHeightSegmentsProjection(const std::array<Segment3D, 2>& segments, const Point2D& point)
 {
 	double value = 0.0;
