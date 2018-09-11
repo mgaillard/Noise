@@ -740,9 +740,9 @@ void Noise<I>::ReplaceNeighboringPoints(const Cell& cell, const Point2DArray<M>&
 	// Offset to iterate over points only using the pointsUpRes cells in the center
 	int offset = (M - pointsUpRes) / 2;
 	// Replace subpoints by the already existing points
-	for (int i = offset; i < points.size() - offset; i++)
+	for (int i = offset; i < points.size() - offset; ++i)
 	{
-		for (int j = offset; j < points[i].size() - offset; j++)
+		for (int j = offset; j < points[i].size() - offset; ++j)
 		{
 			int k, l;
 			std::tie(k, l) = GetArrayCell(subCell, subPoints, GetCell(points[i][j].x, points[i][j].y, subCell.resolution));
