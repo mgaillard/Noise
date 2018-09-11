@@ -1101,7 +1101,7 @@ double Noise<I>::ComputeColorControlFunction(double x, double y, Tail&&... tail)
 	Segment3D nearestSegment;
 	double d = NearestSegmentProjectionZ(1, point, nearestSegment, std::forward<Tail>(tail)...);
 
-	double value = 0.0;
+	double value;
 
 	if (d < (1.0 / 32.0))
 	{
