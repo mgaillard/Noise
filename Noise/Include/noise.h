@@ -187,7 +187,7 @@ private:
 	const Point2D m_controlFunctionTopLeft;
 	const Point2D m_controlFunctionBottomRight;
 
-	// Epsilon used to biais the area where points are generated in cells
+	// Epsilon used to bias the area where points are generated in cells
 	const double m_eps;
 
 	const int CACHE_X = 32;
