@@ -69,7 +69,7 @@ private:
 
 		Cell() = default;
 
-		Cell(int x, int y, int resolution) : x(x), y(y), resolution(resolution) {}
+		Cell(const int x, const int y, const int resolution) : x(x), y(y), resolution(resolution) {}
 	};
 
 	// ----- Points -----
