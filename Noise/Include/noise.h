@@ -44,19 +44,19 @@ public:
 private:
 	// ----- Types -----
 	template <typename T, size_t N>
-	using Array2d = std::array<std::array<T, N>, N>;
+	using Array2D = std::array<std::array<T, N>, N>;
 
 	template <size_t D>
 	using Segment3DChain = std::array<Segment3D, D>;
 
 	template <size_t N>
-	using DoubleArray = Array2d<double, N>;
+	using DoubleArray = Array2D<double, N>;
 
 	template <size_t N>
-	using Point2DArray = Array2d<Point2D, N>;
+	using Point2DArray = Array2D<Point2D, N>;
 
 	template <size_t N, size_t D>
-	using Segment3DChainArray = Array2d<Segment3DChain<D>, N>;
+	using Segment3DChainArray = Array2D<Segment3DChain<D>, N>;
 
 	/// <summary>
 	/// Represents a cell at a specific resolution
@@ -97,7 +97,7 @@ private:
 	Segment3DChain<D> ConnectPointToSegmentNearestPoint(const Point3D& point, double segmentDist, const Segment3D& segment) const;
 
 	template <typename T, size_t N>
-	std::tuple<int, int> GetArrayCell(const Cell& arrCell, const Array2d<T, N>& arr, const Cell& cell) const;
+	std::tuple<int, int> GetArrayCell(const Cell& arrCell, const Array2D<T, N>& arr, const Cell& cell) const;
 
 	template <size_t N, size_t D>
 	double NearestSegmentProjectionZ(int neighborhood, const Point2D& point, Segment3D& nearestSegmentOut, const Cell& cell, const Segment3DChainArray<N, D>& segments) const;
@@ -585,7 +585,7 @@ double Noise<I>::evaluate(double x, double y) const
 
 template <typename I>
 template <typename T, size_t N>
-std::tuple<int, int> Noise<I>::GetArrayCell(const Cell& arrCell, const Array2d<T, N>& arr, const Cell& cell) const
+std::tuple<int, int> Noise<I>::GetArrayCell(const Cell& arrCell, const Array2D<T, N>& arr, const Cell& cell) const
 {
 	int i = (int(arr.size()) / 2) - arrCell.y + cell.y;
 	int j = (int(arr.front().size()) / 2) - arrCell.x + cell.x;
