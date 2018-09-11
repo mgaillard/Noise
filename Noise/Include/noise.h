@@ -732,14 +732,14 @@ template <typename I>
 template <size_t N, size_t M>
 void Noise<I>::ReplaceNeighboringPoints(const Cell& cell, const Point2DArray<M>& points, const Cell& subCell, Point2DArray<N>& subPoints) const
 {
-	// Ensure that there is enough points around to replace subpoints
+	// Ensure that there is enough points around to replace sub-points
 	static_assert(M >= (2 * ((N + 1) / 4) + 1), "Not enough points in the vicinity to replace the sub points.");
 	
 	// Number of cells (or points) to consider in the upper resolution
 	int pointsUpRes = 2 * ((N + 1) / 4) + 1;
 	// Offset to iterate over points only using the pointsUpRes cells in the center
 	int offset = (M - pointsUpRes) / 2;
-	// Replace subpoints by the already existing points
+	// Replace sub-points by the already existing points
 	for (int i = offset; i < points.size() - offset; ++i)
 	{
 		for (int j = offset; j < points[i].size() - offset; ++j)
@@ -827,7 +827,7 @@ void Noise<I>::SegmentChainFromPoints(const Point3D& start, const std::array<Poi
 }
 
 /// <summary>
-/// Subdivide all segments in a Segment3DArray&lt;N&gt; in D smaller segments using an interpolant spline.
+/// Subdivide all segments in a Segment3DArray&lt;N&gt; in D smaller segments using an interpolation spline.
 /// </summary>
 /// Require a Segment3DArray&lt;N&gt; to generate a Segment3DChainArray&lt;N - 2, D&gt; because to subdivide a segment we need its predecessors and successors.
 template <typename I>
@@ -842,38 +842,38 @@ void Noise<I>::SubdivideSegments(const Cell& cell, const Segment3DChainArray<N, 
 	{
 		for (int j = 1; j < segments[i].size() - 1; j++)
 		{
-			Segment3D currSegment = segments[i][j][0];
+			Segment3D currentSegment = segments[i][j][0];
 
-			std::array<Point3D, D - 1> midPoints = Subdivide<D - 1>(currSegment);
+			std::array<Point3D, D - 1> midPoints = Subdivide<D - 1>(currentSegment);
 
 			// If the current segment's length is more than 0, we can subdivide and smooth it
-			if (currSegment.a != currSegment.b)
+			if (currentSegment.a != currentSegment.b)
 			{
 				// Segments ending in A
 				Segment3D lastEndingInA;
-				const int numberSegmentEndingInA = SegmentsEndingInP(cell, segments, currSegment.a, lastEndingInA);
+				const int numberSegmentEndingInA = SegmentsEndingInP(cell, segments, currentSegment.a, lastEndingInA);
 
 				// Segments starting in B
 				Segment3D lastStartingInB;
-				const int numberStartingInB = SegmentsStartingInP(cell, segments, currSegment.b, lastStartingInB);
+				const int numberStartingInB = SegmentsStartingInP(cell, segments, currentSegment.b, lastStartingInB);
 
 				if (numberSegmentEndingInA == 1 && numberStartingInB == 1)
 				{
-					midPoints = SubdivideCatmullRomSpline<D - 1>(lastEndingInA.a, currSegment.a, currSegment.b, lastStartingInB.b);
+					midPoints = SubdivideCatmullRomSpline<D - 1>(lastEndingInA.a, currentSegment.a, currentSegment.b, lastStartingInB.b);
 				}
 				else if (numberSegmentEndingInA != 1 && numberStartingInB == 1)
 				{
-					Point3D fakeStartingPoint = 2.0 * currSegment.a - currSegment.b;
-					midPoints = SubdivideCatmullRomSpline<D - 1>(fakeStartingPoint, currSegment.a, currSegment.b, lastStartingInB.b);
+					Point3D fakeStartingPoint = 2.0 * currentSegment.a - currentSegment.b;
+					midPoints = SubdivideCatmullRomSpline<D - 1>(fakeStartingPoint, currentSegment.a, currentSegment.b, lastStartingInB.b);
 				}
 				else if (numberSegmentEndingInA == 1 && numberStartingInB != 1)
 				{
-					Point3D fakeEndingPoint = 2.0 * currSegment.b - currSegment.a;
-					midPoints = SubdivideCatmullRomSpline<D - 1>(lastEndingInA.a, currSegment.a, currSegment.b, fakeEndingPoint);
+					Point3D fakeEndingPoint = 2.0 * currentSegment.b - currentSegment.a;
+					midPoints = SubdivideCatmullRomSpline<D - 1>(lastEndingInA.a, currentSegment.a, currentSegment.b, fakeEndingPoint);
 				}
 			}
 			
-			SegmentChainFromPoints(currSegment.a, midPoints, currSegment.b, subdividedSegments[i - 1][j - 1]);
+			SegmentChainFromPoints(currentSegment.a, midPoints, currentSegment.b, subdividedSegments[i - 1][j - 1]);
 		}
 	}
 }
