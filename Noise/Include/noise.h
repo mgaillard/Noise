@@ -248,7 +248,7 @@ Point2D Noise<I>::GeneratePoint(int x, int y) const
 	const int seed = GenerateSeedNoise(x, y);
 	RandomGenerator generator(seed);
 
-	std::uniform_real_distribution<double> distribution(m_eps, 1.0 - m_eps);
+	const std::uniform_real_distribution<double> distribution(m_eps, 1.0 - m_eps);
 	const double px = distribution(generator);
 	const double py = distribution(generator);
 
@@ -368,7 +368,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngle
 		// Find the intersection so that the angle between the two segments is 45°
 		// v designates the ratio of the segment on which the intersection is located
 		// v = 0 is point A of the segment ; v = 1 is point B of the segment
-		double v = u + segmentDist / length(ProjectionZ(segment));
+		const double v = u + segmentDist / length(ProjectionZ(segment));
 
 		if (v > 1.0)
 		{
@@ -390,8 +390,8 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngle
 	if (length_sq(straightSegment) > 0.0)
 	{
 		// If the segment exists, we can smooth it
-		Point3D splineStart = 2.0 * straightSegment.a - straightSegment.b;
-		Point3D splineEnd = 2.0 * segment.b - segment.a;
+		const Point3D splineStart = 2.0 * straightSegment.a - straightSegment.b;
+		const Point3D splineEnd = 2.0 * segment.b - segment.a;
 		generatedSegmentPoints = SubdivideCatmullRomSpline<D - 1>(splineStart, straightSegment.a, straightSegment.b, splineEnd);
 	}
 	else
@@ -422,7 +422,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngle
 
 	// Find an intersection on the segment with respect to constraints
 	// u = 0 is point A of the segment ; u = 1 is point B of the segment
-	double u = pointLineProjection(ProjectionZ(point), ProjectionZ(segment));
+	const double u = pointLineProjection(ProjectionZ(point), ProjectionZ(segment));
 
 	// Find the intersection so that the angle between the two segments is 45°
 	// v designates the ratio of the segment on which the intersection is located
@@ -439,8 +439,8 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngle
 	if (length_sq(straightSegment) > 0.0)
 	{
 		// If the segment exists, we can smooth it
-		Point3D splineStart = 2.0 * straightSegment.a - straightSegment.b;
-		Point3D splineEnd = 2.0 * segment.b - segment.a;
+		const Point3D splineStart = 2.0 * straightSegment.a - straightSegment.b;
+		const Point3D splineEnd = 2.0 * segment.b - segment.a;
 		generatedSegmentPoints = SubdivideCatmullRomSpline<D - 1>(splineStart, straightSegment.a, straightSegment.b, splineEnd);
 	}
 	else
@@ -472,7 +472,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentNeare
 
 	// Find an intersection on the segment with respect to constraints
 	// u = 0 is point A of the segment ; u = 1 is point B of the segment
-	double u = pointLineSegmentProjection(ProjectionZ(point), ProjectionZ(segment));
+	const double u = pointLineSegmentProjection(ProjectionZ(point), ProjectionZ(segment));
 
 	const Point3D segmentEnd(lerp(segment, u));
 	const Segment3D straightSegment(point, segmentEnd);
@@ -614,7 +614,7 @@ double Noise<I>::NearestSegmentProjectionZ(int neighborhood, const Point2D& poin
 			for (int k = 0; k < segments[i][j].size(); k++)
 			{
 				Point2D c;
-				double dist = distToLineSegment(point, ProjectionZ(segments[i][j][k]), c);
+				const double dist = distToLineSegment(point, ProjectionZ(segments[i][j][k]), c);
 
 				if (dist < nearestSegmentDistance)
 				{
@@ -636,7 +636,7 @@ double Noise<I>::NearestSegmentProjectionZ(int neighborhood, const Point2D& poin
 
 	// Nearest segment in the sub resolutions
 	Segment3D nearestSubSegment;
-	double nearestSubSegmentDistance = NearestSegmentProjectionZ(neighborhood, point, nearestSubSegment, std::forward<Tail>(tail)...);
+	const double nearestSubSegmentDistance = NearestSegmentProjectionZ(neighborhood, point, nearestSubSegment, std::forward<Tail>(tail)...);
 
 	// Nearest segment in the current resolution
 	double nearestSegmentDistance = NearestSegmentProjectionZ(neighborhood, point, nearestSegmentOut, cell, segments);
@@ -851,11 +851,11 @@ void Noise<I>::SubdivideSegments(const Cell& cell, const Segment3DChainArray<N, 
 			{
 				// Segments ending in A
 				Segment3D lastEndingInA;
-				int numberSegmentEndingInA = SegmentsEndingInP(cell, segments, currSegment.a, lastEndingInA);
+				const int numberSegmentEndingInA = SegmentsEndingInP(cell, segments, currSegment.a, lastEndingInA);
 
 				// Segments starting in B
 				Segment3D lastStartingInB;
-				int numberStartingInB = SegmentsStartingInP(cell, segments, currSegment.b, lastStartingInB);
+				const int numberStartingInB = SegmentsStartingInP(cell, segments, currSegment.b, lastStartingInB);
 
 				if (numberSegmentEndingInA == 1 && numberStartingInB == 1)
 				{
@@ -921,7 +921,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N COMMA D>) Noise<I>::GenerateSubSe
 			// Minimum slope 0.5 deg, tan(0.5 deg) = 0.01
 			double elevationWithMinSlope = lerp(nearestSegment.a.z, nearestSegment.b.z, u) + 0.01 * nearestSegmentDist;
 
-			double elevation = std::max(elevationWithMinSlope, elevationControlFunction);
+			const double elevation = std::max(elevationWithMinSlope, elevationControlFunction);
 
 			Point3D p(points[i][j].x, points[i][j].y, elevation);
 
@@ -982,7 +982,7 @@ double Noise<I>::ComputeColorSegments(const Cell& cell, const Segment3DChainArra
 
 	// White when near to a segment
 	Segment3D nearestSegment;
-	double nearestSegmentDistance = NearestSegmentProjectionZ(neighborhood, Point2D(x, y), nearestSegment, cell, segments);
+	const double nearestSegmentDistance = NearestSegmentProjectionZ(neighborhood, Point2D(x, y), nearestSegment, cell, segments);
 
 	if (nearestSegmentDistance < radius)
 	{
@@ -1028,8 +1028,8 @@ template <typename I>
 template <size_t N1, size_t D1, size_t N2, typename ...Tail>
 double Noise<I>::ComputeColor(double x, double y, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, const Point2DArray<N2>& points, Tail&&... tail) const
 {
-	double valueCurrentLevel = ComputeColor(x, y, cell, segments, points);
-	double valueTail = ComputeColor(x, y, std::forward<Tail>(tail)...);
+	const double valueCurrentLevel = ComputeColor(x, y, cell, segments, points);
+	const double valueTail = ComputeColor(x, y, std::forward<Tail>(tail)...);
 
 	return std::max(valueCurrentLevel, valueTail);
 }
@@ -1072,14 +1072,14 @@ double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& higherRe
 		{
 			// Nearest segment to points[i][j] and nearest point on this segment
 			Segment3D primitiveNearestSegment;
-			double distancePrimitiveCenter = NearestSegmentProjectionZ(1, highestResPoints[i][j], primitiveNearestSegment, std::forward<Tail>(tail)...);
+			const double distancePrimitiveCenter = NearestSegmentProjectionZ(1, highestResPoints[i][j], primitiveNearestSegment, std::forward<Tail>(tail)...);
 			double uPrimitive = pointLineSegmentProjection(highestResPoints[i][j], ProjectionZ(primitiveNearestSegment));
 
 			double distancePrimitive = dist(point, highestResPoints[i][j]);
 
-			double alphaPrimitive = WyvillGalinFunction(distancePrimitive, R, P);
+			const double alphaPrimitive = WyvillGalinFunction(distancePrimitive, R, P);
 			// Slope of approximately arctan(tanSlope) deg
-			double elevation = lerp(primitiveNearestSegment.a.z, primitiveNearestSegment.b.z, uPrimitive) + tanSlope * distancePrimitiveCenter;
+			const double elevation = lerp(primitiveNearestSegment.a.z, primitiveNearestSegment.b.z, uPrimitive) + tanSlope * distancePrimitiveCenter;
 			numerator += alphaPrimitive * elevation;
 			denominator += alphaPrimitive;
 		}
@@ -1099,13 +1099,13 @@ double Noise<I>::ComputeColorControlFunction(double x, double y, Tail&&... tail)
 
 	// nearest segment
 	Segment3D nearestSegment;
-	double d = NearestSegmentProjectionZ(1, point, nearestSegment, std::forward<Tail>(tail)...);
+	const double d = NearestSegmentProjectionZ(1, point, nearestSegment, std::forward<Tail>(tail)...);
 
 	double value;
 
 	if (d < (1.0 / 32.0))
 	{
-		double u = pointLineSegmentProjection(point, ProjectionZ(nearestSegment));
+		const double u = pointLineSegmentProjection(point, ProjectionZ(nearestSegment));
 		// Elevation of the nearest point
 		value = lerp(nearestSegment.a.z, nearestSegment.b.z, u);
 	}
