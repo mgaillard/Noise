@@ -37,7 +37,16 @@ template <typename I>
 class Noise
 {
 public:
-	Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed = 0, double eps = 0.0, bool displayPoints = true, bool displaySegments = true, bool displayGrid = true);
+	Noise(std::unique_ptr<ControlFunction<I>> controlFunction,
+	      const Point2D& noiseTopLeft,
+	      const Point2D& noiseBottomRight,
+	      const Point2D& controlFunctionTopLeft,
+	      const Point2D& controlFunctionBottomRight,
+	      int seed = 0,
+	      double eps = 0.0,
+	      bool displayPoints = true,
+	      bool displaySegments = true,
+	      bool displayGrid = true);
 
 	double evaluate(double x, double y) const;
 
