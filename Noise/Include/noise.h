@@ -109,7 +109,13 @@ private:
 	std::tuple<int, int> GetArrayCell(const Cell& arrCell, const Array2D<T, N>& arr, const Cell& cell) const;
 
 	template <size_t N, size_t D>
+	double NearestSegmentProjectionZ(int neighborhood, const Point2D& point, Cell& nearestSegmentCellOut, Segment3D& nearestSegmentOut, const Cell& cell, const Segment3DChainArray<N, D>& segments) const;
+
+	template <size_t N, size_t D>
 	double NearestSegmentProjectionZ(int neighborhood, const Point2D& point, Segment3D& nearestSegmentOut, const Cell& cell, const Segment3DChainArray<N, D>& segments) const;
+
+	template <size_t N, size_t D, typename ...Tail>
+	double NearestSegmentProjectionZ(int neighborhood, const Point2D& point, Cell& nearestSegmentCellOut, Segment3D& nearestSegmentOut, const Cell& cell, const Segment3DChainArray<N, D>& segments, Tail&&... tail) const;
 
 	template <size_t N, size_t D, typename ...Tail>
 	double NearestSegmentProjectionZ(int neighborhood, const Point2D& point, Segment3D& nearestSegmentOut, const Cell& cell, const Segment3DChainArray<N, D>& segments, Tail&&... tail) const;
@@ -604,7 +610,7 @@ std::tuple<int, int> Noise<I>::GetArrayCell(const Cell& arrCell, const Array2D<T
 
 template <typename I>
 template <size_t N, size_t D>
-double Noise<I>::NearestSegmentProjectionZ(int neighborhood, const Point2D& point, Segment3D& nearestSegmentOut, const Cell& cell, const Segment3DChainArray<N, D>& segments) const
+double Noise<I>::NearestSegmentProjectionZ(int neighborhood, const Point2D& point, Cell& nearestSegmentCellOut, Segment3D& nearestSegmentOut, const Cell& cell, const Segment3DChainArray<N, D>& segments) const
 {
 	assert(neighborhood >= 0);
 
@@ -629,6 +635,10 @@ double Noise<I>::NearestSegmentProjectionZ(int neighborhood, const Point2D& poin
 				{
 					nearestSegmentDistance = dist;
 					nearestSegmentOut = segments[i][j][k];
+
+					nearestSegmentCellOut.x = i;
+					nearestSegmentCellOut.y = j;
+					nearestSegmentCellOut.resolution = cell.resolution;
 				}
 			}
 		}
@@ -638,25 +648,43 @@ double Noise<I>::NearestSegmentProjectionZ(int neighborhood, const Point2D& poin
 }
 
 template <typename I>
+template <size_t N, size_t D>
+double Noise<I>::NearestSegmentProjectionZ(int neighborhood, const Point2D& point, Segment3D& nearestSegmentOut, const Cell& cell, const Segment3DChainArray<N, D>& segments) const
+{
+	Cell placeholderCell;
+	return NearestSegmentProjectionZ(neighborhood, point, placeholderCell, nearestSegmentOut, cell, segments);
+}
+
+template <typename I>
 template <size_t N, size_t D, typename ...Tail>
-double Noise<I>::NearestSegmentProjectionZ(int neighborhood, const Point2D& point, Segment3D& nearestSegmentOut, const Cell& cell, const Segment3DChainArray<N, D>& segments, Tail&&... tail) const
+double Noise<I>::NearestSegmentProjectionZ(int neighborhood, const Point2D& point, Cell& nearestSegmentCellOut, Segment3D& nearestSegmentOut, const Cell& cell, const Segment3DChainArray<N, D>& segments, Tail&&... tail) const
 {
 	assert(neighborhood >= 0);
 
 	// Nearest segment in the sub resolutions
+	Cell nearestSubSegmentCell;
 	Segment3D nearestSubSegment;
-	const double nearestSubSegmentDistance = NearestSegmentProjectionZ(neighborhood, point, nearestSubSegment, std::forward<Tail>(tail)...);
+	const double nearestSubSegmentDistance = NearestSegmentProjectionZ(neighborhood, point, nearestSubSegmentCell, nearestSubSegment, std::forward<Tail>(tail)...);
 
 	// Nearest segment in the current resolution
-	double nearestSegmentDistance = NearestSegmentProjectionZ(neighborhood, point, nearestSegmentOut, cell, segments);
+	double nearestSegmentDistance = NearestSegmentProjectionZ(neighborhood, point, nearestSegmentCellOut, nearestSegmentOut, cell, segments);
 
 	if (nearestSubSegmentDistance < nearestSegmentDistance)
 	{
 		nearestSegmentDistance = nearestSubSegmentDistance;
 		nearestSegmentOut = nearestSubSegment;
+		nearestSegmentCellOut = nearestSubSegmentCell;
 	}
 
 	return nearestSegmentDistance;
+}
+
+template <typename I>
+template <size_t N, size_t D, typename ...Tail>
+double Noise<I>::NearestSegmentProjectionZ(int neighborhood, const Point2D& point, Segment3D& nearestSegmentOut, const Cell& cell, const Segment3DChainArray<N, D>& segments, Tail&&... tail) const
+{
+	Cell placeholderCell;
+	return NearestSegmentProjectionZ(neighborhood, point, placeholderCell, nearestSegmentOut, cell, segments, std::forward<Tail>(tail)...);
 }
 
 template <typename I>
