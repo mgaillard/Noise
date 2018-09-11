@@ -10,7 +10,7 @@ const double EPS = 1e-9;
 
 struct Point2D;
 struct Vec2D;
-struct Segement2D;
+struct Segment2D;
 
 /*
  * Point in a 2D Space

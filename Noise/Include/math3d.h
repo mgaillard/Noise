@@ -9,7 +9,7 @@
 
 struct Point3D;
 struct Vec3D;
-struct Segement3D;
+struct Segment3D;
 
 /*
  * Point in a 3D Space
