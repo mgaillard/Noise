@@ -709,7 +709,7 @@ int Noise<I>::SegmentsStartingInP(const Cell& cell, const Segment3DChainArray<N,
 
 template <typename I>
 template <size_t N>
-typename Noise<I>::Point2DArray<N> Noise<I>::GenerateNeighboringPoints(const Cell& cell) const
+DEPENDENT_TYPE(Noise<I>, Point2DArray<N>) Noise<I>::GenerateNeighboringPoints(const Cell& cell) const
 {
 	Point2DArray<N> points;
 
