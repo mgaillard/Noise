@@ -133,7 +133,6 @@
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\height.cpp" />
     <ClCompile Include="Source\main.cpp" />
     <ClCompile Include="Source\math2d.cpp" />
     <ClCompile Include="Source\math3d.cpp" />
@@ -141,11 +140,9 @@
     <ClCompile Include="Source\perlin.cpp" />
     <ClCompile Include="Source\spline.cpp" />
     <ClCompile Include="Source\utils.cpp" />
-    <ClCompile Include="Source\worley.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\controlfunction.h" />
-    <ClInclude Include="Include\height.h" />
     <ClInclude Include="Include\math2d.h" />
     <ClInclude Include="Include\math3d.h" />
     <ClInclude Include="Include\noise.h" />
@@ -154,7 +151,6 @@
     <ClInclude Include="Include\planecontrolfunction.h" />
     <ClInclude Include="Include\spline.h" />
     <ClInclude Include="Include\utils.h" />
-    <ClInclude Include="Include\worley.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

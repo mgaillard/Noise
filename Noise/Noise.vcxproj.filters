@@ -20,9 +20,6 @@
     <ClCompile Include="Source\noise.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\worley.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Source\perlin.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -38,15 +35,9 @@
     <ClCompile Include="Source\spline.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\height.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\noise.h">
-      <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\worley.h">
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="Include\perlin.h">
@@ -62,9 +53,6 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="Include\spline.h">
-      <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\height.h">
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="Include\controlfunction.h">

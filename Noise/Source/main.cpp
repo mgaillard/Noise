@@ -6,7 +6,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include "worley.h"
 #include "perlin.h"
 #include "noise.h"
 #include "math2d.h"
