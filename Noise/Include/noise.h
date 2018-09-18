@@ -543,6 +543,10 @@ double Noise<I>::ComputeColorGrid(double x, double y, double deltaX, double delt
 template <typename I>
 double Noise<I>::evaluate(double x, double y) const
 {
+	const int levelNumber = 5;
+
+	double value = 0.0;
+
 	// In which level 1 cell is the point (x, y)
 	Cell cell1 = GetCell(x, y, 1);
 	// Level 1: Points in neighboring cells
@@ -553,6 +557,13 @@ double Noise<I>::evaluate(double x, double y) const
 	Segment3DChainArray<5, 4> segments1;
 	SubdivideSegments(cell1, straightSegments1, segments1);
 
+	if (levelNumber == 1)
+	{
+		value = std::max(value, ComputeColorPrimitives(x, y, cell1, points1, cell1, segments1));
+		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1));
+
+		return value;
+	}
 
 	// In which level 2 cell is the point (x, y)
 	Cell cell2 = GetCell(x, y, 2);
@@ -562,6 +573,13 @@ double Noise<I>::evaluate(double x, double y) const
 	// Level 2: List of segments
 	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(points2, cell1, segments1);
 
+	if (levelNumber == 2)
+	{
+		value = std::max(value, ComputeColorPrimitives(x, y, cell2, points2, cell1, segments1, cell2, segments2));
+		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2));
+
+		return value;
+	}
 	
 	// In which level 3 cell is the point (x, y)
 	Cell cell3 = GetCell(x, y, 4);
@@ -571,6 +589,13 @@ double Noise<I>::evaluate(double x, double y) const
 	// Level 3: List of segments
 	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(points3, cell1, segments1, cell2, segments2);
 
+	if (levelNumber == 3)
+	{
+		value = std::max(value, ComputeColorPrimitives(x, y, cell3, points3, cell1, segments1, cell2, segments2, cell3, segments3));
+		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3));
+
+		return value;
+	}
 	
 	// In which level 4 cell is the point (x, y)
 	Cell cell4 = GetCell(x, y, 8);
@@ -580,6 +605,13 @@ double Noise<I>::evaluate(double x, double y) const
 	// Level 4: List of segments
 	Segment3DChainArray<5, 1> segments4 = GenerateSubSegments<5, 1>(points4, cell1, segments1, cell2, segments2, cell3, segments3);
 
+	if (levelNumber == 4)
+	{
+		value = std::max(value, ComputeColorPrimitives(x, y, cell4, points4, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4));
+		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4));
+		
+		return value;
+	}
 
 	// In which level 5 cell is the point (x, y)
 	Cell cell5 = GetCell(x, y, 16);
@@ -589,11 +621,13 @@ double Noise<I>::evaluate(double x, double y) const
 	// Level 5: List of segments
 	Segment3DChainArray<5, 1> segments5 = GenerateSubSegments<5, 1>(points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4);
 
-	double value = 0.0;
+	if (levelNumber == 5)
+	{
+		value = std::max(value, ComputeColorPrimitives(x, y, cell5, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5));
+		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
 
-	// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5));
-	value = std::max(value, ComputeColorPrimitives(x, y, cell5, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5));
-	value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
+		return value;
+	}
 
 	return value;
 }
