@@ -50,7 +50,8 @@ public:
 
 	double evaluate(double x, double y) const;
 
-	double displaySegment(double x, double y, const Segment3D& segment, const Point3D& point) const;
+	template <size_t D>
+	double displaySegment(double x, double y, const std::array<Segment3D, D>& segments, const Point3D& point) const;
 
 private:
 	// ----- Types -----
@@ -635,25 +636,47 @@ double Noise<I>::evaluate(double x, double y) const
 }
 
 template <typename I>
-double Noise<I>::displaySegment(double x, double y, const Segment3D& segment, const Point3D& point) const
+template <size_t D>
+double Noise<I>::displaySegment(double x, double y, const std::array<Segment3D, D>& segments, const Point3D& point) const
 {
 	const double radius = 1.0 / 32;
 
-	// Compute the segment chain
+	// A placeholder point to compute the distance from the point to a segment
 	Point2D c;
+
+	// Find the nearest segment
+	Segment3D segment = segments.front();
+	double nearestSegmentDist = distToLineSegment(ProjectionZ(point), ProjectionZ(segment), c);
+	for (auto&& s : segments)
+	{
+		const double newDist = distToLineSegment(ProjectionZ(point), ProjectionZ(s), c);
+
+		if (newDist < nearestSegmentDist)
+		{
+			nearestSegmentDist = newDist;
+			segment = s;
+		}
+	}
+
+	// Compute the segment chain
+	
 	const double segmentDist = distToLineSegment(ProjectionZ(point), ProjectionZ(segment), c);
-	Segment3DChain<4> segmentChain = ConnectPointToSegmentAngle<4>(point, segmentDist, segment);
+	Segment3DChain<4> segmentChain = ConnectPointToSegmentAngleMid<4>(point, segmentDist, segment);
 
 	double value = 0.0;
 
 	// Display the starting point
 	value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(point), 2.0 * radius));
-	// Display the segment and its points
-	value = std::max(value, ComputeColorSegment(x, y, ProjectionZ(segment), radius));
-	value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(segment.a), 2.0 * radius));
-	value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(segment.b), 2.0 * radius));
+	// Display the input segment chain and its points
+	for (auto&& s : segments)
+	{
+		value = std::max(value, ComputeColorSegment(x, y, ProjectionZ(s), radius));
+		value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(s.a), 2.0 * radius));
+		value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(s.b), 2.0 * radius));
+	}
+
 	// Display the segment chain that joins the point to the segment
-	for (const Segment3D& s : segmentChain)
+	for (auto&& s : segmentChain)
 	{
 		value = std::max(value, ComputeColorSegment(x, y, ProjectionZ(s), radius));
 		value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(s.a), 2.0 * radius));
