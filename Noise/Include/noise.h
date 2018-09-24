@@ -50,6 +50,8 @@ public:
 
 	double evaluate(double x, double y) const;
 
+	double displaySegment(double x, double y, const Segment3D& segment, const Point3D& point) const;
+
 private:
 	// ----- Types -----
 	template <typename T, size_t N>
@@ -628,6 +630,49 @@ double Noise<I>::evaluate(double x, double y) const
 
 		return value;
 	}
+
+	return value;
+}
+
+template <typename I>
+double Noise<I>::displaySegment(double x, double y, const Segment3D& segment, const Point3D& point) const
+{
+	const double radius = 1.0 / 32;
+
+	// Compute the segment chain
+	Point2D c;
+	const double segmentDist = distToLineSegment(ProjectionZ(point), ProjectionZ(segment), c);
+	Segment3DChain<4> segmentChain = ConnectPointToSegmentAngle<4>(point, segmentDist, segment);
+
+	double value = 0.0;
+
+	// Display the starting point
+	value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(point), 2.0 * radius));
+	// Display the segment and its points
+	value = std::max(value, ComputeColorSegment(x, y, ProjectionZ(segment), radius));
+	value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(segment.a), 2.0 * radius));
+	value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(segment.b), 2.0 * radius));
+	// Display the segment chain that joins the point to the segment
+	for (const Segment3D& s : segmentChain)
+	{
+		value = std::max(value, ComputeColorSegment(x, y, ProjectionZ(s), radius));
+		value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(s.a), 2.0 * radius));
+		value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(s.b), 2.0 * radius));
+	}
+
+	// Display control points
+	const Point3D connectingPoint = segmentChain.back().b;
+	const Point3D splineStart = 2.0 * point - connectingPoint;
+	const Segment3D splineHead(splineStart, point);
+	const Segment3D splineMiddle(point, connectingPoint);
+	const Point3D splineEnd = 2.0 * segment.b - segment.a;
+	const Segment3D splineTail(segment.b, splineEnd);
+
+	value = std::max(value, 0.50 * ComputeColorPoint(x, y, ProjectionZ(splineStart), 2.0 * radius));
+	value = std::max(value, 0.25 * ComputeColorSegment(x, y, ProjectionZ(splineHead), 0.5 * radius));
+	value = std::max(value, 0.25 * ComputeColorSegment(x, y, ProjectionZ(splineMiddle), 0.5 * radius));
+	value = std::max(value, 0.25 * ComputeColorSegment(x, y, ProjectionZ(splineTail), 0.5 * radius));
+	value = std::max(value, 0.50 * ComputeColorPoint(x, y, ProjectionZ(splineEnd), 2.0 * radius));
 
 	return value;
 }
