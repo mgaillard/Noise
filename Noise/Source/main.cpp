@@ -35,6 +35,32 @@ cv::Mat PerlinImage(const Point2D& a, const Point2D&b, int width, int height)
 }
 
 template<typename I>
+cv::Mat SegmentImage(const Noise<I>& noise, const Point2D& a, const Point2D&b, int width, int height)
+{
+	const Point3D point(-1.6, 0.16, 0.0);
+	const std::array<Segment3D, 2> segments = { {
+		{Point3D(1.0, 1.0, 0.0), Point3D(2.0, 3.0, 0.0)},
+		{Point3D(2.0, 3.0, 0.0), Point3D(2.0, 5.0, 0.0)}
+	} };
+
+	cv::Mat image(height, width, CV_16U);
+
+#pragma omp parallel for shared(image)
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			const double x = Remap(double(j), 0.0, double(width), a.x, b.x);
+			const double y = Remap(double(i), 0.0, double(height), a.y, b.y);
+
+			const double value = noise.displaySegment(x, y, segments, point);
+
+			image.at<uint16_t>(i, j) = uint16_t(value * numeric_limits<uint16_t>::max());
+		}
+	}
+
+	return image;
+}
+
+template<typename I>
 cv::Mat NoiseImage(const Noise<I>& noise, const Point2D& a, const Point2D&b, int width, int height)
 {
 	vector<vector<double> > temp(height, vector<double>(width));
