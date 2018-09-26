@@ -156,7 +156,7 @@ private:
 	void CheckEnoughSegmentInVicinity(const Point2DArray<N2>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, Tail&&... tail) const;
 
 	template <size_t N, size_t D, typename ...Tail>
-	Segment3DChainArray<N, D> GenerateSubSegments(const Point2DArray<N>& points, Tail&&... tail) const;
+	Segment3DChainArray<N, D> GenerateSubSegments(double minSlope, const Point2DArray<N>& points, Tail&&... tail) const;
 
 	// ----- Compute Color -----
 
@@ -547,6 +547,10 @@ template <typename I>
 double Noise<I>::evaluate(double x, double y) const
 {
 	const int levelNumber = 5;
+	const double minSlopeLevel2 = 0.09;
+	const double minSlopeLevel3 = 0.18;
+	const double minSlopeLevel4 = 0.38;
+	const double minSlopeLevel5 = 1.0;
 
 	double value = 0.0;
 
@@ -574,7 +578,7 @@ double Noise<I>::evaluate(double x, double y) const
 	Point2DArray<5> points2 = GenerateNeighboringPoints<5>(cell2);
 	ReplaceNeighboringPoints(cell1, points1, cell2, points2);
 	// Level 2: List of segments
-	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(points2, cell1, segments1);
+	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(minSlopeLevel2, points2, cell1, segments1);
 
 	if (levelNumber == 2)
 	{
@@ -590,7 +594,7 @@ double Noise<I>::evaluate(double x, double y) const
 	Point2DArray<5> points3 = GenerateNeighboringPoints<5>(cell3);
 	ReplaceNeighboringPoints(cell2, points2, cell3, points3);
 	// Level 3: List of segments
-	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(points3, cell1, segments1, cell2, segments2);
+	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(minSlopeLevel3, points3, cell1, segments1, cell2, segments2);
 
 	if (levelNumber == 3)
 	{
@@ -606,7 +610,7 @@ double Noise<I>::evaluate(double x, double y) const
 	Point2DArray<5> points4 = GenerateNeighboringPoints<5>(cell4);
 	ReplaceNeighboringPoints(cell3, points3, cell4, points4);
 	// Level 4: List of segments
-	Segment3DChainArray<5, 1> segments4 = GenerateSubSegments<5, 1>(points4, cell1, segments1, cell2, segments2, cell3, segments3);
+	Segment3DChainArray<5, 1> segments4 = GenerateSubSegments<5, 1>(minSlopeLevel4, points4, cell1, segments1, cell2, segments2, cell3, segments3);
 
 	if (levelNumber == 4)
 	{
@@ -622,7 +626,7 @@ double Noise<I>::evaluate(double x, double y) const
 	Point2DArray<5> points5 = GenerateNeighboringPoints<5>(cell5);
 	ReplaceNeighboringPoints(cell4, points4, cell5, points5);
 	// Level 5: List of segments
-	Segment3DChainArray<5, 1> segments5 = GenerateSubSegments<5, 1>(points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4);
+	Segment3DChainArray<5, 1> segments5 = GenerateSubSegments<5, 1>(minSlopeLevel5, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4);
 
 	if (levelNumber == 5)
 	{
@@ -1035,7 +1039,7 @@ void Noise<I>::CheckEnoughSegmentInVicinity(const Point2DArray<N2>& points, cons
 
 template <typename I>
 template <size_t N, size_t D, typename ...Tail>
-DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N COMMA D>) Noise<I>::GenerateSubSegments(const Point2DArray<N>& points, Tail&&... tail) const
+DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N COMMA D>) Noise<I>::GenerateSubSegments(double minSlope, const Point2DArray<N>& points, Tail&&... tail) const
 {
 	// Ensure that there is enough segments around to connect sub points
 	CheckEnoughSegmentInVicinity(points, std::forward<Tail>(tail)...);
@@ -1046,23 +1050,25 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N COMMA D>) Noise<I>::GenerateSubSe
 	{
 		for (int j = 0; j < points[i].size(); j++)
 		{
+			// The current point
+			const Point2D point = points[i][j];
+
 			// Find the nearest segment
 			Segment3D nearestSegment;
-			double nearestSegmentDist = NearestSegmentProjectionZ(1, points[i][j], nearestSegment, std::forward<Tail>(tail)...);
+			double nearestSegmentDist = NearestSegmentProjectionZ(1, point, nearestSegment, std::forward<Tail>(tail)...);
 
-			double u = pointLineSegmentProjection(points[i][j], ProjectionZ(nearestSegment));
+			const double u = pointLineSegmentProjection(point, ProjectionZ(nearestSegment));
+			const Point3D connectionPoint = lerp(nearestSegment, u);
+			const double distToConnectionPoint = dist(ProjectionZ(connectionPoint), point);
 
 			// Compute elevation of the point on the control function
-			double elevationControlFunction = EvaluateControlFunction(points[i][j]);
+			const double elevationControlFunction = EvaluateControlFunction(point);
 			// Compute elevation with a constraint on slope
-			// Warning: the distance taken to compute the slope is the distance to the nearest segment
-			// The final segment will have a flatter slope
-			// Minimum slope 0.5 deg, tan(0.5 deg) = 0.01
-			double elevationWithMinSlope = lerp(nearestSegment.a.z, nearestSegment.b.z, u) + 0.01 * nearestSegmentDist;
+			const double elevationWithMinSlope = connectionPoint.z + minSlope * distToConnectionPoint;
 
 			const double elevation = std::max(elevationWithMinSlope, elevationControlFunction);
 
-			Point3D p(points[i][j].x, points[i][j].y, elevation);
+			Point3D p(point.x, point.y, elevation);
 
 			subSegments[i][j] = ConnectPointToSegmentAngle<D>(p, nearestSegmentDist, nearestSegment);
 		}
