@@ -1204,8 +1204,6 @@ double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& higherRe
 	const double R = 2.0 / highestResCell.resolution;
 	// Power to the Wyvill-Galin function
 	const double P = 3.0;
-	// tan(45 deg) = 1.00
-	const double tanSlope = 1.0;
 
 	// Numerator and denominator used to compute the blend of primitives
 	double numerator = 0.0;
@@ -1225,8 +1223,14 @@ double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& higherRe
 
 			const double alphaPrimitive = WyvillGalinFunction(distancePrimitive, R, P);
 			const double nearestPointOnSegmentHeight = lerp(primitiveNearestSegment.a.z, primitiveNearestSegment.b.z, uPrimitive);
-			// Slope of approximately arctan(tanSlope) deg
-			const double elevation = nearestPointOnSegmentHeight + tanSlope * distancePrimitiveCenter;
+
+			// Adaptive slope depending on the mountain height
+			const double controlFunctionMinimum = 0.0;
+			const double controlFunctionMaximum = 1.0;
+			const double slopePower = 1.0;
+			const double slope = smootherstep(controlFunctionMinimum, controlFunctionMaximum, pow(nearestPointOnSegmentHeight, slopePower));
+			const double elevation = nearestPointOnSegmentHeight + slope * distancePrimitiveCenter;
+
 			numerator += alphaPrimitive * elevation;
 			denominator += alphaPrimitive;
 		}
