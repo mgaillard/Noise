@@ -197,6 +197,43 @@ inline Vec2D ProjectionZ(const Vec3D& v) {
 	return Vec2D(v.x, v.y);
 }
 
+inline double angle(const Vec3D& oa, const Vec3D& ob) {
+	return acos(dot(oa, ob) / sqrt(norm_sq(oa) * norm_sq(ob)));
+}
+
+inline Vec3D rotate_axis(const Vec3D& v, const Vec3D& axis, double angle)
+{
+	assert(norm_sq(axis) == 1.0);
+
+	const double sinAngle = sin(angle);
+	const double cosAngle = cos(angle);
+	const double oneMinusCosAngle = 1.0 - cosAngle;
+
+	const Vec3D rotMatrixRow0 = {
+		axis.x * axis.x + cosAngle * (1 - axis.x * axis.x),
+		axis.x * axis.y * oneMinusCosAngle - sinAngle * axis.z,
+		axis.x * axis.z * oneMinusCosAngle + sinAngle * axis.y
+	};
+
+	const Vec3D rotMatrixRow1 = {
+		axis.x * axis.y * oneMinusCosAngle + sinAngle * axis.z,
+		axis.y * axis.y + cosAngle * (1 - axis.y * axis.y),
+		axis.y * axis.z * oneMinusCosAngle - sinAngle * axis.x
+	};
+
+	const Vec3D rotMatrixRow2 = {
+		axis.x * axis.z * oneMinusCosAngle - sinAngle * axis.y,
+		axis.y * axis.z * oneMinusCosAngle + sinAngle * axis.x,
+		axis.z * axis.z + cosAngle * (1 - axis.z * axis.z)
+	};
+
+	return {
+		dot(v, rotMatrixRow0),
+		dot(v, rotMatrixRow1),
+		dot(v, rotMatrixRow2)
+	};
+}
+
 struct Segment3D
 {
 	Point3D a;
