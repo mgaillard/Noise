@@ -108,6 +108,9 @@ private:
 	template <size_t D>
 	Segment3DChain<D> ConnectPointToSegmentNearestPoint(const Point3D& point, double segmentDist, const Segment3D& segment) const;
 
+	template <size_t D>
+	Segment3DChain<D> ConnectPointToSegmentRivers(const Point3D& point, double segmentDist, const Segment3D& segment) const;
+
 	template <typename T, size_t N>
 	std::tuple<int, int> GetArrayCell(const Cell& arrCell, const Array2D<T, N>& arr, const Cell& cell) const;
 
@@ -503,6 +506,69 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentNeare
 }
 
 template <typename I>
+template <size_t D>
+DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentRivers(const Point3D& point, double segmentDist, const Segment3D& segment) const
+{
+	Segment3DChain<D> generatedSegment;
+
+	// The connection point is the nearest point among A, B and middle of the segment
+	Point3D connectionPoint = MidPoint(segment);
+	double distConnectionPoint = dist(connectionPoint, point);
+
+	const double distanceA = dist(segment.a, point);
+	if (distanceA < distConnectionPoint)
+	{
+		connectionPoint = segment.a;
+		distConnectionPoint = distanceA;
+	}
+
+	const double distanceB = dist(segment.b, point);
+	if (distanceB < distConnectionPoint)
+	{
+		connectionPoint = segment.b;
+		distConnectionPoint = distanceB;
+	}
+
+	// Segment before subdivision
+	const Segment3D straightSegment(point, connectionPoint);
+
+	// Subdivide the straightSegment into D smaller segments
+	std::array<Point3D, D - 1> generatedSegmentPoints;
+	if (length_sq(straightSegment) > 0.0)
+	{
+		// Compute the connection angle
+		const double mainSegmentSlope = abs(segment.b.z - segment.a.z) / length(ProjectionZ(segment));
+		const double tributarySlope = abs(straightSegment.b.z - straightSegment.a.z) / length(ProjectionZ(straightSegment));		
+		double connectionAngle = 0.0;
+		if (tributarySlope >= 0.0 && mainSegmentSlope <= tributarySlope)
+		{
+			connectionAngle = acos(mainSegmentSlope / tributarySlope);
+		}
+
+		// The three points (segment.a, point, segment.b) constitute a plane
+		// The normal of this plane is the cross product between IP and AB
+		const Vec3D vecSegment(segment.a, segment.b);
+		const Vec3D vecStraightSegment(straightSegment.b, straightSegment.a);
+		const Vec3D normal = normalized(cross(vecStraightSegment, vecSegment));
+		const Vec3D result = rotate_axis(normalized(vecSegment), normal, connectionAngle);
+
+		// If the segment exists, we can smooth it
+		const Point3D splineStart = 2.0 * straightSegment.a - straightSegment.b;
+		const Point3D splineEnd = connectionPoint + (result * 0.1 * norm(vecStraightSegment));
+		generatedSegmentPoints = SubdivideCatmullRomSpline<D - 1>(splineStart, straightSegment.a, straightSegment.b, splineEnd);
+	}
+	else
+	{
+		// If the segment is a point, it is impossible to smooth it
+		generatedSegmentPoints = Subdivide<D - 1>(straightSegment);
+	}
+
+	SegmentChainFromPoints(straightSegment.a, generatedSegmentPoints, straightSegment.b, generatedSegment);
+
+	return generatedSegment;
+}
+
+template <typename I>
 double Noise<I>::ComputeColorPoint(double x, double y, const Point2D& point, double radius) const
 {
 	double value = 0.0;
@@ -665,7 +731,7 @@ double Noise<I>::displaySegment(double x, double y, const std::array<Segment3D, 
 	// Compute the segment chain
 	
 	const double segmentDist = distToLineSegment(ProjectionZ(point), ProjectionZ(segment), c);
-	Segment3DChain<4> segmentChain = ConnectPointToSegmentAngleMid<4>(point, segmentDist, segment);
+	Segment3DChain<4> segmentChain = ConnectPointToSegmentRivers<4>(point, segmentDist, segment);
 
 	double value = 0.0;
 
@@ -1056,7 +1122,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N COMMA D>) Noise<I>::GenerateSubSe
 
 			Point3D p(point.x, point.y, elevation);
 
-			subSegments[i][j] = ConnectPointToSegmentAngle<D>(p, nearestSegmentDist, nearestSegment);
+			subSegments[i][j] = ConnectPointToSegmentRivers<D>(p, nearestSegmentDist, nearestSegment);
 		}
 	}
 
