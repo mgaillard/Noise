@@ -37,10 +37,10 @@ cv::Mat PerlinImage(const Point2D& a, const Point2D&b, int width, int height)
 template<typename I>
 cv::Mat SegmentImage(const Noise<I>& noise, const Point2D& a, const Point2D&b, int width, int height)
 {
-	const Point3D point(-1.6, 0.16, 0.0);
+	const Point3D point(5.69, -1.34, 4.0);
 	const std::array<Segment3D, 2> segments = { {
-		{Point3D(1.0, 1.0, 0.0), Point3D(2.0, 3.0, 0.0)},
-		{Point3D(2.0, 3.0, 0.0), Point3D(2.0, 5.0, 0.0)}
+		{Point3D(1.0, 1.0, 2.0), Point3D(2.0, 3.0, 1.0)},
+		{Point3D(2.0, 3.0, 1.0), Point3D(2.0, 5.0, 0.0)}
 	} };
 
 	cv::Mat image(height, width, CV_16U);
@@ -153,6 +153,8 @@ int main(int argc, char* argv[])
 
 	// cv::Mat imagePerlin = PerlinImage(perlinTopLeft, perlinBottomRight, WIDTH, HEIGHT);
 	cv::Mat imageNoise = NoiseImage(noise, noiseTopLeft, noiseBottomRight, WIDTH, HEIGHT);
+
+	// cv::Mat imageSegment = SegmentImage(noise, noiseTopLeft, noiseBottomRight, WIDTH, HEIGHT);
 
 	// cv::Mat image = MergePerlinAndNoise(imagePerlin, imageNoise);
 
