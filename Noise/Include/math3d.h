@@ -203,7 +203,7 @@ inline double angle(const Vec3D& oa, const Vec3D& ob) {
 
 inline Vec3D rotate_axis(const Vec3D& v, const Vec3D& axis, double angle)
 {
-	assert(norm_sq(axis) - 1.0 < 1e-6);
+	assert(abs(norm_sq(axis) - 1.0) < 1e-6);
 
 	const double sinAngle = sin(angle);
 	const double cosAngle = cos(angle);
