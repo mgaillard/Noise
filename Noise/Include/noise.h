@@ -687,20 +687,6 @@ double Noise<I>::displaySegment(double x, double y, const std::array<Segment3D, 
 		value = std::max(value, ComputeColorPoint(x, y, ProjectionZ(s.b), 2.0 * radius));
 	}
 
-	// Display control points
-	const Point3D connectingPoint = segmentChain.back().b;
-	const Point3D splineStart = 2.0 * point - connectingPoint;
-	const Segment3D splineHead(splineStart, point);
-	const Segment3D splineMiddle(point, connectingPoint);
-	const Point3D splineEnd = 2.0 * segment.b - segment.a;
-	const Segment3D splineTail(segment.b, splineEnd);
-
-	value = std::max(value, 0.50 * ComputeColorPoint(x, y, ProjectionZ(splineStart), 2.0 * radius));
-	value = std::max(value, 0.25 * ComputeColorSegment(x, y, ProjectionZ(splineHead), 0.5 * radius));
-	value = std::max(value, 0.25 * ComputeColorSegment(x, y, ProjectionZ(splineMiddle), 0.5 * radius));
-	value = std::max(value, 0.25 * ComputeColorSegment(x, y, ProjectionZ(splineTail), 0.5 * radius));
-	value = std::max(value, 0.50 * ComputeColorPoint(x, y, ProjectionZ(splineEnd), 2.0 * radius));
-
 	return value;
 }
 
