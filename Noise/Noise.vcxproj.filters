@@ -64,5 +64,8 @@
     <ClInclude Include="Include\planecontrolfunction.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="Include\lichtenbergcontrolfunction.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

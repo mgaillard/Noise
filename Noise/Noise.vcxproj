@@ -143,6 +143,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\controlfunction.h" />
+    <ClInclude Include="Include\lichtenbergcontrolfunction.h" />
     <ClInclude Include="Include\math2d.h" />
     <ClInclude Include="Include\math3d.h" />
     <ClInclude Include="Include\noise.h" />

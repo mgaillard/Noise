@@ -163,6 +163,8 @@ private:
 
 	// ----- Compute Color -----
 
+	double ComputeColorBase(double dist, double radius) const;
+
 	double ComputeColorPoint(double x, double y, const Point2D& point, double radius) const;
 
 	template <size_t N>
@@ -569,30 +571,29 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentRiver
 }
 
 template <typename I>
-double Noise<I>::ComputeColorPoint(double x, double y, const Point2D& point, double radius) const
+double Noise<I>::ComputeColorBase(double dist, double radius) const
 {
-	double value = 0.0;
-
-	if (dist(Point2D(x, y), point) < radius)
+	if (dist < radius)
 	{
-		value = 1.0;
+		return WyvillGalinFunction(dist, radius, 1.0);
 	}
 
-	return value;
+	return 0.0;
+}
+
+template <typename I>
+double Noise<I>::ComputeColorPoint(double x, double y, const Point2D& point, double radius) const
+{
+	const double d = dist(Point2D(x, y), point);
+	return ComputeColorBase(d, radius);
 }
 
 template <typename I>
 double Noise<I>::ComputeColorSegment(double x, double y, const Segment2D& segment, double radius) const
 {
-	double value = 0.0;
-
 	Point2D c;
-	if (distToLineSegment(Point2D(x, y), segment, c) < radius)
-	{
-		value = 1.0;
-	}
-
-	return value;
+	const double d = distToLineSegment(Point2D(x, y), segment, c);
+	return ComputeColorBase(d, radius);
 }
 
 template <typename I>
@@ -1181,12 +1182,7 @@ double Noise<I>::ComputeColorSegments(const Cell& cell, const Segment3DChainArra
 	Segment3D nearestSegment;
 	const double nearestSegmentDistance = NearestSegmentProjectionZ(neighborhood, Point2D(x, y), nearestSegment, cell, segments);
 
-	if (nearestSegmentDistance < radius)
-	{
-		value = 1.0;
-	}
-
-	return value;
+	return ComputeColorBase(nearestSegmentDistance, radius);
 }
 
 template <typename I>
