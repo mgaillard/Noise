@@ -48,7 +48,7 @@ public:
 	      bool displaySegments = true,
 	      bool displayGrid = true);
 
-	double evaluate(double x, double y) const;
+	double evaluateTerrain(double x, double y) const;
 
 	template <size_t D>
 	double displaySegment(double x, double y, const std::array<Segment3D, D>& segments, const Point3D& point) const;
@@ -611,7 +611,7 @@ double Noise<I>::ComputeColorGrid(double x, double y, double deltaX, double delt
 }
 
 template <typename I>
-double Noise<I>::evaluate(double x, double y) const
+double Noise<I>::evaluateTerrain(double x, double y) const
 {
 	const int levelNumber = 5;
 	const double minSlopeLevel2 = 0.09;
