@@ -49,6 +49,9 @@ double distToLine(const Point2D& p, const Point2D& a, const Point2D& b, Point2D&
 {
 	const Vec2D ap(a, p);
 	const Vec2D ab(a, b);
+
+	assert(norm_sq(ab) != 0.0);
+
 	const double u = dot(ap, ab) / norm_sq(ab);
 
 	c = a + ab * u;
@@ -60,26 +63,36 @@ double distToLineSegment(const Point2D& p, const Point2D& a, const Point2D& b, P
 {
 	const Vec2D ap(a, p);
 	const Vec2D ab(a, b);
+
+	// Segment is only a point and has no length
+	if (norm_sq(ab) <= 0.0)
+	{
+		// The nearest point on the segment is A (or B)
+		c = a;
+		return dist(p, a);
+	}
+
+	// Segment has a length greater than 0
+	// Projection of the point p on the line (AB)
 	const double u = dot(ap, ab) / norm_sq(ab);
 
 	if (u < 0.0)
 	{
-		// Closer to A
+		// P is closer to A
 		c = a;
 		return dist(p, a);
 	}
-	else if (u > 1.0)
+	
+	if (u > 1.0)
 	{
-		// Closer to B
+		// P is closer to B
 		c = b;
 		return dist(p, b);
 	}
-	else
-	{
-		// Between A and B, equivalent to distToLine(p, a, b, c);
-		c = a + ab * u;
-		return dist(p, c);
-	}
+
+	// Projection of P is between A and B, equivalent to distToLine(p, a, b, c);
+	c = a + ab * u;
+	return dist(p, c);
 }
 
 double distToLineSegment(const Point2D& p, const Segment2D& s, Point2D& c)
