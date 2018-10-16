@@ -4,7 +4,15 @@
 #include <cassert>
 
 template<typename T>
-inline T Remap(const T& x, const T& in_start, const T& in_end, const T& out_start, const T& out_end)
+T remap(const T& x, const T& in_start, const T& in_end, const T& out_start, const T& out_end)
+{
+	assert(in_start != in_end);
+	
+	return out_start + (out_end - out_start) * (x - in_start) / (in_end - in_start);
+}
+
+template<typename T>
+T remap_clamp(const T& x, const T& in_start, const T& in_end, const T& out_start, const T& out_end)
 {
 	assert(in_start != in_end);
 
@@ -23,7 +31,7 @@ inline T Remap(const T& x, const T& in_start, const T& in_end, const T& out_star
 }
 
 template<typename T>
-inline const T& clamp(const T& v, const T& lo, const T& hi)
+const T& clamp(const T& v, const T& lo, const T& hi)
 {
 	assert(lo <= hi);
 
@@ -42,14 +50,14 @@ inline const T& clamp(const T& v, const T& lo, const T& hi)
 }
 
 template<typename T>
-inline T lerp(const T& a, const T& b, const T& x)
+T lerp(const T& a, const T& b, const T& x)
 {
 	// FMA friendly
 	return x * b + (a - a * x);
 }
 
 template<typename T>
-inline T lerp_clamp(const T& a, const T& b, const T& x)
+T lerp_clamp(const T& a, const T& b, const T& x)
 {
 	if (x < 0.0)
 	{
@@ -66,16 +74,16 @@ inline T lerp_clamp(const T& a, const T& b, const T& x)
 }
 
 template<typename T>
-inline T smootherstep(const T& edge0, const T& edge1, const T& x)
+T smootherstep(const T& edge0, const T& edge1, const T& x)
 {
 	// Scale, and clamp x to 0..1 range
-	const T t = Remap(x, edge0, edge1, 0.0, 1.0);
+	const T t = remap_clamp(x, edge0, edge1, 0.0, 1.0);
 	// Evaluate polynomial
 	return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
 }
 
 template<typename T>
-inline T WyvillGalinFunction(const T& distance, const T& R, const T& N)
+T WyvillGalinFunction(const T& distance, const T& R, const T& N)
 {
 	T alpha = 0.0;
 

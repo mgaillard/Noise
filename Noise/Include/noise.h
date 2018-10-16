@@ -353,8 +353,8 @@ typename Noise<I>::Cell Noise<I>::GetCell(double x, double y, int resolution) co
 template <typename I>
 double Noise<I>::EvaluateControlFunction(const Point2D& point) const
 {
-	const double x = Remap(point.x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_controlFunctionTopLeft.x, m_controlFunctionBottomRight.x);
-	const double y = Remap(point.y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_controlFunctionTopLeft.y, m_controlFunctionBottomRight.y);
+	const double x = remap(point.x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_controlFunctionTopLeft.x, m_controlFunctionBottomRight.x);
+	const double y = remap(point.y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_controlFunctionTopLeft.y, m_controlFunctionBottomRight.y);
 
 	double value = 0.0;
 

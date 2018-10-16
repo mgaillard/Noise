@@ -22,8 +22,8 @@ cv::Mat PerlinImage(const Point2D& a, const Point2D&b, int width, int height)
 #pragma omp parallel for shared(image)
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
-			const double x = Remap(double(j), 0.0, double(width), a.x, b.x);
-			const double y = Remap(double(i), 0.0, double(height), a.y, b.y);
+			const double x = remap_clamp(double(j), 0.0, double(width), a.x, b.x);
+			const double y = remap_clamp(double(i), 0.0, double(height), a.y, b.y);
 
 			double value = (1.0 + Perlin(x, y)) / 2.0;
 
@@ -68,10 +68,10 @@ cv::Mat NoiseImage(const Noise<I>& noise, const Point2D& a, const Point2D&b, int
 #pragma omp parallel for shared(temp)
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
-			const double x = Remap(double(j), 0.0, double(width), a.x, b.x);
-			const double y = Remap(double(i), 0.0, double(height), a.y, b.y);
+			const double x = remap_clamp(double(j), 0.0, double(width), a.x, b.x);
+			const double y = remap_clamp(double(i), 0.0, double(height), a.y, b.y);
 
-			temp[i][j] = noise.evaluate(x, y);
+			temp[i][j] = noise.evaluateLichtenberg(x, y);
 		}
 	}
 
@@ -91,7 +91,7 @@ cv::Mat NoiseImage(const Noise<I>& noise, const Point2D& a, const Point2D&b, int
 #pragma omp parallel for shared(image)
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
-			const double value = Remap(temp[i][j], minimum, maximum, 0.0, 65535.0);
+			const double value = remap_clamp(temp[i][j], minimum, maximum, 0.0, 65535.0);
 
 			image.at<uint16_t>(i, j) = uint16_t(value);
 		}
@@ -108,7 +108,7 @@ void RemapImage(cv::Mat& image)
 #pragma omp parallel for shared(image)
 	for (int i = 0; i < image.rows; i++) {
 		for (int j = 0; j < image.cols; j++) {
-			const double value = Remap(double(image.at<uint16_t>(i, j)), minimum, maximum, 0.0, 65535.0);
+			const double value = remap_clamp(double(image.at<uint16_t>(i, j)), minimum, maximum, 0.0, 65535.0);
 
 			image.at<uint16_t>(i, j) = uint16_t(value);
 		}
