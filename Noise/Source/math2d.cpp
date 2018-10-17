@@ -25,7 +25,16 @@ double pointLineProjection(const Point2D& p, const Point2D& a, const Point2D& b)
 {
 	const Vec2D ap(a, p);
 	const Vec2D ab(a, b);
-	// Project vector AP on AB
+
+	// Segment is only a point and has no length
+	if (norm_sq(ab) <= 0.0)
+	{
+		// The nearest point on the segment is A (or B)
+		return 0.0;
+	}
+
+	// Segment has a length greater than 0
+	// Projection of the point p on the line (AB)
 	return dot(ap, ab) / norm_sq(ab);
 }
 
@@ -47,12 +56,8 @@ double pointLineSegmentProjection(const Point2D& p, const Segment2D& s)
 
 double distToLine(const Point2D& p, const Point2D& a, const Point2D& b, Point2D& c)
 {
-	const Vec2D ap(a, p);
 	const Vec2D ab(a, b);
-
-	assert(norm_sq(ab) != 0.0);
-
-	const double u = dot(ap, ab) / norm_sq(ab);
+	const double u = pointLineProjection(p, a, b);
 
 	c = a + ab * u;
 
@@ -61,20 +66,8 @@ double distToLine(const Point2D& p, const Point2D& a, const Point2D& b, Point2D&
 
 double distToLineSegment(const Point2D& p, const Point2D& a, const Point2D& b, Point2D& c)
 {
-	const Vec2D ap(a, p);
 	const Vec2D ab(a, b);
-
-	// Segment is only a point and has no length
-	if (norm_sq(ab) <= 0.0)
-	{
-		// The nearest point on the segment is A (or B)
-		c = a;
-		return dist(p, a);
-	}
-
-	// Segment has a length greater than 0
-	// Projection of the point p on the line (AB)
-	const double u = dot(ap, ab) / norm_sq(ab);
+	const double u = pointLineProjection(p, a, b);
 
 	if (u < 0.0)
 	{

@@ -10,9 +10,14 @@ class PerlinControlFunction : public ControlFunction<PerlinControlFunction>
 	friend class ControlFunction<PerlinControlFunction>;
 
 protected:
-	double evaluate_impl(double x, double y) const
+	double EvaluateImpl(double x, double y) const
 	{
 		return (Perlin(x, y) + 1.0) / 2.0;
+	}
+
+	bool InsideDomainImpl(double x, double y) const
+	{
+		return true;
 	}
 };
 

@@ -8,9 +8,14 @@ class PlaneControlFunction : public ControlFunction<PlaneControlFunction>
 	friend class ControlFunction<PlaneControlFunction>;
 
 protected:
-	double evaluate_impl(double x, double y) const
+	double EvaluateImpl(double x, double y) const
 	{
 		return x / 8.0 + (Perlin(x, y) + 1.0) / 8.0;
+	}
+
+	bool InsideDomainImpl(double x, double y) const
+	{
+		return true;
 	}
 };
 

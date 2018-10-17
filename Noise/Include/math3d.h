@@ -266,7 +266,7 @@ inline Point3D MidPoint(const Segment3D& s) {
 }
 
 template <size_t N>
-std::array<Point3D, N> Subdivide(const Segment3D& s)
+std::array<Point3D, N> SubdivideInPoints(const Segment3D& s)
 {
 	std::array<Point3D, N> points;
 
@@ -277,6 +277,26 @@ std::array<Point3D, N> Subdivide(const Segment3D& s)
 	}
 
 	return points;
+}
+
+template <size_t N>
+std::array<Segment3D, N> SubdivideInSegments(const Segment3D& s)
+{
+	static_assert(N > 0, "Segment should be divided in at least one part.");
+
+	std::array<Segment3D, N> segments;
+
+	segments.front().a = s.a;
+	for (int n = 0; n < segments.size() - 1; n++)
+	{
+		const double t = double(n + 1) / N;
+		const Point3D point = lerp(s.a, s.b, t);
+		segments[n].b = point;
+		segments[n + 1].a = point;
+	}
+	segments.back().b = s.b;
+
+	return segments;
 }
 
 inline Segment2D ProjectionZ(const Segment3D& s) {

@@ -49,6 +49,7 @@ public:
 	      bool displayGrid = true);
 
 	double evaluateTerrain(double x, double y) const;
+	double evaluateLichtenberg(double x, double y) const;
 
 	template <size_t D>
 	double displaySegment(double x, double y, const std::array<Segment3D, D>& segments, const Point3D& point) const;
@@ -98,6 +99,14 @@ private:
 	Cell GetCell(double x, double y, int resolution) const;
 
 	double EvaluateControlFunction(const Point2D& point) const;
+
+	bool InsideDomain(const Point2D& point) const;
+
+	bool InsideDomain(const Segment2D& segment) const;
+	
+	bool InsideDomain(const Point3D& point) const;
+
+	bool InsideDomain(const Segment3D& segment) const;
 
 	template <size_t D>
 	Segment3DChain<D> ConnectPointToSegmentAngle(const Point3D& point, double segmentDist, const Segment3D& segment) const;
@@ -367,6 +376,44 @@ double Noise<I>::EvaluateControlFunction(const Point2D& point) const
 }
 
 /// <summary>
+/// Check if one point (x, y) is in the domain of the control function
+/// </summary>
+/// <param name="point">Coordinates of the point</param>
+/// <returns>True if the point is in the domain of the function</returns>
+template <typename I>
+bool Noise<I>::InsideDomain(const Point2D& point) const
+{
+	const double x = remap(point.x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_controlFunctionTopLeft.x, m_controlFunctionBottomRight.x);
+	const double y = remap(point.y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_controlFunctionTopLeft.y, m_controlFunctionBottomRight.y);
+
+	double value = 0.0;
+
+	if (m_controlFunction)
+	{
+		value = m_controlFunction->insideDomain(x, y);
+	}
+
+	return value;
+}
+
+template <typename I>
+bool Noise<I>::InsideDomain(const Segment2D& segment) const
+{
+	return (InsideDomain(segment.a) && InsideDomain(segment.b));
+}
+
+template <typename I>
+bool Noise<I>::InsideDomain(const Point3D& point) const {
+	return InsideDomain(ProjectionZ(point));
+}
+
+template <typename I>
+bool Noise<I>::InsideDomain(const Segment3D& segment) const
+{
+	return (InsideDomain(segment.a) && InsideDomain(segment.b));
+}
+
+/// <summary>
 /// Connect a point to a segment
 /// If the nearest point lies on the segment (between A and B), the point is connected to the segment to form a 45 degrees angle
 /// If the nearest point on the segment is A or B, connect to it.
@@ -410,7 +457,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngle
 
 	// Subdivide the straightSegment into D smaller segments
 	std::array<Point3D, D - 1> generatedSegmentPoints;
-	if (length_sq(straightSegment) > 0.0)
+	if (length_sq(straightSegment) > 0.0 && length_sq(segment))
 	{
 		// If the segment exists, we can smooth it
 		const Point3D splineStart = 2.0 * straightSegment.a - straightSegment.b;
@@ -420,7 +467,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngle
 	else
 	{
 		// If the segment is a point, it is impossible to smooth it
-		generatedSegmentPoints = Subdivide<D - 1>(straightSegment);
+		generatedSegmentPoints = SubdivideInPoints<D - 1>(straightSegment);
 	}
 
 	SegmentChainFromPoints(straightSegment.a, generatedSegmentPoints, straightSegment.b, generatedSegment);
@@ -459,7 +506,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngle
 
 	// Subdivide the straightSegment into D smaller segments
 	std::array<Point3D, D - 1> generatedSegmentPoints;
-	if (length_sq(straightSegment) > 0.0)
+	if (length_sq(straightSegment) > 0.0 && length_sq(segment))
 	{
 		// If the segment exists, we can smooth it
 		const Point3D splineStart = 2.0 * straightSegment.a - straightSegment.b;
@@ -469,7 +516,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngle
 	else
 	{
 		// If the segment is a point, it is impossible to smooth it
-		generatedSegmentPoints = Subdivide<D - 1>(straightSegment);
+		generatedSegmentPoints = SubdivideInPoints<D - 1>(straightSegment);
 	}
 
 	SegmentChainFromPoints(straightSegment.a, generatedSegmentPoints, straightSegment.b, generatedSegment);
@@ -501,8 +548,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentNeare
 	const Segment3D straightSegment(point, segmentEnd);
 
 	// Subdivide the straightSegment into D smaller segments
-	std::array<Point3D, D - 1> generatedSegmentPoints = Subdivide<D - 1>(straightSegment);
-	SegmentChainFromPoints(straightSegment.a, generatedSegmentPoints, straightSegment.b, generatedSegment);
+	generatedSegment = SubdivideInSegments<D>(straightSegment);
 
 	return generatedSegment;
 }
@@ -562,7 +608,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentRiver
 	else
 	{
 		// If the segment is a point, it is impossible to smooth it
-		generatedSegmentPoints = Subdivide<D - 1>(straightSegment);
+		generatedSegmentPoints = SubdivideInPoints<D - 1>(straightSegment);
 	}
 
 	SegmentChainFromPoints(straightSegment.a, generatedSegmentPoints, straightSegment.b, generatedSegment);
@@ -575,7 +621,8 @@ double Noise<I>::ComputeColorBase(double dist, double radius) const
 {
 	if (dist < radius)
 	{
-		return WyvillGalinFunction(dist, radius, 1.0);
+		// return WyvillGalinFunction(dist, radius, 1.0);
+		return 1.0;
 	}
 
 	return 0.0;
@@ -703,6 +750,114 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 		return value;
 	}
 
+	return value;
+}
+
+template <typename I>
+double Noise<I>::evaluateLichtenberg(double x, double y) const
+{
+	const int levelNumber = 6;
+
+	double value = 0.0;
+
+	// In which level 1 cell is the point (x, y)
+	Cell cell1 = GetCell(x, y, 1);
+	// Level 1: Points in neighboring cells
+	Point2DArray<9> points1 = GenerateNeighboringPoints<9>(cell1);
+	// Level 1: List of segments
+	const Segment3DChainArray<7, 1> straightSegments1 = GenerateSegments(points1);
+	// Subdivide segments of level 1
+	Segment3DChainArray<5, 4> segments1;
+	SubdivideSegments(cell1, straightSegments1, segments1);
+
+	if (levelNumber == 1)
+	{
+		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1));
+		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1));
+
+		return value;
+	}
+
+	// In which level 2 cell is the point (x, y)
+	Cell cell2 = GetCell(x, y, 2);
+	// Level 2: Points in neighboring cells
+	Point2DArray<5> points2 = GenerateNeighboringPoints<5>(cell2);
+	ReplaceNeighboringPoints(cell1, points1, cell2, points2);
+	// Level 2: List of segments
+	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(0.0, points2, cell1, segments1);
+
+	if (levelNumber == 2)
+	{
+		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2));
+		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2));
+
+		return value;
+	}
+
+	// In which level 3 cell is the point (x, y)
+	Cell cell3 = GetCell(x, y, 4);
+	// Level 3: Points in neighboring cells
+	Point2DArray<5> points3 = GenerateNeighboringPoints<5>(cell3);
+	ReplaceNeighboringPoints(cell2, points2, cell3, points3);
+	// Level 3: List of segments
+	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(0.0, points3, cell1, segments1, cell2, segments2);
+
+	if (levelNumber == 3)
+	{
+		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3));
+		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3));
+
+		return value;
+	}
+
+	// In which level 4 cell is the point (x, y)
+	Cell cell4 = GetCell(x, y, 8);
+	// Level 4: Points in neighboring cells
+	Point2DArray<5> points4 = GenerateNeighboringPoints<5>(cell4);
+	ReplaceNeighboringPoints(cell3, points3, cell4, points4);
+	// Level 4: List of segments
+	Segment3DChainArray<5, 1> segments4 = GenerateSubSegments<5, 1>(0.0, points4, cell1, segments1, cell2, segments2, cell3, segments3);
+
+	if (levelNumber == 4)
+	{
+		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4));
+		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4));
+
+		return value;
+	}
+
+	// In which level 5 cell is the point (x, y)
+	Cell cell5 = GetCell(x, y, 16);
+	// Level 5: Points in neighboring cells
+	Point2DArray<5> points5 = GenerateNeighboringPoints<5>(cell5);
+	ReplaceNeighboringPoints(cell4, points4, cell5, points5);
+	// Level 5: List of segments
+	Segment3DChainArray<5, 1> segments5 = GenerateSubSegments<5, 1>(0.0, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4);
+
+	if (levelNumber == 5)
+	{
+		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
+		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5));
+
+		return value;
+	}
+
+	// In which level 6 cell is the point (x, y)
+	Cell cell6 = GetCell(x, y, 32);
+	// Level 6: Points in neighboring cells
+	Point2DArray<5> points6 = GenerateNeighboringPoints<5>(cell6);
+	ReplaceNeighboringPoints(cell5, points5, cell6, points6);
+	// Level 6: List of segments
+	Segment3DChainArray<5, 1> segments6 = GenerateSubSegments<5, 1>(0.0, points6, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5);
+
+	if (levelNumber == 6)
+	{
+		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5, cell6, segments6, points6));
+		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5, cell6, segments6));
+
+		return value;
+	}
+	
 	return value;
 }
 
@@ -979,7 +1134,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N - 2 COMMA 1>) Noise<I>::GenerateS
 	{
 		for (int j = 1; j < points[i].size() - 1; j++)
 		{
-			// Lowest neighbor
+			// Find the lowest neighbor
 			double lowestNeighborElevation = std::numeric_limits<double>::max();
 			int lowestNeighborI = i;
 			int lowestNeighborJ = j;
@@ -996,11 +1151,22 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N - 2 COMMA 1>) Noise<I>::GenerateS
 					}
 				}
 			}
+			
+			const Point3D startingPoint(points[i][j].x, points[i][j].y, elevations[i][j]);
+			const Point3D endingPoint(points[lowestNeighborI][lowestNeighborJ].x, points[lowestNeighborI][lowestNeighborJ].y, lowestNeighborElevation);
 
-			const Point3D a(points[i][j].x, points[i][j].y, elevations[i][j]);
-			const Point3D b(points[lowestNeighborI][lowestNeighborJ].x, points[lowestNeighborI][lowestNeighborJ].y, lowestNeighborElevation);
-
-			segments[i - 1][j - 1][0] = Segment3D(a, b);
+			// Check if the points are inside the domain
+			if (InsideDomain(startingPoint) && InsideDomain(endingPoint))
+			{
+				// Both points are in the domain, we keep the segment
+				segments[i - 1][j - 1][0] = Segment3D(startingPoint, endingPoint);
+			}
+			else
+			{
+				// If one of the two points is outside the domain
+				// We discard the segment; it has a null length
+				segments[i - 1][j - 1][0] = Segment3D(startingPoint, startingPoint);
+			}
 		}
 	}
 
@@ -1040,7 +1206,7 @@ void Noise<I>::SubdivideSegments(const Cell& cell, const Segment3DChainArray<N, 
 		{
 			Segment3D currentSegment = segments[i][j][0];
 
-			std::array<Point3D, D - 1> midPoints = Subdivide<D - 1>(currentSegment);
+			std::array<Point3D, D - 1> midPoints = SubdivideInPoints<D - 1>(currentSegment);
 
 			// If the current segment's length is more than 0, we can subdivide and smooth it
 			if (currentSegment.a != currentSegment.b)
@@ -1111,19 +1277,31 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N COMMA D>) Noise<I>::GenerateSubSe
 			double nearestSegmentDist = NearestSegmentProjectionZ(1, point, nearestSegment, std::forward<Tail>(tail)...);
 
 			const double u = pointLineSegmentProjection(point, ProjectionZ(nearestSegment));
-			const Point3D connectionPoint = lerp(nearestSegment, u);
-			const double distToConnectionPoint = dist(ProjectionZ(connectionPoint), point);
+			const Point3D nearestPointOnSegment = lerp(nearestSegment, u);
 
 			// Compute elevation of the point on the control function
 			const double elevationControlFunction = EvaluateControlFunction(point);
 			// Compute elevation with a constraint on slope
-			const double elevationWithMinSlope = connectionPoint.z + minSlope * distToConnectionPoint;
+			// Warning, the actual slope may change if the connection point is changed in ConnectPointToSegment
+			const double elevationWithMinSlope = nearestPointOnSegment.z + minSlope * nearestSegmentDist;
 
 			const double elevation = std::max(elevationWithMinSlope, elevationControlFunction);
 
-			Point3D p(point.x, point.y, elevation);
+			const Point3D p(point.x, point.y, elevation);
 
-			subSegments[i][j] = ConnectPointToSegmentRivers<D>(p, nearestSegmentDist, nearestSegment);
+			// TODO: find a way to dynamically select the connection method
+			const Segment3DChain<D> segmentChain = ConnectPointToSegmentAngleMid<D>(p, nearestSegmentDist, nearestSegment);
+
+			if (length_sq(nearestSegment) > 0.0 && InsideDomain(segmentChain.front().a) && InsideDomain(segmentChain.back().b))
+			{
+				subSegments[i][j] = segmentChain;
+			}
+			else
+			{
+				// Warning, in some cases, even if length_sq(nearestSegment) == 0.0, we would want to connect the point to the segment
+				// It happens we a point is generated exactly on a segment. The segment starting from this point has a null length.
+				subSegments[i][j] = SubdivideInSegments<D>(Segment3D(p, p));
+			}
 		}
 	}
 
@@ -1182,7 +1360,13 @@ double Noise<I>::ComputeColorSegments(const Cell& cell, const Segment3DChainArra
 	Segment3D nearestSegment;
 	const double nearestSegmentDistance = NearestSegmentProjectionZ(neighborhood, Point2D(x, y), nearestSegment, cell, segments);
 
-	return ComputeColorBase(nearestSegmentDistance, radius);
+	// If the segment has a length greater than zero
+	if (length_sq(nearestSegment) > 0.0)
+	{
+		value = ComputeColorBase(nearestSegmentDistance, radius);
+	}
+	
+	return value;
 }
 
 template <typename I>

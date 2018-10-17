@@ -234,7 +234,7 @@ inline Point2D MidPoint(const Segment2D& s) {
 }
 
 template <size_t N>
-std::array<Point2D, N> Subdivide(const Segment2D& s)
+std::array<Point2D, N> SubdivideInPoints(const Segment2D& s)
 {
 	std::array<Point2D, N> points;
 

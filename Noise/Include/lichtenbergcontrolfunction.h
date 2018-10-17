@@ -8,9 +8,14 @@ class LichtenbergControlFunction : public ControlFunction<LichtenbergControlFunc
 	friend class ControlFunction<LichtenbergControlFunction>;
 
 protected:
-	double evaluate_impl(double x, double y) const
+	double EvaluateImpl(double x, double y) const
 	{
 		return x * x + y * y;
+	}
+
+	bool InsideDomainImpl(double x, double y) const
+	{
+		return std::max(abs(x), abs(y)) <= 1.0;
 	}
 };
 
