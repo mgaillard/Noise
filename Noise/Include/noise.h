@@ -38,12 +38,13 @@ class Noise
 {
 public:
 	Noise(std::unique_ptr<ControlFunction<I>> controlFunction,
-	      const Point2D& noiseTopLeft,
-	      const Point2D& noiseBottomRight,
-	      const Point2D& controlFunctionTopLeft,
-	      const Point2D& controlFunctionBottomRight,
-	      int seed = 0,
-	      double eps = 0.0,
+		  const Point2D& noiseTopLeft,
+		  const Point2D& noiseBottomRight,
+		  const Point2D& controlFunctionTopLeft,
+		  const Point2D& controlFunctionBottomRight,
+		  int seed = 0,
+		  double eps = 0.0,
+		  int resolution = 1,
 	      bool displayPoints = true,
 	      bool displaySegments = true,
 	      bool displayGrid = true);
@@ -222,13 +223,19 @@ private:
 	// Epsilon used to bias the area where points are generated in cells
 	const double m_eps;
 
+	// Number of resolutions in the noise function
+	const int m_resolution;
+
+	// Additional resolution steps in the ComputeColorPrimitives function
+	const int m_primitivesResolutionSteps = 3;
+
 	const int CACHE_X = 32;
 	const int CACHE_Y = 32;
 	std::vector<std::vector<Point2D> > m_pointCache;
 };
 
 template <typename I>
-Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, bool displayPoints, bool displaySegments, bool displayGrid) :
+Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, int resolution, bool displayPoints, bool displaySegments, bool displayGrid) :
 	m_seed(seed),
 	m_controlFunction(std::move(controlFunction)),
 	m_displayPoints(displayPoints),
@@ -238,7 +245,8 @@ Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Poin
 	m_noiseBottomRight(noiseBottomRight),
 	m_controlFunctionTopLeft(controlFunctionTopLeft),
 	m_controlFunctionBottomRight(controlFunctionBottomRight),
-	m_eps(eps)
+	m_eps(eps),
+	m_resolution(resolution)
 {
 	InitPointCache();
 }
@@ -660,7 +668,8 @@ double Noise<I>::ComputeColorGrid(double x, double y, double deltaX, double delt
 template <typename I>
 double Noise<I>::evaluateTerrain(double x, double y) const
 {
-	const int levelNumber = 5;
+	assert(m_resolution >= 1 && m_resolution <= 5);
+
 	const double minSlopeLevel2 = 0.09;
 	const double minSlopeLevel3 = 0.18;
 	const double minSlopeLevel4 = 0.38;
@@ -678,10 +687,10 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	Segment3DChainArray<5, 4> segments1;
 	SubdivideSegments(cell1, straightSegments1, segments1);
 
-	if (levelNumber == 1)
+	if (m_resolution == 1)
 	{
 		value = std::max(value, ComputeColorPrimitives(x, y, cell1, points1, cell1, segments1));
-		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1));
+		// value = std::max(value, ComputeColor(x, y, cell1, segments1, points1));
 
 		return value;
 	}
@@ -694,10 +703,10 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	// Level 2: List of segments
 	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(minSlopeLevel2, points2, cell1, segments1);
 
-	if (levelNumber == 2)
+	if (m_resolution == 2)
 	{
 		value = std::max(value, ComputeColorPrimitives(x, y, cell2, points2, cell1, segments1, cell2, segments2));
-		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2));
+		// value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2));
 
 		return value;
 	}
@@ -710,10 +719,10 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	// Level 3: List of segments
 	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(minSlopeLevel3, points3, cell1, segments1, cell2, segments2);
 
-	if (levelNumber == 3)
+	if (m_resolution == 3)
 	{
 		value = std::max(value, ComputeColorPrimitives(x, y, cell3, points3, cell1, segments1, cell2, segments2, cell3, segments3));
-		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3));
+		// value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3));
 
 		return value;
 	}
@@ -726,10 +735,10 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	// Level 4: List of segments
 	Segment3DChainArray<5, 1> segments4 = GenerateSubSegments<5, 1>(minSlopeLevel4, points4, cell1, segments1, cell2, segments2, cell3, segments3);
 
-	if (levelNumber == 4)
+	if (m_resolution == 4)
 	{
 		value = std::max(value, ComputeColorPrimitives(x, y, cell4, points4, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4));
-		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4));
+		// value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4));
 		
 		return value;
 	}
@@ -742,10 +751,10 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	// Level 5: List of segments
 	Segment3DChainArray<5, 1> segments5 = GenerateSubSegments<5, 1>(minSlopeLevel5, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4);
 
-	if (levelNumber == 5)
+	if (m_resolution == 5)
 	{
 		value = std::max(value, ComputeColorPrimitives(x, y, cell5, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5));
-		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
+		// value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
 
 		return value;
 	}
@@ -756,7 +765,7 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 template <typename I>
 double Noise<I>::evaluateLichtenberg(double x, double y) const
 {
-	const int levelNumber = 6;
+	assert(m_resolution >= 1 && m_resolution <= 6);
 
 	double value = 0.0;
 
@@ -770,7 +779,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	Segment3DChainArray<5, 4> segments1;
 	SubdivideSegments(cell1, straightSegments1, segments1);
 
-	if (levelNumber == 1)
+	if (m_resolution == 1)
 	{
 		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1));
 		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1));
@@ -786,7 +795,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	// Level 2: List of segments
 	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(0.0, points2, cell1, segments1);
 
-	if (levelNumber == 2)
+	if (m_resolution == 2)
 	{
 		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2));
 		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2));
@@ -802,7 +811,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	// Level 3: List of segments
 	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(0.0, points3, cell1, segments1, cell2, segments2);
 
-	if (levelNumber == 3)
+	if (m_resolution == 3)
 	{
 		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3));
 		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3));
@@ -818,7 +827,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	// Level 4: List of segments
 	Segment3DChainArray<5, 1> segments4 = GenerateSubSegments<5, 1>(0.0, points4, cell1, segments1, cell2, segments2, cell3, segments3);
 
-	if (levelNumber == 4)
+	if (m_resolution == 4)
 	{
 		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4));
 		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4));
@@ -834,7 +843,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	// Level 5: List of segments
 	Segment3DChainArray<5, 1> segments5 = GenerateSubSegments<5, 1>(0.0, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4);
 
-	if (levelNumber == 5)
+	if (m_resolution == 5)
 	{
 		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
 		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5));
@@ -850,7 +859,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	// Level 6: List of segments
 	Segment3DChainArray<5, 1> segments6 = GenerateSubSegments<5, 1>(0.0, points6, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5);
 
-	if (levelNumber == 6)
+	if (m_resolution == 6)
 	{
 		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5, cell6, segments6, points6));
 		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5, cell6, segments6));
@@ -1417,12 +1426,10 @@ double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& higherRe
 {
 	const Point2D point(x, y);
 
-	const int resolutionSteps = 3;
-
 	// Generate higher resolution points, which are going to be the centers of primitives
 	Cell highestResCell = higherResCell;
 	Point2DArray<N> highestResPoints = higherResPoints;
-	for (int i = 0; i < resolutionSteps; i++)
+	for (int i = 0; i < m_primitivesResolutionSteps; i++)
 	{
 		Cell newCell = GetCell(x, y, 2 * highestResCell.resolution);
 		Point2DArray<N> newPoints = GenerateNeighboringPoints<N>(newCell);
