@@ -288,7 +288,7 @@ Point2D Noise<I>::GeneratePoint(int x, int y) const
 	const int seed = GenerateSeedNoise(x, y);
 	RandomGenerator generator(seed);
 
-	const std::uniform_real_distribution<double> distribution(m_eps, 1.0 - m_eps);
+	std::uniform_real_distribution<double> distribution(m_eps, 1.0 - m_eps);
 	const double px = distribution(generator);
 	const double py = distribution(generator);
 
