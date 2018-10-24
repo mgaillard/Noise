@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <memory>
 #include <cassert>
 
@@ -14,6 +15,50 @@
 #include "lichtenbergcontrolfunction.h"
 
 using namespace std;
+
+struct Progress
+{
+	const int totalSteps;
+	const int moduloSteps;
+	int completedSteps;
+
+	/// <summary>
+	/// Construct a Progress object to monitor the progress in an OpenMP loop.
+	/// </summary>
+	/// <param name="totalSteps">The total number of steps in the loop</param>
+	/// <param name="numberDisplay">The number of times the progress is going to be displayed</param>
+	Progress(int totalSteps, int numberDisplay = 100) :
+		totalSteps(totalSteps),
+		moduloSteps(totalSteps / numberDisplay),
+		completedSteps(0)
+	{
+		assert(numberDisplay > 0);
+	}
+
+	/// <summary>
+	/// Update the progress.
+	/// This function should be called each time a step is completed.
+	/// </summary>
+	void Update()
+	{
+#pragma omp atomic
+		++completedSteps;
+	}
+
+	/// <summary>
+	/// Display the progress.
+	/// This function display the progress every "moduloSteps" steps have been completed.
+	/// </summary>
+	void Display() const
+	{
+		// stepsCompleted may have changed, however it is not a big problem if the progress is not very precise.
+		if ((completedSteps % moduloSteps) == 0)
+		{
+#pragma omp critical
+			cout << "Progress: " << (100 * completedSteps / totalSteps) << " %\n";
+		}
+	}
+};
 
 template<typename I>
 cv::Mat SegmentImage(const Noise<I>& noise, const Point2D& a, const Point2D&b, int width, int height)
@@ -46,6 +91,9 @@ vector<vector<double> > EvaluateTerrain(const Noise<I>& noise, const Point2D& a,
 {
 	vector<vector<double> > values(height, vector<double>(width));
 
+	// Display progress 25 times.
+	Progress progress(width * height, 25);
+
 #pragma omp parallel for shared(values)
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
@@ -53,6 +101,9 @@ vector<vector<double> > EvaluateTerrain(const Noise<I>& noise, const Point2D& a,
 			const double y = remap_clamp(double(i), 0.0, double(height), a.y, b.y);
 
 			values[i][j] = noise.evaluateTerrain(x, y);
+
+			progress.Update();
+			progress.Display();
 		}
 	}
 
@@ -64,6 +115,9 @@ vector<vector<double> > EvaluateLichtenbergFigure(const Noise<I>& noise, const P
 {
 	vector<vector<double> > values(height, vector<double>(width));
 
+	// Display progress 25 times.
+	Progress progress(width * height, 25);
+
 #pragma omp parallel for shared(values)
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
@@ -71,6 +125,9 @@ vector<vector<double> > EvaluateLichtenbergFigure(const Noise<I>& noise, const P
 			const double y = remap_clamp(double(i), 0.0, double(height), a.y, b.y);
 
 			values[i][j] = noise.evaluateLichtenberg(x, y);
+
+			progress.Update();
+			progress.Display();
 		}
 	}
 
@@ -107,12 +164,11 @@ cv::Mat GenerateImage(const vector<vector<double> > &values)
 	return image;
 }
 
-void TerrainImage(int width, int height, const string& filename)
+void TerrainImage(int width, int height, int seed, const string& filename)
 {
 	typedef PerlinControlFunction ControlFunctionType;
 	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
 
-	const int seed = 0;
 	const double eps = 0.15;
 	const int resolution = 3;
 	const Point2D noiseTopLeft(0.0, 0.0);
@@ -126,12 +182,11 @@ void TerrainImage(int width, int height, const string& filename)
 	cv::imwrite(filename, image);
 }
 
-void LichtenbergFigureImage(int width, int height, const string& filename)
+void LichtenbergFigureImage(int width, int height, int seed, const string& filename)
 {
 	typedef LichtenbergControlFunction ControlFunctionType;
 	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
 
-	const int seed = 0;
 	const double eps = 0.1;
 	const int resolution = 6;
 	const Point2D noiseTopLeft(-2.0, -2.0);
@@ -149,11 +204,12 @@ int main(int argc, char* argv[])
 {
 	const int WIDTH = 512;
 	const int HEIGHT = 512;
+	const int SEED = 0;
 	const string FILENAME_TERRAIN = "terrain.png";
 	const string FILENAME_LICHTENBERG = "lichtenberg.png";
 
-	TerrainImage(WIDTH, HEIGHT, FILENAME_TERRAIN);
-	LichtenbergFigureImage(WIDTH, HEIGHT, FILENAME_LICHTENBERG);
+	TerrainImage(WIDTH, HEIGHT, SEED, FILENAME_TERRAIN);
+	LichtenbergFigureImage(WIDTH, HEIGHT, SEED, FILENAME_LICHTENBERG);
 
 	return 0;
 }
