@@ -55,7 +55,7 @@ struct Progress
 		if ((completedSteps % moduloSteps) == 0)
 		{
 #pragma omp critical
-			cout << "Progress: " << (100 * completedSteps / totalSteps) << " %\n";
+			cout << "Progress: " << (100LLU * completedSteps / totalSteps) << " %\n";
 		}
 	}
 };
