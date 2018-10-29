@@ -25,6 +25,15 @@ public:
 	{
 		return static_cast<const Implementation*>(this)->InsideDomainImpl(x, y);
 	}
+
+	/// <summary>
+	/// Return the distance between the point and the inside of the domain
+	/// </summary>
+	/// <returns>The distance between the point and the inside of the domain</return>
+	double distToDomain(double x, double y) const
+	{
+		return static_cast<const Implementation*>(this)->DistToDomainImpl(x, y);
+	}
 };
 
 #endif // CONTROLFUNCTION_H

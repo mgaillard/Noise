@@ -19,6 +19,11 @@ protected:
 	{
 		return true;
 	}
+
+	double DistToDomainImpl(double x, double y) const
+	{
+		return 0.0;
+	}
 };
 
 #endif // PERLINCONTROLFUNCTION_H

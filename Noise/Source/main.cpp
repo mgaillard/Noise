@@ -177,6 +177,8 @@ void TerrainImage(int width, int height, int seed, const string& filename)
 	const Point2D controlFunctionBottomRight(0.5, 0.5);
 
 	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, false, false, false);
+	// TODO: Warning change the segment connection strategy to ConnectPointToSegmentRivers
+	// TODO: Random generator std::minstd_rand
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
 	cv::imwrite(filename, image);
@@ -184,20 +186,28 @@ void TerrainImage(int width, int height, int seed, const string& filename)
 
 void LichtenbergFigureImage(int width, int height, int seed, const string& filename)
 {
+	const int antiAliasingLevel = 4;
+	
 	typedef LichtenbergControlFunction ControlFunctionType;
 	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
 
 	const double eps = 0.1;
 	const int resolution = 6;
-	const Point2D noiseTopLeft(-2.0, -2.0);
+	const Point2D noiseTopLeft(-3.0, -3.0);
 	const Point2D noiseBottomRight(2.0, 2.0);
 	const Point2D controlFunctionTopLeft(-1.0, -1.0);
 	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
 	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, false, true, false);
+	// TODO: Warning change the segment connection strategy to ConnectPointToSegmentAngleMid
+	// TODO: Random generator std::mt19937_64
 	const cv::Mat image = GenerateImage(EvaluateLichtenbergFigure(noise, noiseTopLeft, noiseBottomRight, width, height));
 
-	cv::imwrite(filename, image);
+	// Resize image (anti aliasing)
+	cv::Mat resized_image(height / antiAliasingLevel, width / antiAliasingLevel, CV_16U);
+	resize(image, resized_image, resized_image.size(), 0, 0, CV_INTER_AREA);
+
+	cv::imwrite(filename, resized_image);
 }
 
 int main(int argc, char* argv[])

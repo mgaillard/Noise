@@ -109,6 +109,8 @@ private:
 
 	bool InsideDomain(const Segment3D& segment) const;
 
+	bool DistToDomain(const Point2D& point) const;
+
 	template <size_t D>
 	Segment3DChain<D> ConnectPointToSegmentAngle(const Point3D& point, double segmentDist, const Segment3D& segment) const;
 
@@ -203,7 +205,7 @@ private:
 	double ComputeColorControlFunction(double x, double y, Tail&&... tail) const;
 	
 	// Random generator used by the class
-	typedef std::minstd_rand RandomGenerator;
+	typedef std::mt19937_64 RandomGenerator;
 
 	// Seed of the noise
 	const int m_seed;
@@ -394,7 +396,7 @@ bool Noise<I>::InsideDomain(const Point2D& point) const
 	const double x = remap(point.x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_controlFunctionTopLeft.x, m_controlFunctionBottomRight.x);
 	const double y = remap(point.y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_controlFunctionTopLeft.y, m_controlFunctionBottomRight.y);
 
-	double value = 0.0;
+	bool value = false;
 
 	if (m_controlFunction)
 	{
@@ -419,6 +421,22 @@ template <typename I>
 bool Noise<I>::InsideDomain(const Segment3D& segment) const
 {
 	return (InsideDomain(segment.a) && InsideDomain(segment.b));
+}
+
+template <typename I>
+bool Noise<I>::DistToDomain(const Point2D& point) const
+{
+	const double x = remap(point.x, m_noiseTopLeft.x, m_noiseBottomRight.x, m_controlFunctionTopLeft.x, m_controlFunctionBottomRight.x);
+	const double y = remap(point.y, m_noiseTopLeft.y, m_noiseBottomRight.y, m_controlFunctionTopLeft.y, m_controlFunctionBottomRight.y);
+
+	double value = 0.0;
+
+	if (m_controlFunction)
+	{
+		value = m_controlFunction->distToDomain(x, y);
+	}
+
+	return value;
 }
 
 /// <summary>
@@ -781,7 +799,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 
 	if (m_resolution == 1)
 	{
-		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1));
+		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1));
 		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1));
 
 		return value;
@@ -797,7 +815,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 
 	if (m_resolution == 2)
 	{
-		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2));
+		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2));
 		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2));
 
 		return value;
@@ -813,7 +831,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 
 	if (m_resolution == 3)
 	{
-		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3));
+		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3));
 		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3));
 
 		return value;
@@ -829,7 +847,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 
 	if (m_resolution == 4)
 	{
-		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4));
+		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4));
 		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4));
 
 		return value;
@@ -845,7 +863,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 
 	if (m_resolution == 5)
 	{
-		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
+		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
 		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5));
 
 		return value;
@@ -861,7 +879,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 
 	if (m_resolution == 6)
 	{
-		value = std::max(value, 4.0 * ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5, cell6, segments6, points6));
+		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5, cell6, segments6, points6));
 		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5, cell6, segments6));
 
 		return value;
@@ -1081,7 +1099,28 @@ DEPENDENT_TYPE(Noise<I>, Point2DArray<N>) Noise<I>::GenerateNeighboringPoints(co
 			const int x = cell.x + j - int(points[i].size()) / 2;
 			const int y = cell.y + i - int(points.size()) / 2;
 
-			points[i][j] = GeneratePointCached(x, y) / cell.resolution;
+			const Point2D p = GeneratePointCached(x, y) / cell.resolution;
+
+			// Bias the random generator to repulse the points outside the domain
+			if (InsideDomain(p))
+			{
+				points[i][j] = p;
+			}
+			else
+			{
+				// Furthest point in the cell (could be improved with topRight and bottom Left)
+				const Point2D topLeft(double(x) / cell.resolution, double(y) / cell.resolution);
+				const Point2D bottomRight(double(x + 1) / cell.resolution, double(y + 1) / cell.resolution);
+
+				if (DistToDomain(topLeft) < DistToDomain(bottomRight))
+				{
+					points[i][j] = bottomRight;
+				}
+				else
+				{
+					points[i][j] = topLeft;
+				}
+			}
 		}
 	}
 
@@ -1368,6 +1407,17 @@ double Noise<I>::ComputeColorSegments(const Cell& cell, const Segment3DChainArra
 	// White when near to a segment
 	Segment3D nearestSegment;
 	const double nearestSegmentDistance = NearestSegmentProjectionZ(neighborhood, Point2D(x, y), nearestSegment, cell, segments);
+	
+	/*
+	 * // Make level 1 segments thicker near to the origin of the Lichtenberg figure
+	 * if (cell.resolution == 1)
+	 * {
+	 *     // const double d = dist(Point2D(-0.75, -1.8), Point2D(x, y));
+	 *     const double d = dist(Point2D(0.0, -4.0), Point2D(x, y));
+	 *     radius *= 1.0 - smootherstep(0.0, 3.0, d) / 2.0;
+	 * }
+	 * 
+	 */
 
 	// If the segment has a length greater than zero
 	if (length_sq(nearestSegment) > 0.0)
@@ -1384,7 +1434,7 @@ double Noise<I>::ComputeColor(double x, double y, const Cell& cell, const Segmen
 {
 	double value = 0.0;
 
-	const double radius = 1.0 / (16.0 * cell.resolution);
+	const double radius = 1.0 / (26 * exp(0.085 * cell.resolution));
 
 	if (m_displayPoints)
 	{
