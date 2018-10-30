@@ -1435,7 +1435,7 @@ double Noise<I>::ComputeColor(double x, double y, const Cell& cell, const Segmen
 {
 	double value = 0.0;
 
-	const double radius = 1.0 / (26 * exp(0.085 * cell.resolution));
+	const double radius = 1.0 / (26 * std::exp(0.085 * cell.resolution));
 
 	if (m_displayPoints)
 	{
