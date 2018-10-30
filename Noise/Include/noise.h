@@ -520,10 +520,11 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngle
 	// u = 0 is point A of the segment ; u = 1 is point B of the segment
 	const double u = pointLineProjection(ProjectionZ(point), ProjectionZ(segment));
 
+	const double tanAngle = 1.0; // tan(45 deg) = 1.0
 	// Find the intersection so that the angle between the two segments is 45°
 	// v designates the ratio of the segment on which the intersection is located
 	// v = 0 is point A of the segment ; v = 1 is point B of the segment
-	double v = u + segmentDist / length(ProjectionZ(segment));
+	double v = u + (segmentDist / tanAngle) / length(ProjectionZ(segment));
 	// The intersection must lie on the segment
 	v = clamp(v, 0.0, 1.0);
 
