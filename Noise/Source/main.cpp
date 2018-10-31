@@ -177,7 +177,6 @@ void TerrainImage(int width, int height, int seed, const string& filename)
 	const Point2D controlFunctionBottomRight(0.5, 0.5);
 
 	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, false, false, false);
-	// TODO: Warning change the segment connection strategy to ConnectPointToSegmentRivers
 	// TODO: Random generator std::minstd_rand
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
@@ -199,7 +198,6 @@ void LichtenbergFigureImage(int width, int height, int seed, const string& filen
 	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
 	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, false, true, false);
-	// TODO: Warning change the segment connection strategy to ConnectPointToSegmentAngleMid
 	// TODO: Random generator std::mt19937_64
 	const cv::Mat image = GenerateImage(EvaluateLichtenbergFigure(noise, noiseTopLeft, noiseBottomRight, width, height));
 

@@ -69,6 +69,14 @@ private:
 	template <size_t N, size_t D>
 	using Segment3DChainArray = Array2D<Segment3DChain<D>, N>;
 
+	enum class ConnectionStrategy
+	{
+		Angle,
+		AngleMid,
+		NearestPoint,
+		Rivers
+	};
+
 	/// <summary>
 	/// Represents a cell at a specific resolution
 	/// </summary>
@@ -120,6 +128,9 @@ private:
 	template <size_t D>
 	Segment3DChain<D> ConnectPointToSegmentRivers(const Point3D& point, double segmentDist, const Segment3D& segment) const;
 
+	template <size_t D>
+	Segment3DChain<D> ConnectPointToSegment(const ConnectionStrategy& strategy, const Point3D& point, double segmentDist, const Segment3D& segment) const;
+
 	template <typename T, size_t N>
 	std::tuple<int, int> GetArrayCell(const Cell& arrCell, const Array2D<T, N>& arr, const Cell& cell) const;
 
@@ -168,7 +179,7 @@ private:
 	void CheckEnoughSegmentInVicinity(const Point2DArray<N2>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments, Tail&&... tail) const;
 
 	template <size_t N, size_t D, typename ...Tail>
-	Segment3DChainArray<N, D> GenerateSubSegments(double minSlope, const Point2DArray<N>& points, Tail&&... tail) const;
+	Segment3DChainArray<N, D> GenerateSubSegments(const ConnectionStrategy& connectionStrategy, double minSlope, const Point2DArray<N>& points, Tail&&... tail) const;
 
 	// ----- Compute Color -----
 
@@ -641,6 +652,31 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentRiver
 }
 
 template <typename I>
+template <size_t D>
+DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegment(const ConnectionStrategy& strategy, const Point3D& point, double segmentDist, const Segment3D& segment) const
+{
+	switch (strategy)
+	{
+	case ConnectionStrategy::Angle:
+		return ConnectPointToSegmentAngle<D>(point ,segmentDist, segment);
+		break;
+
+	case ConnectionStrategy::AngleMid:
+		return ConnectPointToSegmentAngleMid<D>(point, segmentDist, segment);
+		break;
+
+	case ConnectionStrategy::Rivers:
+		return ConnectPointToSegmentRivers<D>(point, segmentDist, segment);
+		break;
+
+	default:
+	case ConnectionStrategy::NearestPoint:
+		return ConnectPointToSegmentNearestPoint<D>(point, segmentDist, segment);
+		break;
+	}
+}
+
+template <typename I>
 double Noise<I>::ComputeColorBase(double dist, double radius) const
 {
 	if (dist < radius)
@@ -686,6 +722,7 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 {
 	assert(m_resolution >= 1 && m_resolution <= 5);
 
+	const ConnectionStrategy connectionStrategy = ConnectionStrategy::Rivers;
 	const double minSlopeLevel2 = 0.09;
 	const double minSlopeLevel3 = 0.18;
 	const double minSlopeLevel4 = 0.38;
@@ -717,7 +754,7 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	Point2DArray<5> points2 = GenerateNeighboringPoints<5>(cell2);
 	ReplaceNeighboringPoints(cell1, points1, cell2, points2);
 	// Level 2: List of segments
-	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(minSlopeLevel2, points2, cell1, segments1);
+	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(connectionStrategy, minSlopeLevel2, points2, cell1, segments1);
 
 	if (m_resolution == 2)
 	{
@@ -733,7 +770,7 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	Point2DArray<5> points3 = GenerateNeighboringPoints<5>(cell3);
 	ReplaceNeighboringPoints(cell2, points2, cell3, points3);
 	// Level 3: List of segments
-	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(minSlopeLevel3, points3, cell1, segments1, cell2, segments2);
+	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(connectionStrategy, minSlopeLevel3, points3, cell1, segments1, cell2, segments2);
 
 	if (m_resolution == 3)
 	{
@@ -749,7 +786,7 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	Point2DArray<5> points4 = GenerateNeighboringPoints<5>(cell4);
 	ReplaceNeighboringPoints(cell3, points3, cell4, points4);
 	// Level 4: List of segments
-	Segment3DChainArray<5, 1> segments4 = GenerateSubSegments<5, 1>(minSlopeLevel4, points4, cell1, segments1, cell2, segments2, cell3, segments3);
+	Segment3DChainArray<5, 1> segments4 = GenerateSubSegments<5, 1>(connectionStrategy, minSlopeLevel4, points4, cell1, segments1, cell2, segments2, cell3, segments3);
 
 	if (m_resolution == 4)
 	{
@@ -765,7 +802,7 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	Point2DArray<5> points5 = GenerateNeighboringPoints<5>(cell5);
 	ReplaceNeighboringPoints(cell4, points4, cell5, points5);
 	// Level 5: List of segments
-	Segment3DChainArray<5, 1> segments5 = GenerateSubSegments<5, 1>(minSlopeLevel5, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4);
+	Segment3DChainArray<5, 1> segments5 = GenerateSubSegments<5, 1>(connectionStrategy, minSlopeLevel5, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4);
 
 	if (m_resolution == 5)
 	{
@@ -782,6 +819,8 @@ template <typename I>
 double Noise<I>::evaluateLichtenberg(double x, double y) const
 {
 	assert(m_resolution >= 1 && m_resolution <= 6);
+
+	const ConnectionStrategy connectionStrategy = ConnectionStrategy::AngleMid;
 
 	double value = 0.0;
 
@@ -809,7 +848,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	Point2DArray<5> points2 = GenerateNeighboringPoints<5>(cell2);
 	ReplaceNeighboringPoints(cell1, points1, cell2, points2);
 	// Level 2: List of segments
-	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(0.0, points2, cell1, segments1);
+	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(connectionStrategy, 0.0, points2, cell1, segments1);
 
 	if (m_resolution == 2)
 	{
@@ -825,7 +864,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	Point2DArray<5> points3 = GenerateNeighboringPoints<5>(cell3);
 	ReplaceNeighboringPoints(cell2, points2, cell3, points3);
 	// Level 3: List of segments
-	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(0.0, points3, cell1, segments1, cell2, segments2);
+	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(connectionStrategy, 0.0, points3, cell1, segments1, cell2, segments2);
 
 	if (m_resolution == 3)
 	{
@@ -841,7 +880,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	Point2DArray<5> points4 = GenerateNeighboringPoints<5>(cell4);
 	ReplaceNeighboringPoints(cell3, points3, cell4, points4);
 	// Level 4: List of segments
-	Segment3DChainArray<5, 1> segments4 = GenerateSubSegments<5, 1>(0.0, points4, cell1, segments1, cell2, segments2, cell3, segments3);
+	Segment3DChainArray<5, 1> segments4 = GenerateSubSegments<5, 1>(connectionStrategy, 0.0, points4, cell1, segments1, cell2, segments2, cell3, segments3);
 
 	if (m_resolution == 4)
 	{
@@ -857,7 +896,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	Point2DArray<5> points5 = GenerateNeighboringPoints<5>(cell5);
 	ReplaceNeighboringPoints(cell4, points4, cell5, points5);
 	// Level 5: List of segments
-	Segment3DChainArray<5, 1> segments5 = GenerateSubSegments<5, 1>(0.0, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4);
+	Segment3DChainArray<5, 1> segments5 = GenerateSubSegments<5, 1>(connectionStrategy, 0.0, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4);
 
 	if (m_resolution == 5)
 	{
@@ -873,7 +912,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	Point2DArray<5> points6 = GenerateNeighboringPoints<5>(cell6);
 	ReplaceNeighboringPoints(cell5, points5, cell6, points6);
 	// Level 6: List of segments
-	Segment3DChainArray<5, 1> segments6 = GenerateSubSegments<5, 1>(0.0, points6, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5);
+	Segment3DChainArray<5, 1> segments6 = GenerateSubSegments<5, 1>(connectionStrategy, 0.0, points6, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5);
 
 	if (m_resolution == 6)
 	{
@@ -1253,7 +1292,7 @@ void Noise<I>::CheckEnoughSegmentInVicinity(const Point2DArray<N2>& points, cons
 
 template <typename I>
 template <size_t N, size_t D, typename ...Tail>
-DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N COMMA D>) Noise<I>::GenerateSubSegments(double minSlope, const Point2DArray<N>& points, Tail&&... tail) const
+DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N COMMA D>) Noise<I>::GenerateSubSegments(const ConnectionStrategy& connectionStrategy, double minSlope, const Point2DArray<N>& points, Tail&&... tail) const
 {
 	// Ensure that there is enough segments around to connect sub points
 	CheckEnoughSegmentInVicinity(points, std::forward<Tail>(tail)...);
@@ -1284,8 +1323,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N COMMA D>) Noise<I>::GenerateSubSe
 
 			const Point3D p(point.x, point.y, elevation);
 
-			// TODO: find a way to dynamically select the connection method
-			const Segment3DChain<D> segmentChain = ConnectPointToSegmentAngleMid<D>(p, nearestSegmentDist, nearestSegment);
+			const Segment3DChain<D> segmentChain = ConnectPointToSegment<D>(connectionStrategy, p, nearestSegmentDist, nearestSegment);
 
 			if (length_sq(nearestSegment) > 0.0 && InsideDomain(segmentChain.front().a) && InsideDomain(segmentChain.back().b))
 			{
