@@ -17,16 +17,10 @@
     <ClCompile Include="Source\main.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\noise.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Source\perlin.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\math2d.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\utils.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\math3d.cpp">

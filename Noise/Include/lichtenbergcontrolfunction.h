@@ -2,6 +2,7 @@
 #define LICHTENBERGCONTROLFUNCTION_H
 
 #include "controlfunction.h"
+#include "math2d.h"
 
 class LichtenbergControlFunction : public ControlFunction<LichtenbergControlFunction>
 {

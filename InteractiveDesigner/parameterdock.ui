@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ParameterDock</class>
+ <widget class="QDockWidget" name="ParameterDock">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Parameters</string>
+  </property>
+  <widget class="QWidget" name="widget">
+   <layout class="QFormLayout" name="formLayout_2">
+    <item row="0" column="0">
+     <widget class="QLabel" name="seedLabel">
+      <property name="text">
+       <string>Seed</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QSpinBox" name="seedSpinBox">
+      <property name="minimum">
+       <number>-127</number>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="widthResolutionLabel">
+      <property name="text">
+       <string>Width resolution</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QSpinBox" name="widthResolutionSpinBox">
+      <property name="suffix">
+       <string> px</string>
+      </property>
+      <property name="maximum">
+       <number>16384</number>
+      </property>
+      <property name="value">
+       <number>512</number>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="heightResolutionLabel">
+      <property name="text">
+       <string>Height resolution</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QSpinBox" name="heightResolutionSpinBox">
+      <property name="suffix">
+       <string> px</string>
+      </property>
+      <property name="maximum">
+       <number>16384</number>
+      </property>
+      <property name="value">
+       <number>512</number>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="levelLabel">
+      <property name="text">
+       <string>Levels</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QSpinBox" name="levelSpinBox">
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>6</number>
+      </property>
+      <property name="value">
+       <number>1</number>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QLabel" name="epsilonLabel">
+      <property name="text">
+       <string>Epsilon</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QDoubleSpinBox" name="epsilonDoubleSpinBox">
+      <property name="maximum">
+       <double>0.500000000000000</double>
+      </property>
+      <property name="singleStep">
+       <double>0.050000000000000</double>
+      </property>
+      <property name="value">
+       <double>0.100000000000000</double>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
