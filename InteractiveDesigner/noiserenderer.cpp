@@ -51,10 +51,10 @@ QImage NoiseRenderer::Render() const
 	typedef LichtenbergControlFunction ControlFunctionType;
 	std::unique_ptr<ControlFunctionType> controlFunction(std::make_unique<ControlFunctionType>());
 
-	const Point2D noiseTopLeft(-3.0, -3.0);
-	const Point2D noiseBottomRight(2.0, 2.0);
-	const Point2D controlFunctionTopLeft(-1.0, -1.0);
-	const Point2D controlFunctionBottomRight(1.0, 1.0);
+	const Point2D noiseTopLeft(m_parameters.noiseLeft, m_parameters.noiseTop);
+	const Point2D noiseBottomRight(m_parameters.noiseRight, m_parameters.noiseBottom);
+	const Point2D controlFunctionTopLeft(m_parameters.controlFunctionLeft, m_parameters.controlFunctionTop);
+	const Point2D controlFunctionBottomRight(m_parameters.controlFunctionRight, m_parameters.controlFunctionBottom);
 
 	const Noise<ControlFunctionType> noise(std::move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, m_parameters.seed, m_parameters.epsilon, m_parameters.levels, false, true, false);
 

@@ -5,11 +5,19 @@
 
 // Default parameters for the noise function
 const NoiseParameters MainWindow::default_noise_parameters = {
-	0,   // seed
-	512, // width
-	512, // height
-	1,   // levels
-	0.1  // epsilon
+	0,    // seed
+	512,  // width
+	512,  // height
+	1,    // levels
+	0.1,  // epsilon
+	-3.0, // noiseTop
+	2.0,  // noiseBottom
+	-3.0, // noiseLeft
+	2.0,  // noiseRight
+	-1.0, // controlFunctionTop
+	1.0,  // controlFunctionBottom
+	-1.0, // controlFunctionLeft
+	2.0   // controlFunctionRight
 };
 
 MainWindow::MainWindow(QWidget *parent)

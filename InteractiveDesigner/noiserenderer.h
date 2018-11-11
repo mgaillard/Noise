@@ -47,15 +47,15 @@ private slots:
 private:
 	void ConfigureFutureWatcher();
 
+	/**
+	 * \brief Render the noise in a QImage.
+	 * \return An image of the noise.
+	 */
 	QImage Render() const;
 
 	QFutureWatcher<QImage>* m_futureImageWatcher;
 
 	NoiseParameters m_parameters;
-
-	// TODO: remove
-	const int m_imageWidth = 1024;
-	const int m_imageHeight = 1024;
 
 	QImage m_result;
 };
