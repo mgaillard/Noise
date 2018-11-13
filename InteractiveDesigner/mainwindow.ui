@@ -73,6 +73,9 @@
    <property name="text">
     <string>&amp;Normal Size</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+0</string>
+   </property>
   </action>
   <action name="actionZoom_In_25">
    <property name="text">
@@ -96,16 +99,10 @@
    <property name="text">
     <string>Render</string>
    </property>
-   <property name="shortcut">
-    <string>F5</string>
-   </property>
   </action>
   <action name="actionSave">
    <property name="text">
     <string>Save</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+S</string>
    </property>
   </action>
  </widget>

@@ -103,6 +103,8 @@ void MainWindow::SetupUi()
 
 void MainWindow::CreateActions()
 {
+	ui->actionSave->setShortcut(QKeySequence::Save);
+	ui->actionRender->setShortcut(QKeySequence::Refresh);
 	ui->actionZoom_In_25->setShortcut(QKeySequence::ZoomIn);
 	ui->actionZoom_Out_25->setShortcut(QKeySequence::ZoomOut);
 
