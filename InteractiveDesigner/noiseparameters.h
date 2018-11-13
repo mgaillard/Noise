@@ -8,6 +8,7 @@ struct NoiseParameters
 	int heightResolution;
 	int levels;
 	double epsilon;
+	double displacement;
 	double noiseTop;
 	double noiseBottom;
 	double noiseLeft;

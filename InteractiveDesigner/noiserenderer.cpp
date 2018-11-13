@@ -56,7 +56,18 @@ QImage NoiseRenderer::Render() const
 	const Point2D controlFunctionTopLeft(m_parameters.controlFunctionLeft, m_parameters.controlFunctionTop);
 	const Point2D controlFunctionBottomRight(m_parameters.controlFunctionRight, m_parameters.controlFunctionBottom);
 
-	const Noise<ControlFunctionType> noise(std::move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, m_parameters.seed, m_parameters.epsilon, m_parameters.levels, false, true, false);
+	const Noise<ControlFunctionType> noise(std::move(controlFunction),
+										   noiseTopLeft,
+										   noiseBottomRight,
+										   controlFunctionTopLeft,
+										   controlFunctionBottomRight,
+										   m_parameters.seed,
+										   m_parameters.epsilon,
+										   m_parameters.levels,
+										   m_parameters.displacement,
+										   false,
+										   true,
+										   false);
 
 	QImage image(m_parameters.widthResolution, m_parameters.heightResolution, QImage::Format::Format_Grayscale8);
 

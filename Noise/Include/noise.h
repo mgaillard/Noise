@@ -45,6 +45,7 @@ public:
 		  int seed = 0,
 		  double eps = 0.0,
 		  int resolution = 1,
+		  double displacement = 0.0,
 	      bool displayPoints = true,
 	      bool displaySegments = true,
 	      bool displayGrid = true);
@@ -239,6 +240,9 @@ private:
 	// Number of resolutions in the noise function
 	const int m_resolution;
 
+	// Maximum displacement of segments
+	const double m_displacement;
+
 	// Additional resolution steps in the ComputeColorPrimitives function
 	const int m_primitivesResolutionSteps = 3;
 
@@ -248,7 +252,7 @@ private:
 };
 
 template <typename I>
-Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, int resolution, bool displayPoints, bool displaySegments, bool displayGrid) :
+Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, int resolution, double displacement, bool displayPoints, bool displaySegments, bool displayGrid) :
 	m_seed(seed),
 	m_controlFunction(std::move(controlFunction)),
 	m_displayPoints(displayPoints),
@@ -259,7 +263,8 @@ Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Poin
 	m_controlFunctionTopLeft(controlFunctionTopLeft),
 	m_controlFunctionBottomRight(controlFunctionBottomRight),
 	m_eps(eps),
-	m_resolution(resolution)
+	m_resolution(resolution),
+	m_displacement(displacement)
 {
 	InitPointCache();
 }
@@ -824,9 +829,9 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	assert(m_resolution >= 1 && m_resolution <= 6);
 
 	const ConnectionStrategy connectionStrategy = ConnectionStrategy::AngleMid;
-	const double displacementLevel1 = 0.05;
-	const double displacementLevel2 = 0.0125;
-	const double displacementLevel3 = 0.003125;
+	const double displacementLevel1 = m_displacement;
+	const double displacementLevel2 = displacementLevel1 / 4;
+	const double displacementLevel3 = displacementLevel2 / 4;
 
 	double value = 0.0;
 

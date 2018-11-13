@@ -21,6 +21,7 @@ void ParameterDock::setParameters(const NoiseParameters& parameters)
 	ui->heightResolutionSpinBox->setValue(parameters.heightResolution);
 	ui->levelSpinBox->setValue(parameters.levels);
 	ui->epsilonDoubleSpinBox->setValue(parameters.epsilon);
+	ui->displacementDoubleSpinBox->setValue(parameters.displacement),
 	ui->noiseTopDoubleSpinBox->setValue(parameters.noiseTop);
 	ui->noiseBottomDoubleSpinBox->setValue(parameters.noiseBottom);
 	ui->noiseLeftDoubleSpinBox->setValue(parameters.noiseLeft);
@@ -39,6 +40,7 @@ NoiseParameters ParameterDock::parameters() const
 		ui->heightResolutionSpinBox->value(),
 		ui->levelSpinBox->value(),
 		ui->epsilonDoubleSpinBox->value(),
+		ui->displacementDoubleSpinBox->value(),
 		ui->noiseTopDoubleSpinBox->value(),
 		ui->noiseBottomDoubleSpinBox->value(),
 		ui->noiseLeftDoubleSpinBox->value(),

@@ -11,6 +11,7 @@ const NoiseParameters MainWindow::default_noise_parameters = {
 	512,  // height
 	1,    // levels
 	0.1,  // epsilon
+	0.0,  // displacement
 	-2.0, // noiseTop
 	1.0,  // noiseBottom
 	-2.0, // noiseLeft
