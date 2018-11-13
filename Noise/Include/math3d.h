@@ -24,6 +24,8 @@ struct Point3D
 
 	Point3D(double _x, double _y, double _z) : x(_x), y(_y), z(_z) { }
 
+	explicit Point3D(const Point2D& point, double _z) : x(point.x), y(point.y), z(_z) { }
+
 	// Unary Point operators
 	Point3D& operator+=(const Point3D& p) { x += p.x; y += p.y; z += p.z; return *this; }
 	Point3D& operator-=(const Point3D& p) { x -= p.x; y -= p.y; z -= p.z; return *this; }
@@ -37,7 +39,7 @@ struct Point3D
 	Point3D& operator/=(double s) { x /= s; y /= s; z /= s; return *this; }
 
 	// Unary minus operator
-	Point3D operator-() const { return Point3D(-x, -y, -z); }
+	Point3D operator-() const { return { -x, -y, -z }; }
 };
 
 // Comparison operators
@@ -94,15 +96,15 @@ inline double dist(const Point3D& lhs, const Point3D& rhs) {
 }
 
 inline Point3D lerp(const Point3D& a, const Point3D& b, double t) {
-	return Point3D(
+	return {
 		lerp(a.x, b.x, t),
 		lerp(a.y, b.y, t),
 		lerp(a.z, b.z, t)
-	);
+	};
 }
 
 inline Point2D ProjectionZ(const Point3D& p) {
-	return Point2D(p.x, p.y);
+	return { p.x, p.y };
 }
 
 /*
@@ -118,9 +120,11 @@ struct Vec3D
 
 	Vec3D(double _x, double _y, double _z) : x(_x), y(_y), z(_z) { }
 
-	Vec3D(const Point3D& p) : x(p.x), y(p.y), z(p.z) { }
+	explicit Vec3D(const Point3D& p) : x(p.x), y(p.y), z(p.z) { }
 
-	Vec3D(const Point3D& a, const Point3D& b) : x(b.x - a.x), y(b.y - a.y), z(b.z - a.z) { }
+	explicit Vec3D(const Point3D& a, const Point3D& b) : x(b.x - a.x), y(b.y - a.y), z(b.z - a.z) { }
+
+	explicit Vec3D(const Vec2D& vec, double _z) : x(vec.x), y(vec.y), z(_z) { }
 
 	// Unary Point operators
 	Vec3D& operator+=(const Vec3D& v) { x += v.x; y += v.y; z += v.z; return *this; }
@@ -181,20 +185,20 @@ inline double dot(const Vec3D& a, const Vec3D& b) {
 }
 
 inline Vec3D cross(const Vec3D& a, const Vec3D& b) {
-	return Vec3D(
+	return {
 		a.y * b.z - a.z * b.y,
 		a.z * b.x - a.x * b.z,
 		a.x * b.y - a.y * b.x
-	);
+	};
 }
 
 inline Vec3D normalized(const Vec3D& a) {
 	const double n = norm(a);
-	return Vec3D(a.x / n, a.y / n, a.z / n);
+	return { a.x / n, a.y / n, a.z / n };
 }
 
 inline Vec2D ProjectionZ(const Vec3D& v) {
-	return Vec2D(v.x, v.y);
+	return { v.x, v.y };
 }
 
 inline double angle(const Vec3D& oa, const Vec3D& ob) {
@@ -241,7 +245,7 @@ struct Segment3D
 
 	Segment3D() = default;
 
-	Segment3D(const Point3D& _a, const Point3D& _b) : a(_a), b(_b) { }
+	explicit Segment3D(const Point3D& _a, const Point3D& _b) : a(_a), b(_b) { }
 };
 
 // Utility functions
@@ -258,11 +262,11 @@ inline Point3D lerp(const Segment3D& s, double t) {
 }
 
 inline Point3D MidPoint(const Segment3D& s) {
-	return Point3D(
+	return {
 		(s.a.x + s.b.x) / 2.0,
 		(s.a.y + s.b.y) / 2.0,
 		(s.a.z + s.b.z) / 2.0
-	);
+	};
 }
 
 template <size_t N>
@@ -300,7 +304,7 @@ std::array<Segment3D, N> SubdivideInSegments(const Segment3D& s)
 }
 
 inline Segment2D ProjectionZ(const Segment3D& s) {
-	return Segment2D(ProjectionZ(s.a), ProjectionZ(s.b));
+	return { ProjectionZ(s.a), ProjectionZ(s.b) };
 }
 
 #endif // MATH3D_H

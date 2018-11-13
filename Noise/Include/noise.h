@@ -171,6 +171,9 @@ private:
 
 	template <size_t N, size_t D>
 	void SubdivideSegments(const Cell& cell, const Segment3DChainArray<N, 1>& segments, Segment3DChainArray<N - 2, D>& subdividedSegments) const;
+	
+	template <size_t N, size_t D>
+	void DisplaceSegments(double factor, Segment3DChainArray<N, D>& segments) const;
 
 	template <size_t N2, size_t N1, size_t D1>
 	void CheckEnoughSegmentInVicinity(const Point2DArray<N2>& points, const Cell& cell, const Segment3DChainArray<N1, D1>& segments) const;
@@ -821,6 +824,9 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	assert(m_resolution >= 1 && m_resolution <= 6);
 
 	const ConnectionStrategy connectionStrategy = ConnectionStrategy::AngleMid;
+	const double displacementLevel1 = 0.05;
+	const double displacementLevel2 = 0.0125;
+	const double displacementLevel3 = 0.003125;
 
 	double value = 0.0;
 
@@ -833,6 +839,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	// Subdivide segments of level 1
 	Segment3DChainArray<5, 4> segments1;
 	SubdivideSegments(cell1, straightSegments1, segments1);
+	DisplaceSegments(displacementLevel1, segments1);
 
 	if (m_resolution == 1)
 	{
@@ -849,6 +856,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	ReplaceNeighboringPoints(cell1, points1, cell2, points2);
 	// Level 2: List of segments
 	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(connectionStrategy, 0.0, points2, cell1, segments1);
+	DisplaceSegments(displacementLevel2, segments2);
 
 	if (m_resolution == 2)
 	{
@@ -865,6 +873,7 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 	ReplaceNeighboringPoints(cell2, points2, cell3, points3);
 	// Level 3: List of segments
 	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(connectionStrategy, 0.0, points3, cell1, segments1, cell2, segments2);
+	DisplaceSegments(displacementLevel3, segments3);
 
 	if (m_resolution == 3)
 	{
@@ -1270,6 +1279,43 @@ void Noise<I>::SubdivideSegments(const Cell& cell, const Segment3DChainArray<N, 
 			}
 			
 			SegmentChainFromPoints(currentSegment.a, midPoints, currentSegment.b, subdividedSegments[i - 1][j - 1]);
+		}
+	}
+}
+
+template <typename I>
+template <size_t N, size_t D>
+void Noise<I>::DisplaceSegments(double factor, Segment3DChainArray<N, D>& segments) const
+{
+	// Ensure that segments are subdivided.
+	static_assert(D > 1, "Segments should be subdivided in more than 1 part.");
+
+	// Subdivide segments
+	for (unsigned int i = 0; i < segments.size(); i++)
+	{
+		for (unsigned int j = 0; j < segments[i].size(); j++)
+		{
+			// First point of the segment chain
+			const Point2D a = ProjectionZ(segments[i][j].front().a);
+			// Last point of the segment chain
+			const Point2D b = ProjectionZ(segments[i][j].back().b);
+
+			const Vec2D ab(a, b);
+			const Vec3D displacementVector(rotateCCW90(ab), 0.0);
+
+			for (unsigned int k = 0; k < segments[i][j].size() - 1; k++)
+			{
+				if (k % 2 == 0)
+				{
+					segments[i][j][k].b += factor * displacementVector;
+					segments[i][j][k + 1].a += factor * displacementVector;
+				}
+				else
+				{
+					segments[i][j][k].b -= factor * displacementVector;
+					segments[i][j][k + 1].a -= factor * displacementVector;
+				}
+			}
 		}
 	}
 }
