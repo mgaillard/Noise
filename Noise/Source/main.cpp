@@ -65,8 +65,8 @@ cv::Mat SegmentImage(const Noise<I>& noise, const Point2D& a, const Point2D&b, i
 {
 	const Point3D point(5.69, -1.34, 4.0);
 	const std::array<Segment3D, 2> segments = { {
-		{Point3D(1.0, 1.0, 2.0), Point3D(2.0, 3.0, 1.0)},
-		{Point3D(2.0, 3.0, 1.0), Point3D(2.0, 5.0, 0.0)}
+		Segment3D(Point3D(1.0, 1.0, 2.0), Point3D(2.0, 3.0, 1.0)),
+		Segment3D(Point3D(2.0, 3.0, 1.0), Point3D(2.0, 5.0, 0.0))
 	} };
 
 	cv::Mat image(height, width, CV_16U);
