@@ -22,6 +22,7 @@ public:
 private slots:
 	void StartRendering();
 	void RenderingFinished();
+	void Save();
 
 private:
 	void SetupUi();

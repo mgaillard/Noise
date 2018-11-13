@@ -33,6 +33,7 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <addaction name="actionSave"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -96,7 +97,15 @@
     <string>Render</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+R</string>
+    <string>F5</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
  </widget>
