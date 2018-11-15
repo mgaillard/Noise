@@ -299,6 +299,22 @@
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>seedSpinBox</tabstop>
+  <tabstop>widthResolutionSpinBox</tabstop>
+  <tabstop>heightResolutionSpinBox</tabstop>
+  <tabstop>levelSpinBox</tabstop>
+  <tabstop>epsilonDoubleSpinBox</tabstop>
+  <tabstop>displacementDoubleSpinBox</tabstop>
+  <tabstop>noiseTopDoubleSpinBox</tabstop>
+  <tabstop>noiseBottomDoubleSpinBox</tabstop>
+  <tabstop>noiseLeftDoubleSpinBox</tabstop>
+  <tabstop>noiseRightDoubleSpinBox</tabstop>
+  <tabstop>controlFunctionTopDoubleSpinBox</tabstop>
+  <tabstop>controlFunctionBottomDoubleSpinBox</tabstop>
+  <tabstop>controlFunctionLeftDoubleSpinBox</tabstop>
+  <tabstop>controlFunctionRightDoubleSpinBox</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
