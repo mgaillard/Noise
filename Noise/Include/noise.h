@@ -371,13 +371,10 @@ typename Noise<I>::Cell Noise<I>::GetCell(double x, double y, int resolution) co
 	// Resolution is strictly positive
 	assert(resolution > 0);
 
-	Cell c;
+	const int cellX = int(floor(x * resolution));
+	const int cellY = int(floor(y * resolution));
 
-	c.x = int(floor(x * resolution));
-	c.y = int(floor(y * resolution));
-	c.resolution = resolution;
-
-	return c;
+	return { cellX, cellY , resolution };
 }
 
 /// <summary>
