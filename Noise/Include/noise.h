@@ -16,23 +16,6 @@
 #include "utils.h"
 #include "controlfunction.h"
 
-// If a member function of Noise<I> returns a dependent type, use this macro like:
-//    template <typename I>
-//    template <size_t D>
-//    NOISE_DEPENDENT_TYPE(Segment3DChain<D>) Noise<I>::MemberFunction() const { return Segment3DChain<D>(); }
-// This macro is a workaround because MSVC currently fails to compile dependent type templates
-// In this macro, type should be a Noise<I> template dependent type, for example: Segment3DChain<D>
-#if defined(_MSC_VER)
-// Nonconformant code for the latest Visual Studio 2017 C++ Compiler
-#define DEPENDENT_TYPE(C, T) typename C::T
-#else
-// Conformance with the disambiguation rule.
-// The template keyword is here to tells the compiler that type is a template type
-#define DEPENDENT_TYPE(C, T) typename C::template T
-#endif
-
-#define COMMA ,
-
 template <typename I>
 class Noise
 {
@@ -463,7 +446,7 @@ bool Noise<I>::DistToDomain(const Point2D& point) const
 /// <returns>A chain of segments connecting the point with the segment</returns>
 template <typename I>
 template <size_t D>
-DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngle(const Point3D & point, double segmentDist, const Segment3D& segment) const
+typename Noise<I>::template Segment3DChain<D> Noise<I>::ConnectPointToSegmentAngle(const Point3D & point, double segmentDist, const Segment3D& segment) const
 {
 	Segment3DChain<D> generatedSegment;
 
@@ -525,7 +508,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngle
 /// <returns>A chain of segments connecting the point with the segment</returns>
 template <typename I>
 template <size_t D>
-DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngleMid(const Point3D& point, double segmentDist, const Segment3D& segment) const
+typename Noise<I>::template Segment3DChain<D> Noise<I>::ConnectPointToSegmentAngleMid(const Point3D& point, double segmentDist, const Segment3D& segment) const
 {
 	Segment3DChain<D> generatedSegment;
 
@@ -576,7 +559,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentAngle
 /// <returns>A chain of segments connecting the point with the segment</returns>
 template <typename I>
 template <size_t D>
-DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentNearestPoint(const Point3D& point, double segmentDist, const Segment3D& segment) const
+typename Noise<I>::template Segment3DChain<D> Noise<I>::ConnectPointToSegmentNearestPoint(const Point3D& point, double segmentDist, const Segment3D& segment) const
 {
 	Segment3DChain<D> generatedSegment;
 
@@ -595,7 +578,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentNeare
 
 template <typename I>
 template <size_t D>
-DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentRivers(const Point3D& point, double segmentDist, const Segment3D& segment) const
+typename Noise<I>::template Segment3DChain<D> Noise<I>::ConnectPointToSegmentRivers(const Point3D& point, double segmentDist, const Segment3D& segment) const
 {
 	Segment3DChain<D> generatedSegment;
 
@@ -658,7 +641,7 @@ DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegmentRiver
 
 template <typename I>
 template <size_t D>
-DEPENDENT_TYPE(Noise<I>, Segment3DChain<D>) Noise<I>::ConnectPointToSegment(const ConnectionStrategy& strategy, const Point3D& point, double segmentDist, const Segment3D& segment) const
+typename Noise<I>::template Segment3DChain<D> Noise<I>::ConnectPointToSegment(const ConnectionStrategy& strategy, const Point3D& point, double segmentDist, const Segment3D& segment) const
 {
 	switch (strategy)
 	{
@@ -1084,7 +1067,7 @@ int Noise<I>::SegmentsStartingInP(const Cell& cell, const Segment3DChainArray<N,
 
 template <typename I>
 template <size_t N>
-DEPENDENT_TYPE(Noise<I>, Point2DArray<N>) Noise<I>::GenerateNeighboringPoints(const Cell& cell) const
+typename Noise<I>::template Point2DArray<N> Noise<I>::GenerateNeighboringPoints(const Cell& cell) const
 {
 	Point2DArray<N> points;
 
@@ -1153,7 +1136,7 @@ void Noise<I>::ReplaceNeighboringPoints(const Cell& cell, const Point2DArray<M>&
 
 template <typename I>
 template <size_t N>
-DEPENDENT_TYPE(Noise<I>, DoubleArray<N>) Noise<I>::ComputeElevations(const Point2DArray<N>& points) const
+typename Noise<I>::template DoubleArray<N> Noise<I>::ComputeElevations(const Point2DArray<N>& points) const
 {
 	DoubleArray<N> elevations;
 
@@ -1170,7 +1153,7 @@ DEPENDENT_TYPE(Noise<I>, DoubleArray<N>) Noise<I>::ComputeElevations(const Point
 
 template <typename I>
 template <size_t N>
-DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N - 2 COMMA 1>) Noise<I>::GenerateSegments(const Point2DArray<N>& points) const
+typename Noise<I>::template Segment3DChainArray<N - 2 , 1> Noise<I>::GenerateSegments(const Point2DArray<N>& points) const
 {
 	const DoubleArray<N> elevations = ComputeElevations<N>(points);
 
@@ -1338,7 +1321,7 @@ void Noise<I>::CheckEnoughSegmentInVicinity(const Point2DArray<N2>& points, cons
 
 template <typename I>
 template <size_t N, size_t D, typename ...Tail>
-DEPENDENT_TYPE(Noise<I>, Segment3DChainArray<N COMMA D>) Noise<I>::GenerateSubSegments(const ConnectionStrategy& connectionStrategy, double minSlope, const Point2DArray<N>& points, Tail&&... tail) const
+typename Noise<I>::template Segment3DChainArray<N , D> Noise<I>::GenerateSubSegments(const ConnectionStrategy& connectionStrategy, double minSlope, const Point2DArray<N>& points, Tail&&... tail) const
 {
 	// Ensure that there is enough segments around to connect sub points
 	CheckEnoughSegmentInVicinity(points, std::forward<Tail>(tail)...);
