@@ -1,9 +1,15 @@
 #ifndef NOISERENDERER_H
 #define NOISERENDERER_H
 
+#include <vector>
+
 #include <QObject>
 #include <QImage>
 #include <QtConcurrent>
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "noiseparameters.h"
 
@@ -21,10 +27,16 @@ public:
 	void setParameters(const NoiseParameters& parameters);
 
 	/**
-	 * \brief Return the rendered image
+	 * \brief Return the rendered image as a QImage
 	 * \return The rendered image
 	 */
-	const QImage& result() const;
+	QImage resultQImage() const;
+
+	/**
+	 * \brief Return the rendered image as a cv::Mat
+	 * \return The rendered image
+	 */
+	cv::Mat resultCvMat() const;
 
 	/**
 	 * \brief Start the rendering of the image
@@ -45,25 +57,59 @@ private slots:
 	void OnRenderingFinished();
 
 private:
+
+	/**
+	 * \brief A 2D std::vector<double> to temporarily store a result
+	 */
+	struct VectorDouble2D
+	{
+		std::size_t height;
+		std::size_t width;
+		std::vector<double> data;
+
+		VectorDouble2D() :
+			height(0),
+			width(0)
+		{
+		}
+
+		VectorDouble2D(std::size_t h, std::size_t w) :
+			height(h),
+			width(w),
+			data(h * w)
+		{
+		}
+
+		const double& at(std::size_t i, std::size_t j) const
+		{
+			return data.at(i * height + j);
+		}
+
+		double& at(std::size_t i, std::size_t j)
+		{
+			return data.at(i * height + j);
+		}
+	};
+
 	void ConfigureFutureWatcher();
 
 	/**
 	 * \brief Render the terrain noise in a QImage.
 	 * \return An image of the noise.
 	 */
-	QImage RenderTerrain() const;
+	VectorDouble2D RenderTerrain() const;
 
 	/**
 	 * \brief Render the Lichtenberg noise in a QImage.
 	 * \return An image of the noise.
 	 */
-	QImage RenderLichtenberg() const;
+	VectorDouble2D RenderLichtenberg() const;
 
-	QFutureWatcher<QImage>* m_futureImageWatcher;
+	QFutureWatcher<VectorDouble2D>* m_futureImageWatcher;
 
 	NoiseParameters m_parameters;
 
-	QImage m_result;
+	VectorDouble2D m_result;
 };
 
 #endif // NOISERENDERER_H

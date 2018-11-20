@@ -62,7 +62,7 @@ void MainWindow::StartRendering()
 
 void MainWindow::RenderingFinished()
 {
-	ui->display_widget->setImage(m_noiseRenderer->result());
+	ui->display_widget->setImage(m_noiseRenderer->resultQImage());
 
 	// Close the progress dialog
 	if (m_progressDialog != nullptr)
@@ -73,13 +73,15 @@ void MainWindow::RenderingFinished()
 
 void MainWindow::Save()
 {
-	if (!m_noiseRenderer->result().isNull())
+	cv::Mat image = m_noiseRenderer->resultCvMat();
+
+	if (!image.empty())
 	{
 		QString filename = QFileDialog::getSaveFileName(this, tr("Save the image"), "", tr("Images (*.png *.jpg)"));
 
 		if (!filename.isEmpty())
 		{
-			const bool saved = m_noiseRenderer->result().save(filename);
+			const bool saved = cv::imwrite(filename.toStdString(), image);
 
 			if (!saved)
 			{

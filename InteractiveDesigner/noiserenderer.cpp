@@ -6,7 +6,7 @@
 
 NoiseRenderer::NoiseRenderer(QObject *parent, const NoiseParameters& parameters)
 	: QObject(parent),
-	m_futureImageWatcher(new QFutureWatcher<QImage>(this)),
+	m_futureImageWatcher(new QFutureWatcher<VectorDouble2D>(this)),
 	m_parameters(parameters)
 {
 	ConfigureFutureWatcher();
@@ -17,9 +17,48 @@ void NoiseRenderer::setParameters(const NoiseParameters& parameters)
 	m_parameters = parameters;
 }
 
-const QImage& NoiseRenderer::result() const
+QImage NoiseRenderer::resultQImage() const
 {
-	return m_result;
+	QImage image(m_result.width, m_result.height, QImage::Format::Format_Grayscale8);
+
+	// Find min and max to remap to 16 bits
+	double minimum = std::numeric_limits<double>::max();
+	double maximum = std::numeric_limits<double>::lowest();
+	for (auto value : m_result.data) {
+		minimum = std::min(minimum, value);
+		maximum = std::max(maximum, value);
+	}
+
+	for (std::size_t i = 0; i < m_result.height; i++) {
+		for (std::size_t j = 0; j < m_result.width; j++) {
+			const auto grayValue = remap_clamp(m_result.at(i, j), minimum, maximum, 0.0, double(std::numeric_limits<uint8_t>::max()));
+			image.setPixel(j, i, qRgb(grayValue, grayValue, grayValue));
+		}
+	}
+
+	return image;
+}
+
+cv::Mat NoiseRenderer::resultCvMat() const
+{
+	cv::Mat image(m_result.width, m_result.height, CV_16U);
+
+	// Find min and max to remap to 16 bits
+	double minimum = std::numeric_limits<double>::max();
+	double maximum = std::numeric_limits<double>::lowest();
+	for (auto value : m_result.data) {
+		minimum = std::min(minimum, value);
+		maximum = std::max(maximum, value);
+	}
+
+	for (std::size_t i = 0; i < m_result.height; i++) {
+		for (std::size_t j = 0; j < m_result.width; j++) {
+			const auto grayValue = remap_clamp(m_result.at(i, j), minimum, maximum, 0.0, double(std::numeric_limits<uint16_t>::max()));
+			image.at<uint16_t>(j, i) = static_cast<uint16_t>(grayValue);
+		}
+	}
+
+	return image;
 }
 
 bool NoiseRenderer::start()
@@ -27,7 +66,7 @@ bool NoiseRenderer::start()
 	// Check that the renderer is not currently running before starting a new computation
 	if (!m_futureImageWatcher->isRunning())
 	{
-		QFuture<QImage> futureImage;
+		QFuture<VectorDouble2D> futureImage;
 
 		switch (m_parameters.type)
 		{
@@ -56,10 +95,10 @@ void NoiseRenderer::OnRenderingFinished()
 
 void NoiseRenderer::ConfigureFutureWatcher()
 {
-	connect(m_futureImageWatcher, &QFutureWatcher<QImage>::finished, this, &NoiseRenderer::OnRenderingFinished);
+	connect(m_futureImageWatcher, &QFutureWatcher<VectorDouble2D>::finished, this, &NoiseRenderer::OnRenderingFinished);
 }
 
-QImage NoiseRenderer::RenderTerrain() const
+NoiseRenderer::VectorDouble2D NoiseRenderer::RenderTerrain() const
 {
 	typedef PerlinControlFunction ControlFunctionType;
 	std::unique_ptr<ControlFunctionType> controlFunction(std::make_unique<ControlFunctionType>());
@@ -82,25 +121,22 @@ QImage NoiseRenderer::RenderTerrain() const
 		false,
 		false);
 
-	QImage image(m_parameters.widthResolution, m_parameters.heightResolution, QImage::Format::Format_Grayscale8);
+	VectorDouble2D result(m_parameters.heightResolution, m_parameters.widthResolution);
 
-#pragma omp parallel for shared(image, noise)
-	for (int i = 0; i < image.height(); i++) {
-		for (int j = 0; j < image.width(); j++) {
-			const double x = remap_clamp(double(j), 0.0, double(image.width() - 1), noiseTopLeft.x, noiseBottomRight.x);
-			const double y = remap_clamp(double(i), 0.0, double(image.height() - 1), noiseTopLeft.y, noiseBottomRight.y);
+#pragma omp parallel for
+	for (int i = 0; i < m_parameters.heightResolution; i++) {
+		for (int j = 0; j < m_parameters.widthResolution; j++) {
+			const double x = remap_clamp(double(j), 0.0, double(m_parameters.widthResolution - 1), noiseTopLeft.x, noiseBottomRight.x);
+			const double y = remap_clamp(double(i), 0.0, double(m_parameters.heightResolution - 1), noiseTopLeft.y, noiseBottomRight.y);
 
-			const double value = noise.evaluateTerrain(x, y);
-			const auto grayValue = uint8_t(value * std::numeric_limits<uint8_t>::max());
-
-			image.setPixel(j, i, qRgb(grayValue, grayValue, grayValue));
+			result.at(i, j) = noise.evaluateTerrain(x, y);
 		}
 	}
 
-	return image;
+	return result;
 }
 
-QImage NoiseRenderer::RenderLichtenberg() const
+NoiseRenderer::VectorDouble2D NoiseRenderer::RenderLichtenberg() const
 {
 	typedef LichtenbergControlFunction ControlFunctionType;
 	std::unique_ptr<ControlFunctionType> controlFunction(std::make_unique<ControlFunctionType>());
@@ -123,20 +159,17 @@ QImage NoiseRenderer::RenderLichtenberg() const
 										   true,
 										   false);
 
-	QImage image(m_parameters.widthResolution, m_parameters.heightResolution, QImage::Format::Format_Grayscale8);
+	VectorDouble2D result(m_parameters.heightResolution, m_parameters.widthResolution);
 
-#pragma omp parallel for shared(image, noise)
-	for (int i = 0; i < image.height(); i++) {
-		for (int j = 0; j < image.width(); j++) {
-			const double x = remap_clamp(double(j), 0.0, double(image.width() - 1), noiseTopLeft.x, noiseBottomRight.x);
-			const double y = remap_clamp(double(i), 0.0, double(image.height() - 1), noiseTopLeft.y, noiseBottomRight.y);
+#pragma omp parallel for
+	for (int i = 0; i < m_parameters.heightResolution; i++) {
+		for (int j = 0; j < m_parameters.widthResolution; j++) {
+			const double x = remap_clamp(double(j), 0.0, double(m_parameters.widthResolution - 1), noiseTopLeft.x, noiseBottomRight.x);
+			const double y = remap_clamp(double(i), 0.0, double(m_parameters.heightResolution - 1), noiseTopLeft.y, noiseBottomRight.y);
 
-			const double value = noise.evaluateLichtenberg(x, y);
-			const auto grayValue = uint8_t(value * std::numeric_limits<uint8_t>::max());
-
-			image.setPixel(j, i, qRgb(grayValue, grayValue, grayValue));
+			result.at(i, j) = noise.evaluateLichtenberg(x, y);
 		}
 	}
 
-	return image;
+	return result;
 }
