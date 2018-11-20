@@ -16,6 +16,7 @@ ParameterDock::~ParameterDock()
 
 void ParameterDock::setParameters(const NoiseParameters& parameters)
 {
+	ui->typeComboBox->setCurrentIndex(static_cast<int>(parameters.type));
 	ui->seedSpinBox->setValue(parameters.seed);
 	ui->widthResolutionSpinBox->setValue(parameters.widthResolution);
 	ui->heightResolutionSpinBox->setValue(parameters.heightResolution);
@@ -34,7 +35,8 @@ void ParameterDock::setParameters(const NoiseParameters& parameters)
 
 NoiseParameters ParameterDock::parameters() const
 {
-	return { 
+	return {
+		static_cast<NoiseType>(ui->typeComboBox->currentIndex()),
 		ui->seedSpinBox->value(),
 		ui->widthResolutionSpinBox->value(),
 		ui->heightResolutionSpinBox->value(),

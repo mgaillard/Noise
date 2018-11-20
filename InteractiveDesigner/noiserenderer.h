@@ -48,10 +48,16 @@ private:
 	void ConfigureFutureWatcher();
 
 	/**
-	 * \brief Render the noise in a QImage.
+	 * \brief Render the terrain noise in a QImage.
 	 * \return An image of the noise.
 	 */
-	QImage Render() const;
+	QImage RenderTerrain() const;
+
+	/**
+	 * \brief Render the Lichtenberg noise in a QImage.
+	 * \return An image of the noise.
+	 */
+	QImage RenderLichtenberg() const;
 
 	QFutureWatcher<QImage>* m_futureImageWatcher;
 

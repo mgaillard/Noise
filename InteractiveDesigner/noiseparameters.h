@@ -1,8 +1,15 @@
 #ifndef NOISEPARAMETERS_H
 #define NOISEPARAMETERS_H
 
+enum class NoiseType
+{
+	terrain = 0,
+	lichtenberg = 1
+};
+
 struct NoiseParameters
 {
+	NoiseType type;
 	int seed;
 	int widthResolution;
 	int heightResolution;

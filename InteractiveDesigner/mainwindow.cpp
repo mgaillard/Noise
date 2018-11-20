@@ -6,6 +6,7 @@
 
 // Default parameters for the noise function
 const NoiseParameters MainWindow::default_noise_parameters = {
+	NoiseType::lichtenberg,
 	0,    // seed
 	512,  // width
 	512,  // height

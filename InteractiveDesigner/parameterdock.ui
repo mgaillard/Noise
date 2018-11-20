@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>398</height>
+    <height>433</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,14 +15,14 @@
   </property>
   <widget class="QWidget" name="widget">
    <layout class="QFormLayout" name="formLayout_2">
-    <item row="0" column="0">
+    <item row="1" column="0">
      <widget class="QLabel" name="seedLabel">
       <property name="text">
        <string>Seed</string>
       </property>
      </widget>
     </item>
-    <item row="0" column="1">
+    <item row="1" column="1">
      <widget class="QSpinBox" name="seedSpinBox">
       <property name="minimum">
        <number>-65535</number>
@@ -32,14 +32,14 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="0">
+    <item row="2" column="0">
      <widget class="QLabel" name="widthResolutionLabel">
       <property name="text">
        <string>Width resolution</string>
       </property>
      </widget>
     </item>
-    <item row="1" column="1">
+    <item row="2" column="1">
      <widget class="QSpinBox" name="widthResolutionSpinBox">
       <property name="suffix">
        <string> px</string>
@@ -52,14 +52,14 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="0">
+    <item row="3" column="0">
      <widget class="QLabel" name="heightResolutionLabel">
       <property name="text">
        <string>Height resolution</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="1">
+    <item row="3" column="1">
      <widget class="QSpinBox" name="heightResolutionSpinBox">
       <property name="suffix">
        <string> px</string>
@@ -72,14 +72,14 @@
       </property>
      </widget>
     </item>
-    <item row="3" column="0">
+    <item row="4" column="0">
      <widget class="QLabel" name="levelLabel">
       <property name="text">
        <string>Levels</string>
       </property>
      </widget>
     </item>
-    <item row="3" column="1">
+    <item row="4" column="1">
      <widget class="QSpinBox" name="levelSpinBox">
       <property name="minimum">
        <number>1</number>
@@ -92,14 +92,14 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="0">
+    <item row="5" column="0">
      <widget class="QLabel" name="epsilonLabel">
       <property name="text">
        <string>Epsilon</string>
       </property>
      </widget>
     </item>
-    <item row="4" column="1">
+    <item row="5" column="1">
      <widget class="QDoubleSpinBox" name="epsilonDoubleSpinBox">
       <property name="maximum">
        <double>0.500000000000000</double>
@@ -112,14 +112,14 @@
       </property>
      </widget>
     </item>
-    <item row="6" column="0">
+    <item row="7" column="0">
      <widget class="QLabel" name="noiseTopLabel">
       <property name="text">
        <string>Noise Top</string>
       </property>
      </widget>
     </item>
-    <item row="6" column="1">
+    <item row="7" column="1">
      <widget class="QDoubleSpinBox" name="noiseTopDoubleSpinBox">
       <property name="minimum">
        <double>-1024.000000000000000</double>
@@ -135,14 +135,14 @@
       </property>
      </widget>
     </item>
-    <item row="7" column="0">
+    <item row="8" column="0">
      <widget class="QLabel" name="noiseBottomLabel">
       <property name="text">
        <string>Noise Bottom</string>
       </property>
      </widget>
     </item>
-    <item row="7" column="1">
+    <item row="8" column="1">
      <widget class="QDoubleSpinBox" name="noiseBottomDoubleSpinBox">
       <property name="minimum">
        <double>-1024.000000000000000</double>
@@ -155,14 +155,14 @@
       </property>
      </widget>
     </item>
-    <item row="8" column="0">
+    <item row="9" column="0">
      <widget class="QLabel" name="noiseLeftLabel">
       <property name="text">
        <string>Noise Left</string>
       </property>
      </widget>
     </item>
-    <item row="8" column="1">
+    <item row="9" column="1">
      <widget class="QDoubleSpinBox" name="noiseLeftDoubleSpinBox">
       <property name="minimum">
        <double>-1024.000000000000000</double>
@@ -175,14 +175,14 @@
       </property>
      </widget>
     </item>
-    <item row="9" column="0">
+    <item row="10" column="0">
      <widget class="QLabel" name="noiseRightLabel">
       <property name="text">
        <string>Noise Right</string>
       </property>
      </widget>
     </item>
-    <item row="9" column="1">
+    <item row="10" column="1">
      <widget class="QDoubleSpinBox" name="noiseRightDoubleSpinBox">
       <property name="minimum">
        <double>-1024.000000000000000</double>
@@ -195,14 +195,14 @@
       </property>
      </widget>
     </item>
-    <item row="10" column="0">
+    <item row="11" column="0">
      <widget class="QLabel" name="controlFunctionTopLabel">
       <property name="text">
        <string>Control Function Top</string>
       </property>
      </widget>
     </item>
-    <item row="10" column="1">
+    <item row="11" column="1">
      <widget class="QDoubleSpinBox" name="controlFunctionTopDoubleSpinBox">
       <property name="minimum">
        <double>-1024.000000000000000</double>
@@ -215,14 +215,14 @@
       </property>
      </widget>
     </item>
-    <item row="11" column="0">
+    <item row="12" column="0">
      <widget class="QLabel" name="controlFunctionBottomLabel">
       <property name="text">
        <string>Control Function Bottom</string>
       </property>
      </widget>
     </item>
-    <item row="11" column="1">
+    <item row="12" column="1">
      <widget class="QDoubleSpinBox" name="controlFunctionBottomDoubleSpinBox">
       <property name="minimum">
        <double>-1024.000000000000000</double>
@@ -235,14 +235,14 @@
       </property>
      </widget>
     </item>
-    <item row="12" column="0">
+    <item row="13" column="0">
      <widget class="QLabel" name="controlFunctionLeftLabel">
       <property name="text">
        <string>Control Function Left</string>
       </property>
      </widget>
     </item>
-    <item row="12" column="1">
+    <item row="13" column="1">
      <widget class="QDoubleSpinBox" name="controlFunctionLeftDoubleSpinBox">
       <property name="minimum">
        <double>-1024.000000000000000</double>
@@ -255,14 +255,14 @@
       </property>
      </widget>
     </item>
-    <item row="13" column="0">
+    <item row="14" column="0">
      <widget class="QLabel" name="controlFunctionRightLabel">
       <property name="text">
        <string>Control Function Right</string>
       </property>
      </widget>
     </item>
-    <item row="13" column="1">
+    <item row="14" column="1">
      <widget class="QDoubleSpinBox" name="controlFunctionRightDoubleSpinBox">
       <property name="minimum">
        <double>-1024.000000000000000</double>
@@ -275,14 +275,14 @@
       </property>
      </widget>
     </item>
-    <item row="5" column="0">
+    <item row="6" column="0">
      <widget class="QLabel" name="displacementLabel">
       <property name="text">
        <string>Displacement</string>
       </property>
      </widget>
     </item>
-    <item row="5" column="1">
+    <item row="6" column="1">
      <widget class="QDoubleSpinBox" name="displacementDoubleSpinBox">
       <property name="decimals">
        <number>3</number>
@@ -295,11 +295,33 @@
       </property>
      </widget>
     </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="typeLabel">
+      <property name="text">
+       <string>Type</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QComboBox" name="typeComboBox">
+      <item>
+       <property name="text">
+        <string>Terrain</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Lichtenberg</string>
+       </property>
+      </item>
+     </widget>
+    </item>
    </layout>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
+  <tabstop>typeComboBox</tabstop>
   <tabstop>seedSpinBox</tabstop>
   <tabstop>widthResolutionSpinBox</tabstop>
   <tabstop>heightResolutionSpinBox</tabstop>
