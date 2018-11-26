@@ -714,6 +714,9 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	const double minSlopeLevel3 = 0.18;
 	const double minSlopeLevel4 = 0.38;
 	const double minSlopeLevel5 = 1.0;
+	const double displacementLevel1 = m_displacement;
+	const double displacementLevel2 = displacementLevel1 / 4;
+	const double displacementLevel3 = displacementLevel2 / 4;
 
 	double value = 0.0;
 
@@ -726,6 +729,7 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	// Subdivide segments of level 1
 	Segment3DChainArray<5, 4> segments1;
 	SubdivideSegments(cell1, straightSegments1, segments1);
+	DisplaceSegments(displacementLevel1, cell1, segments1);
 
 	if (m_resolution == 1)
 	{
@@ -742,6 +746,7 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	ReplaceNeighboringPoints(cell1, points1, cell2, points2);
 	// Level 2: List of segments
 	Segment3DChainArray<5, 3> segments2 = GenerateSubSegments<5, 3>(connectionStrategy, minSlopeLevel2, points2, cell1, segments1);
+	DisplaceSegments(displacementLevel2, cell2, segments2);
 
 	if (m_resolution == 2)
 	{
@@ -758,6 +763,7 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 	ReplaceNeighboringPoints(cell2, points2, cell3, points3);
 	// Level 3: List of segments
 	Segment3DChainArray<5, 2> segments3 = GenerateSubSegments<5, 2>(connectionStrategy, minSlopeLevel3, points3, cell1, segments1, cell2, segments2);
+	DisplaceSegments(displacementLevel3, cell3, segments3);
 
 	if (m_resolution == 3)
 	{
