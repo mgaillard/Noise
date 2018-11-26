@@ -82,12 +82,12 @@ private:
 
 		const double& at(std::size_t i, std::size_t j) const
 		{
-			return data.at(i * height + j);
+			return data.at(i * width + j);
 		}
 
 		double& at(std::size_t i, std::size_t j)
 		{
-			return data.at(i * height + j);
+			return data.at(i * width + j);
 		}
 	};
 

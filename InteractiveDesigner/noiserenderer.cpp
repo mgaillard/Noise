@@ -41,7 +41,7 @@ QImage NoiseRenderer::resultQImage() const
 
 cv::Mat NoiseRenderer::resultCvMat() const
 {
-	cv::Mat image(m_result.width, m_result.height, CV_16U);
+	cv::Mat image(m_result.height, m_result.width, CV_16U);
 
 	// Find min and max to remap to 16 bits
 	double minimum = std::numeric_limits<double>::max();
@@ -54,7 +54,7 @@ cv::Mat NoiseRenderer::resultCvMat() const
 	for (std::size_t i = 0; i < m_result.height; i++) {
 		for (std::size_t j = 0; j < m_result.width; j++) {
 			const auto grayValue = remap_clamp(m_result.at(i, j), minimum, maximum, 0.0, double(std::numeric_limits<uint16_t>::max()));
-			image.at<uint16_t>(j, i) = static_cast<uint16_t>(grayValue);
+			image.at<uint16_t>(i, j) = static_cast<uint16_t>(grayValue);
 		}
 	}
 
