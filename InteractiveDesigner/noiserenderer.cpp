@@ -117,6 +117,7 @@ NoiseRenderer::VectorDouble2D NoiseRenderer::RenderTerrain() const
 		m_parameters.epsilon,
 		m_parameters.levels,
 		m_parameters.displacement,
+		m_parameters.primitivesResolutionSteps,
 		false,
 		false,
 		false);
@@ -155,6 +156,7 @@ NoiseRenderer::VectorDouble2D NoiseRenderer::RenderLichtenberg() const
 										   m_parameters.epsilon,
 										   m_parameters.levels,
 										   m_parameters.displacement,
+										   m_parameters.primitivesResolutionSteps,
 										   false,
 										   true,
 										   false);

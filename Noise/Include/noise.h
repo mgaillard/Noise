@@ -29,6 +29,7 @@ public:
 		  double eps = 0.0,
 		  int resolution = 1,
 		  double displacement = 0.0,
+		  int primitivesResolutionSteps = 3,
 	      bool displayPoints = true,
 	      bool displaySegments = true,
 	      bool displayGrid = true);
@@ -227,7 +228,7 @@ private:
 	const double m_displacement;
 
 	// Additional resolution steps in the ComputeColorPrimitives function
-	const int m_primitivesResolutionSteps = 3;
+	const int m_primitivesResolutionSteps;
 
 	const int CACHE_X = 32;
 	const int CACHE_Y = 32;
@@ -235,7 +236,7 @@ private:
 };
 
 template <typename I>
-Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, int resolution, double displacement, bool displayPoints, bool displaySegments, bool displayGrid) :
+Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, int resolution, double displacement, int primitivesResolutionSteps, bool displayPoints, bool displaySegments, bool displayGrid) :
 	m_seed(seed),
 	m_controlFunction(std::move(controlFunction)),
 	m_displayPoints(displayPoints),
@@ -247,7 +248,8 @@ Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Poin
 	m_controlFunctionBottomRight(controlFunctionBottomRight),
 	m_eps(eps),
 	m_resolution(resolution),
-	m_displacement(displacement)
+	m_displacement(displacement),
+    m_primitivesResolutionSteps(primitivesResolutionSteps)
 {
 	InitPointCache();
 }
