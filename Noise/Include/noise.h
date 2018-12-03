@@ -30,6 +30,7 @@ public:
 		  int resolution = 1,
 		  double displacement = 0.0,
 		  int primitivesResolutionSteps = 3,
+		  double slopePower = 1.0,
 	      bool displayPoints = true,
 	      bool displaySegments = true,
 	      bool displayGrid = true);
@@ -230,13 +231,16 @@ private:
 	// Additional resolution steps in the ComputeColorPrimitives function
 	const int m_primitivesResolutionSteps;
 
+	// Additional parameter to control the variation of slope on terrains
+	const double m_slopePower;
+
 	const int CACHE_X = 32;
 	const int CACHE_Y = 32;
 	std::vector<std::vector<Point2D> > m_pointCache;
 };
 
 template <typename I>
-Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, int resolution, double displacement, int primitivesResolutionSteps, bool displayPoints, bool displaySegments, bool displayGrid) :
+Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, int resolution, double displacement, int primitivesResolutionSteps, double slopePower, bool displayPoints, bool displaySegments, bool displayGrid) :
 	m_seed(seed),
 	m_controlFunction(std::move(controlFunction)),
 	m_displayPoints(displayPoints),
@@ -249,7 +253,8 @@ Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Poin
 	m_eps(eps),
 	m_resolution(resolution),
 	m_displacement(displacement),
-    m_primitivesResolutionSteps(primitivesResolutionSteps)
+    m_primitivesResolutionSteps(primitivesResolutionSteps),
+	m_slopePower(slopePower)
 {
 	InitPointCache();
 }
@@ -1539,8 +1544,7 @@ double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& higherRe
 			// Adaptive slope depending on the mountain height
 			const double controlFunctionMinimum = 0.0;
 			const double controlFunctionMaximum = 1.0;
-			const double slopePower = 1.0;
-			const double slope = smootherstep(controlFunctionMinimum, controlFunctionMaximum, pow(nearestPointOnSegmentHeight, slopePower));
+			const double slope = smootherstep(controlFunctionMinimum, controlFunctionMaximum, pow(nearestPointOnSegmentHeight, m_slopePower));
 			const double elevation = nearestPointOnSegmentHeight + slope * distancePrimitiveCenter;
 
 			numerator += alphaPrimitive * elevation;

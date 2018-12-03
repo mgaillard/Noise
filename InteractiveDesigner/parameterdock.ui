@@ -319,7 +319,7 @@
     <item row="15" column="0">
      <widget class="QLabel" name="primitivesResolutionStepsLabel">
       <property name="text">
-       <string>Primitives Generation Steps</string>
+       <string>Terrain Generation Steps</string>
       </property>
      </widget>
     </item>
@@ -333,6 +333,23 @@
       </property>
       <property name="value">
        <number>3</number>
+      </property>
+     </widget>
+    </item>
+    <item row="16" column="0">
+     <widget class="QLabel" name="slopePowerLabel">
+      <property name="text">
+       <string>Terrain Slope Power</string>
+      </property>
+     </widget>
+    </item>
+    <item row="16" column="1">
+     <widget class="QDoubleSpinBox" name="slopePowerDoubleSpinBox">
+      <property name="maximum">
+       <double>10.000000000000000</double>
+      </property>
+      <property name="value">
+       <double>1.000000000000000</double>
       </property>
      </widget>
     </item>

@@ -32,6 +32,7 @@ void ParameterDock::setParameters(const NoiseParameters& parameters)
 	ui->controlFunctionLeftDoubleSpinBox->setValue(parameters.controlFunctionLeft);
 	ui->controlFunctionRightDoubleSpinBox->setValue(parameters.controlFunctionRight);
 	ui->primitivesResolutionStepsSpinBox->setValue(parameters.primitivesResolutionSteps);
+	ui->slopePowerDoubleSpinBox->setValue(parameters.slopePower);
 }
 
 NoiseParameters ParameterDock::parameters() const
@@ -52,6 +53,7 @@ NoiseParameters ParameterDock::parameters() const
 		ui->controlFunctionBottomDoubleSpinBox->value(),
 		ui->controlFunctionLeftDoubleSpinBox->value(),
 		ui->controlFunctionRightDoubleSpinBox->value(),
-		ui->primitivesResolutionStepsSpinBox->value()
+		ui->primitivesResolutionStepsSpinBox->value(),
+		ui->slopePowerDoubleSpinBox->value()
 	};
 }

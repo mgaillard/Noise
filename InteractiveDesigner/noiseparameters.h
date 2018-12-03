@@ -25,6 +25,7 @@ struct NoiseParameters
 	double controlFunctionLeft;
 	double controlFunctionRight;
 	int primitivesResolutionSteps;
+	double slopePower;
 };
 
 #endif // NOISEPARAMETERS_H

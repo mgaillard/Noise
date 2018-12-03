@@ -173,12 +173,13 @@ void TerrainImage(int width, int height, int seed, const string& filename)
 	const int resolution = 3;
 	const double displacement = 0.0;
 	const int primitivesResolutionSteps = 3;
+	const double slopePower = 1.0;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(4.0, 4.0);
 	const Point2D controlFunctionTopLeft(0.0, 0.0);
 	const Point2D controlFunctionBottomRight(0.5, 0.5);
 
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, false, false, false);
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
 	// TODO: Random generator std::minstd_rand
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
@@ -196,12 +197,13 @@ void LichtenbergFigureImage(int width, int height, int seed, const string& filen
 	const int resolution = 6;
 	const double displacement = 0.05;
 	const int primitivesResolutionSteps = 3;
+	const double slopePower = 1.0;
 	const Point2D noiseTopLeft(-3.0, -3.0);
 	const Point2D noiseBottomRight(2.0, 2.0);
 	const Point2D controlFunctionTopLeft(-1.0, -1.0);
 	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, false, true, false);
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, true, false);
 	// TODO: Random generator std::mt19937_64
 	const cv::Mat image = GenerateImage(EvaluateLichtenbergFigure(noise, noiseTopLeft, noiseBottomRight, width, height));
 

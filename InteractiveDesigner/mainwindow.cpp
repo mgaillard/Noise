@@ -21,7 +21,8 @@ const NoiseParameters MainWindow::default_noise_parameters = {
 	1.0,  // controlFunctionBottom
 	-1.0, // controlFunctionLeft
 	1.0,  // controlFunctionRight
-	3     // primitivesResolutionSteps
+	3,    // primitivesResolutionSteps
+	1.0   // slopePower
 };
 
 MainWindow::MainWindow(QWidget *parent)
