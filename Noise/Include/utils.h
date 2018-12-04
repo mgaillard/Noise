@@ -2,6 +2,7 @@
 #define UTILS_H
 
 #include <cassert>
+#include <array>
 
 template<typename T>
 T remap(const T& x, const T& in_start, const T& in_end, const T& out_start, const T& out_end)
@@ -94,5 +95,11 @@ T WyvillGalinFunction(const T& distance, const T& R, const T& N)
 
 	return alpha;
 }
+
+double cubic_interpolate(double p0, double p1, double p2, double p3, double t);
+
+double cubic_interpolate(const std::array<double, 4>& p, double t);
+
+double bi_cubic_interpolate(const std::array<std::array<double, 4>, 4>& p, double u, double v);
 
 #endif // UTILS_H

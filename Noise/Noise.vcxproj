@@ -133,14 +133,17 @@
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\imagecontrolfunction.cpp" />
     <ClCompile Include="Source\main.cpp" />
     <ClCompile Include="Source\math2d.cpp" />
     <ClCompile Include="Source\math3d.cpp" />
     <ClCompile Include="Source\perlin.cpp" />
     <ClCompile Include="Source\spline.cpp" />
+    <ClCompile Include="Source\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\controlfunction.h" />
+    <ClInclude Include="Include\imagecontrolfunction.h" />
     <ClInclude Include="Include\lichtenbergcontrolfunction.h" />
     <ClInclude Include="Include\math2d.h" />
     <ClInclude Include="Include\math3d.h" />
