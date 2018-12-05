@@ -31,7 +31,7 @@ protected:
 		x = clamp(x, 0.0, 1.0);
 		y = clamp(y, 0.0, 1.0);
 
-		return sample(y, x) / 16.0;
+		return sample(y, x);
 	}
 
 	bool InsideDomainImpl(double x, double y) const
