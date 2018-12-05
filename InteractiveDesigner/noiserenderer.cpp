@@ -2,6 +2,7 @@
 
 #include "lichtenbergcontrolfunction.h"
 #include "perlincontrolfunction.h"
+#include "imagecontrolfunction.h"
 #include "noise.h"
 
 NoiseRenderer::NoiseRenderer(QObject *parent, const NoiseParameters& parameters)
