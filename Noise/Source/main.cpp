@@ -165,7 +165,7 @@ cv::Mat GenerateImage(const vector<vector<double> > &values)
 	return image;
 }
 
-void AmplificationImage(int width, int height, int seed, const string& input, const string& filename)
+void SmallAmplificationImage(int width, int height, int seed, const string& input, const string& filename)
 {
 	const auto inputImage = cv::imread(input, cv::ImreadModes::IMREAD_ANYDEPTH);
 
@@ -179,6 +179,29 @@ void AmplificationImage(int width, int height, int seed, const string& input, co
 	const double slopePower = 1.0;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(12.0, 12.0);
+	const Point2D controlFunctionTopLeft(0.0, 0.0);
+	const Point2D controlFunctionBottomRight(1.0, 1.0);
+
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
+	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
+
+	cv::imwrite(filename, image);
+}
+
+void BigAmplificationImage(int width, int height, int seed, const string& input, const string& filename)
+{
+	const auto inputImage = cv::imread(input, cv::ImreadModes::IMREAD_ANYDEPTH);
+
+	typedef ImageControlFunction ControlFunctionType;
+	std::unique_ptr<ControlFunctionType> controlFunction(std::make_unique<ControlFunctionType>(inputImage));
+
+	const double eps = 0.10;
+	const int resolution = 1;
+	const double displacement = 0.05;
+	const int primitivesResolutionSteps = 2;
+	const double slopePower = 1.0;
+	const Point2D noiseTopLeft(0.0, 0.0);
+	const Point2D noiseBottomRight(48.0, 48.0);
 	const Point2D controlFunctionTopLeft(0.0, 0.0);
 	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
@@ -240,23 +263,43 @@ void LichtenbergFigureImage(int width, int height, int seed, const string& filen
 
 int main(int argc, char* argv[])
 {
-	const int WIDTH = 512;
-	const int HEIGHT = 512;
-	const int SEED = 0;
+	std::cout << "Amplification of a small terrain" << std::endl;
+	const int SMALL_AMP_WIDTH = 512;
+	const int SMALL_AMP_HEIGHT = 512;
+	const int SMALL_AMP_SEED = 1;
+	const string SMALL_AMP_INPUT = "../Images/amplification_small.png";
+	const string SMALL_AMP_OUTPUT = "amplification_small_result.png";
+	SmallAmplificationImage(SMALL_AMP_WIDTH,
+							SMALL_AMP_HEIGHT,
+							SMALL_AMP_SEED,
+							SMALL_AMP_INPUT,
+							SMALL_AMP_OUTPUT);
 
-	// Amplification of a small terrain
-	const int SEED_AMPLIFICATION = 1;
-	const string FILENAME_AMPLIFICATION_INPUT = "../Images/amplification_small.png";
-	const string FILENAME_AMPLIFICATION = "amplification_small_result.png";
-	AmplificationImage(WIDTH, HEIGHT, SEED_AMPLIFICATION, FILENAME_AMPLIFICATION_INPUT, FILENAME_AMPLIFICATION);
+	std::cout << "Amplification of a big terrain" << std::endl;
+	const int BIG_AMP_WIDTH = 1024;
+	const int BIG_AMP_HEIGHT = 1024;
+	const int BIG_AMP_SEED = 0;
+	const string BIG_AMP_INPUT = "../Images/amplification_big.png";
+	const string BIG_AMP_OUTPUT = "amplification_big_result.png";
+	BigAmplificationImage(BIG_AMP_WIDTH,
+						  BIG_AMP_HEIGHT,
+						  BIG_AMP_SEED,
+						  BIG_AMP_INPUT,
+						  BIG_AMP_OUTPUT);
 
-	// Procedural generation of a small terrain
-	const string FILENAME_TERRAIN = "terrain.png";
-	TerrainImage(WIDTH, HEIGHT, SEED, FILENAME_TERRAIN);
+	std::cout << "Procedural generation of a small terrain" << std::endl;
+	const int TERRAIN_WIDTH = 512;
+	const int TERRAIN_HEIGHT = 512;
+	const int TERRAIN_SEED = 0;
+	const string TERRAIN_INPUT = "terrain.png";
+	TerrainImage(TERRAIN_WIDTH, TERRAIN_HEIGHT, TERRAIN_SEED, TERRAIN_INPUT);
 
-	// Procedural generation of a Lichtenberg figure
-	const string FILENAME_LICHTENBERG = "lichtenberg.png";
-	LichtenbergFigureImage(WIDTH, HEIGHT, SEED, FILENAME_LICHTENBERG);
+	std::cout << "Procedural generation of a Lichtenberg figure" << std::endl;
+	const int LICHTENBERG_WIDTH = 1024;
+	const int LICHTENBERG_HEIGHT = 1024;
+	const int LICHTENBERG_SEED = 0;
+	const string LICHTENBERG_OUTPUT = "lichtenberg.png";
+	LichtenbergFigureImage(LICHTENBERG_WIDTH, LICHTENBERG_HEIGHT, LICHTENBERG_SEED, LICHTENBERG_OUTPUT);
 
 	return 0;
 }
