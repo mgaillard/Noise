@@ -13,6 +13,8 @@ find_package(OpenCV REQUIRED)
 
 set(SOURCE_FILES Source/main.cpp
 			     Include/controlfunction.h
+				 Include/imagecontrolfunction.h Source/imagecontrolfunction.cpp
+				 Include/lichtenbergcontrolfunction.h
 				 Include/math2d.h Source/math2d.cpp
 				 Include/math3d.h Source/math3d.cpp
 				 Include/noise.h
@@ -20,7 +22,7 @@ set(SOURCE_FILES Source/main.cpp
 				 Include/perlincontrolfunction.h
 				 Include/planecontrolfunction.h
 				 Include/spline.h Source/spline.cpp
-				 Include/utils.h)
+				 Include/utils.h Source/utils.cpp)
 
 add_executable(Noise ${SOURCE_FILES})
 target_include_directories(Noise PRIVATE Include)
