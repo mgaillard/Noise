@@ -183,6 +183,7 @@ void SmallAmplificationImage(int width, int height, int seed, const string& inpu
 	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
 	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
+	// TODO: Random generator std::minstd_rand
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
 	cv::imwrite(filename, image);
@@ -206,6 +207,7 @@ void BigAmplificationImage(int width, int height, int seed, const string& input,
 	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
 	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
+	// TODO: Random generator std::minstd_rand
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
 	cv::imwrite(filename, image);
@@ -216,18 +218,18 @@ void TerrainImage(int width, int height, int seed, const string& filename)
 	typedef PerlinControlFunction ControlFunctionType;
 	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
 
-	const double eps = 0.15;
-	const int resolution = 3;
-	const double displacement = 0.0;
+	const double eps = 0.25;
+	const int resolution = 2;
+	const double displacement = 0.08;
 	const int primitivesResolutionSteps = 3;
-	const double slopePower = 1.0;
+	const double slopePower = 2.0;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(4.0, 4.0);
 	const Point2D controlFunctionTopLeft(0.0, 0.0);
 	const Point2D controlFunctionBottomRight(0.5, 0.5);
 
 	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
-	// TODO: Random generator std::minstd_rand
+	// TODO: Random generator std::mt19937_64
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
 	cv::imwrite(filename, image);
@@ -290,7 +292,7 @@ int main(int argc, char* argv[])
 	std::cout << "Procedural generation of a small terrain" << std::endl;
 	const int TERRAIN_WIDTH = 512;
 	const int TERRAIN_HEIGHT = 512;
-	const int TERRAIN_SEED = 0;
+	const int TERRAIN_SEED = 1;
 	const string TERRAIN_INPUT = "terrain.png";
 	TerrainImage(TERRAIN_WIDTH, TERRAIN_HEIGHT, TERRAIN_SEED, TERRAIN_INPUT);
 
