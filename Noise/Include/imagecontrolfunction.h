@@ -65,6 +65,16 @@ protected:
 		return dist;
 	}
 
+	double MinimumImpl() const
+	{
+		return 0.0;
+	}
+
+	double MaximumImpl() const
+	{
+		return 1.0;
+	}
+
 private:
 	double get(int i, int j) const
 	{

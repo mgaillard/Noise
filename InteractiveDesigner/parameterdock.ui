@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>525</height>
+    <height>670</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -347,6 +347,26 @@
      <widget class="QDoubleSpinBox" name="slopePowerDoubleSpinBox">
       <property name="maximum">
        <double>10.000000000000000</double>
+      </property>
+      <property name="value">
+       <double>1.000000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="17" column="0">
+     <widget class="QLabel" name="controlScaleLabel">
+      <property name="text">
+       <string>Terrain Control Scale</string>
+      </property>
+     </widget>
+    </item>
+    <item row="17" column="1">
+     <widget class="QDoubleSpinBox" name="controlScaleDoubleSpinBox">
+      <property name="decimals">
+       <number>3</number>
+      </property>
+      <property name="maximum">
+       <double>100.000000000000000</double>
       </property>
       <property name="value">
        <double>1.000000000000000</double>

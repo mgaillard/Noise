@@ -22,6 +22,18 @@ protected:
 	{
 		return 0.0;
 	}
+
+	double MinimumImpl() const
+	{
+		return 0.0;
+	}
+
+	double MaximumImpl() const
+	{
+		// The maximum depends on where the function is evaluated
+		// When x is big, evaluate(x, y) is big as well
+		return 1.0;
+	}
 };
 
 #endif // PLANECONTROLFUNCTION_H

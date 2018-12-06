@@ -50,6 +50,16 @@ protected:
 
 		return dist;
 	}
+
+	double MinimumImpl() const
+	{
+		return 0.0;
+	}
+
+	double MaximumImpl() const
+	{
+		return 16.0;
+	}
 };
 
 #endif // LICHTENBERGCONTROLFUNCTION_H

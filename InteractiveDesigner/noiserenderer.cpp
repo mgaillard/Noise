@@ -102,7 +102,7 @@ void NoiseRenderer::ConfigureFutureWatcher()
 NoiseRenderer::VectorDouble2D NoiseRenderer::RenderTerrain() const
 {
 	typedef PerlinControlFunction ControlFunctionType;
-	std::unique_ptr<ControlFunctionType> controlFunction(std::make_unique<ControlFunctionType>());
+	std::unique_ptr<ControlFunctionType> controlFunction(std::make_unique<ControlFunctionType>(m_parameters.controlScale));
 
 	const Point2D noiseTopLeft(m_parameters.noiseLeft, m_parameters.noiseTop);
 	const Point2D noiseBottomRight(m_parameters.noiseRight, m_parameters.noiseBottom);

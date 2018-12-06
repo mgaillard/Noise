@@ -34,6 +34,24 @@ public:
 	{
 		return static_cast<const Implementation*>(this)->DistToDomainImpl(x, y);
 	}
+
+	/// <summary>
+	/// Return the minimum value of the control function
+	/// </summary>
+	/// <returns>The minimum value of the control function</return>
+	double minimum() const
+	{
+		return static_cast<const Implementation*>(this)->MinimumImpl();
+	}
+
+	/// <summary>
+	/// Return the maximum value of the control function
+	/// </summary>
+	/// <returns>The maximum value of the control function</return>
+	double maximum() const
+	{
+		return static_cast<const Implementation*>(this)->MaximumImpl();
+	}
 };
 
 #endif // CONTROLFUNCTION_H

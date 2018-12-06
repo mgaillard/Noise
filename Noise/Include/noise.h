@@ -105,6 +105,10 @@ private:
 
 	bool DistToDomain(const Point2D& point) const;
 
+	bool ControlFunctionMinimum() const;
+	
+	bool ControlFunctionMaximum() const;
+
 	template <size_t D>
 	Segment3DChain<D> ConnectPointToSegmentAngle(const Point3D& point, double segmentDist, const Segment3D& segment) const;
 
@@ -437,6 +441,32 @@ bool Noise<I>::DistToDomain(const Point2D& point) const
 	if (m_controlFunction)
 	{
 		value = m_controlFunction->distToDomain(x, y);
+	}
+
+	return value;
+}
+
+template <typename I>
+bool Noise<I>::ControlFunctionMinimum() const
+{
+	double value = 0.0;
+
+	if (m_controlFunction)
+	{
+		value = m_controlFunction->minimum();
+	}
+
+	return value;
+}
+
+template <typename I>
+bool Noise<I>::ControlFunctionMaximum() const
+{
+	double value = 0.0;
+
+	if (m_controlFunction)
+	{
+		value = m_controlFunction->maximum();
 	}
 
 	return value;
@@ -1542,8 +1572,8 @@ double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& higherRe
 			const double nearestPointOnSegmentHeight = lerp(primitiveNearestSegment.a.z, primitiveNearestSegment.b.z, uPrimitive);
 
 			// Adaptive slope depending on the mountain height
-			const double controlFunctionMinimum = 0.0;
-			const double controlFunctionMaximum = 1.0;
+			const double controlFunctionMinimum = ControlFunctionMinimum();
+			const double controlFunctionMaximum = ControlFunctionMaximum();
 			const double slope = smootherstep(controlFunctionMinimum, controlFunctionMaximum, pow(nearestPointOnSegmentHeight, m_slopePower));
 			const double elevation = nearestPointOnSegmentHeight + slope * distancePrimitiveCenter;
 
