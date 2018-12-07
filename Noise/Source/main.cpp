@@ -332,9 +332,9 @@ int main(int argc, char* argv[])
 					   MEDIUM_TERRAIN_INPUT);
 	
 	std::cout << "Procedural generation of a Lichtenberg figure" << std::endl;
-	const int LICHTENBERG_WIDTH = 1024;
-	const int LICHTENBERG_HEIGHT = 1024;
-	const int LICHTENBERG_SEED = 0;
+	const int LICHTENBERG_WIDTH = 2048;
+	const int LICHTENBERG_HEIGHT = 2048;
+	const int LICHTENBERG_SEED = 33058;
 	const string LICHTENBERG_OUTPUT = "lichtenberg.png";
 	LichtenbergFigureImage(LICHTENBERG_WIDTH, LICHTENBERG_HEIGHT, LICHTENBERG_SEED, LICHTENBERG_OUTPUT);
 
