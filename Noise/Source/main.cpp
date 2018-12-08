@@ -257,6 +257,28 @@ void MediumTerrainImage(int width, int height, int seed, const string& filename)
 	cv::imwrite(filename, image);
 }
 
+void LargeTerrainImage(int width, int height, int seed, const string& filename)
+{
+	typedef PerlinControlFunction ControlFunctionType;
+	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>(0.250));
+
+	const double eps = 0.20;
+	const int resolution = 3;
+	const double displacement = 0.075;
+	const int primitivesResolutionSteps = 3;
+	const double slopePower = 0.1;
+	const Point2D noiseTopLeft(0.0, 0.0);
+	const Point2D noiseBottomRight(4.0, 4.0);
+	const Point2D controlFunctionTopLeft(-0.2, -0.5);
+	const Point2D controlFunctionBottomRight(1.40, 0.7);
+
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
+	// TODO: Random generator std::mt19937_64
+	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
+
+	cv::imwrite(filename, image);
+}
+
 void LichtenbergFigureImage(int width, int height, int seed, const string& filename)
 {
 	const int antiAliasingLevel = 4;
@@ -330,6 +352,16 @@ int main(int argc, char* argv[])
 					   MEDIUM_TERRAIN_HEIGHT,
 					   MEDIUM_TERRAIN_SEED,
 					   MEDIUM_TERRAIN_INPUT);
+
+	std::cout << "Procedural generation of a large terrain" << std::endl;
+	const int LARGE_TERRAIN_WIDTH = 1024;
+	const int LARGE_TERRAIN_HEIGHT = 1024;
+	const int LARGE_TERRAIN_SEED = 0;
+	const string LARGE_TERRAIN_INPUT = "large_terrain.png";
+	LargeTerrainImage(LARGE_TERRAIN_WIDTH,
+					  LARGE_TERRAIN_HEIGHT,
+					  LARGE_TERRAIN_SEED,
+					  LARGE_TERRAIN_INPUT);
 	
 	std::cout << "Procedural generation of a Lichtenberg figure" << std::endl;
 	const int LICHTENBERG_WIDTH = 2048;
