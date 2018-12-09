@@ -279,6 +279,28 @@ void LargeTerrainImage(int width, int height, int seed, const string& filename)
 	cv::imwrite(filename, image);
 }
 
+void EvaluationTerrainImage(int width, int height, int seed, const string& filename)
+{
+	typedef PerlinControlFunction ControlFunctionType;
+	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
+
+	const double eps = 0.25;
+	const int resolution = 2;
+	const double displacement = 0.1;
+	const int primitivesResolutionSteps = 3;
+	const double slopePower = 0.5;
+	const Point2D noiseTopLeft(0.0, 0.0);
+	const Point2D noiseBottomRight(4.0, 4.0);
+	const Point2D controlFunctionTopLeft(-0.2, -0.4);
+	const Point2D controlFunctionBottomRight(1.4, 0.7);
+
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
+	// TODO: Random generator std::mt19937_64
+	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
+
+	cv::imwrite(filename, image);
+}
+
 void LichtenbergFigureImage(int width, int height, int seed, const string& filename)
 {
 	const int antiAliasingLevel = 4;
@@ -337,31 +359,52 @@ int main(int argc, char* argv[])
 	const int SMALL_TERRAIN_WIDTH = 512;
 	const int SMALL_TERRAIN_HEIGHT = 512;
 	const int SMALL_TERRAIN_SEED = 1;
-	const string SMALL_TERRAIN_INPUT = "small_terrain.png";
+	const string SMALL_TERRAIN_OUTPUT = "small_terrain.png";
 	SmallTerrainImage(SMALL_TERRAIN_WIDTH,
 					  SMALL_TERRAIN_HEIGHT,
 					  SMALL_TERRAIN_SEED,
-					  SMALL_TERRAIN_INPUT);
+					  SMALL_TERRAIN_OUTPUT);
 	
 	std::cout << "Procedural generation of a medium terrain" << std::endl;
 	const int MEDIUM_TERRAIN_WIDTH = 768;
 	const int MEDIUM_TERRAIN_HEIGHT = 768;
 	const int MEDIUM_TERRAIN_SEED = 0;
-	const string MEDIUM_TERRAIN_INPUT = "medium_terrain.png";
+	const string MEDIUM_TERRAIN_OUTPUT = "medium_terrain.png";
 	MediumTerrainImage(MEDIUM_TERRAIN_WIDTH,
 					   MEDIUM_TERRAIN_HEIGHT,
 					   MEDIUM_TERRAIN_SEED,
-					   MEDIUM_TERRAIN_INPUT);
+					   MEDIUM_TERRAIN_OUTPUT);
 
 	std::cout << "Procedural generation of a large terrain" << std::endl;
 	const int LARGE_TERRAIN_WIDTH = 1024;
 	const int LARGE_TERRAIN_HEIGHT = 1024;
 	const int LARGE_TERRAIN_SEED = 0;
-	const string LARGE_TERRAIN_INPUT = "large_terrain.png";
+	const string LARGE_TERRAIN_OUTPUT = "large_terrain.png";
 	LargeTerrainImage(LARGE_TERRAIN_WIDTH,
 					  LARGE_TERRAIN_HEIGHT,
 					  LARGE_TERRAIN_SEED,
-					  LARGE_TERRAIN_INPUT);
+					  LARGE_TERRAIN_OUTPUT);
+
+	std::cout << "Procedural generation of a set of medium terrains for evaluation" << std::endl;
+	const int EVALUATION_TERRAIN_WIDTH = 512;
+	const int EVALUATION_TERRAIN_HEIGHT = 512;
+	const int EVALUATION_TERRAIN_SEED_START = 0;
+	const int EVALUATION_TERRAIN_SEED_END = 9;
+	const string EVALUATION_TERRAIN_OUTPUT = "evaluation_terrain_";
+	const string EVALUATION_TERRAIN_EXTENSION = ".png";
+	for (int s = EVALUATION_TERRAIN_SEED_START; s <= EVALUATION_TERRAIN_SEED_END; s++)
+	{
+		string filename = EVALUATION_TERRAIN_OUTPUT;
+		filename += std::to_string(s);
+		filename += EVALUATION_TERRAIN_EXTENSION;
+
+		std::cout << "Terrain: " << filename << std::endl;
+
+		EvaluationTerrainImage(EVALUATION_TERRAIN_WIDTH,
+							   EVALUATION_TERRAIN_HEIGHT,
+							   s,
+							   filename);
+	}
 	
 	std::cout << "Procedural generation of a Lichtenberg figure" << std::endl;
 	const int LICHTENBERG_WIDTH = 2048;
