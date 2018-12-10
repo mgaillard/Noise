@@ -23,6 +23,7 @@ const NoiseParameters MainWindow::default_noise_parameters = {
 	1.0,  // controlFunctionRight
 	3,    // primitivesResolutionSteps
 	1.0,  // slopePower
+	0.05, // noiseAmplitudeProportion
 	1.0   // controlScale
 };
 

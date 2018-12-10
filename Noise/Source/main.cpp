@@ -177,12 +177,13 @@ void SmallAmplificationImage(int width, int height, int seed, const string& inpu
 	const double displacement = 0.05;
 	const int primitivesResolutionSteps = 2;
 	const double slopePower = 1.0;
+	const double noiseAmplitudeProportion = 0.05;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(12.0, 12.0);
 	const Point2D controlFunctionTopLeft(0.0, 0.0);
 	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, false);
 	// TODO: Random generator std::minstd_rand
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
@@ -201,12 +202,13 @@ void BigAmplificationImage(int width, int height, int seed, const string& input,
 	const double displacement = 0.05;
 	const int primitivesResolutionSteps = 2;
 	const double slopePower = 1.0;
+	const double noiseAmplitudeProportion = 0.05;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(48.0, 48.0);
 	const Point2D controlFunctionTopLeft(0.0, 0.0);
 	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, false);
 	// TODO: Random generator std::minstd_rand
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
@@ -222,13 +224,14 @@ void SmallTerrainImage(int width, int height, int seed, const string& filename)
 	const int resolution = 2;
 	const double displacement = 0.08;
 	const int primitivesResolutionSteps = 3;
-	const double slopePower = 2.0;
+	const double slopePower = 1.5;
+	const double noiseAmplitudeProportion = 0.025;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(4.0, 4.0);
 	const Point2D controlFunctionTopLeft(0.0, 0.0);
 	const Point2D controlFunctionBottomRight(0.5, 0.5);
 
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, false);
 	// TODO: Random generator std::mt19937_64
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
@@ -245,12 +248,13 @@ void MediumTerrainImage(int width, int height, int seed, const string& filename)
 	const double displacement = 0.2;
 	const int primitivesResolutionSteps = 3;
 	const double slopePower = 0.5;
+	const double noiseAmplitudeProportion = 0.05;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(4.0, 4.0);
 	const Point2D controlFunctionTopLeft(-0.2, -0.5);
 	const Point2D controlFunctionBottomRight(1.45, 0.7);
 
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, false);
 	// TODO: Random generator std::mt19937_64
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
@@ -267,12 +271,13 @@ void LargeTerrainImage(int width, int height, int seed, const string& filename)
 	const double displacement = 0.075;
 	const int primitivesResolutionSteps = 3;
 	const double slopePower = 0.1;
+	const double noiseAmplitudeProportion = 0.05;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(4.0, 4.0);
 	const Point2D controlFunctionTopLeft(-0.2, -0.5);
 	const Point2D controlFunctionBottomRight(1.40, 0.7);
 
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, false);
 	// TODO: Random generator std::mt19937_64
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
@@ -289,12 +294,13 @@ void EvaluationTerrainImage(int width, int height, int seed, const string& filen
 	const double displacement = 0.1;
 	const int primitivesResolutionSteps = 3;
 	const double slopePower = 0.5;
+	const double noiseAmplitudeProportion = 0.05;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(4.0, 4.0);
 	const Point2D controlFunctionTopLeft(-0.2, -0.4);
 	const Point2D controlFunctionBottomRight(1.4, 0.7);
 
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, false, false);
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, false);
 	// TODO: Random generator std::mt19937_64
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
@@ -313,12 +319,13 @@ void LichtenbergFigureImage(int width, int height, int seed, const string& filen
 	const double displacement = 0.05;
 	const int primitivesResolutionSteps = 3;
 	const double slopePower = 1.0;
+	const double noiseAmplitudeProportion = 0.05;
 	const Point2D noiseTopLeft(-3.0, -3.0);
 	const Point2D noiseBottomRight(2.0, 2.0);
 	const Point2D controlFunctionTopLeft(-1.0, -1.0);
 	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, false, true, false);
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, true, false);
 	// TODO: Random generator std::mt19937_64
 	const cv::Mat image = GenerateImage(EvaluateLichtenbergFigure(noise, noiseTopLeft, noiseBottomRight, width, height));
 

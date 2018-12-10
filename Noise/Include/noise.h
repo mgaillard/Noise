@@ -14,6 +14,7 @@
 #include "math3d.h"
 #include "spline.h"
 #include "utils.h"
+#include "perlin.h"
 #include "controlfunction.h"
 
 template <typename I>
@@ -31,6 +32,7 @@ public:
 		  double displacement = 0.0,
 		  int primitivesResolutionSteps = 3,
 		  double slopePower = 1.0,
+		  double noiseAmplitudeProportion = 0.0,
 	      bool displayPoints = true,
 	      bool displaySegments = true,
 	      bool displayGrid = true);
@@ -235,6 +237,9 @@ private:
 	// Additional resolution steps in the ComputeColorPrimitives function
 	const int m_primitivesResolutionSteps;
 
+	// Proportion of the amplitude of the control function as noise
+	const double m_noiseAmplitudeProportion;
+
 	// Additional parameter to control the variation of slope on terrains
 	const double m_slopePower;
 
@@ -244,7 +249,7 @@ private:
 };
 
 template <typename I>
-Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, int resolution, double displacement, int primitivesResolutionSteps, double slopePower, bool displayPoints, bool displaySegments, bool displayGrid) :
+Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, int resolution, double displacement, int primitivesResolutionSteps, double slopePower, double noiseAmplitudeProportion, bool displayPoints, bool displaySegments, bool displayGrid) :
 	m_seed(seed),
 	m_controlFunction(std::move(controlFunction)),
 	m_displayPoints(displayPoints),
@@ -258,7 +263,8 @@ Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Poin
 	m_resolution(resolution),
 	m_displacement(displacement),
     m_primitivesResolutionSteps(primitivesResolutionSteps),
-	m_slopePower(slopePower)
+	m_slopePower(slopePower),
+	m_noiseAmplitudeProportion(noiseAmplitudeProportion)
 {
 	InitPointCache();
 }
@@ -1574,8 +1580,25 @@ double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& higherRe
 			// Adaptive slope depending on the mountain height
 			const double controlFunctionMinimum = ControlFunctionMinimum();
 			const double controlFunctionMaximum = ControlFunctionMaximum();
-			const double slope = smootherstep(controlFunctionMinimum, controlFunctionMaximum, pow(nearestPointOnSegmentHeight, m_slopePower));
-			const double elevation = nearestPointOnSegmentHeight + slope * distancePrimitiveCenter;
+			const double adaptiveSlope = smootherstep(controlFunctionMinimum, controlFunctionMaximum, pow(nearestPointOnSegmentHeight, m_slopePower));
+
+			// Noise
+			const double amplitudeMax = m_noiseAmplitudeProportion * (controlFunctionMaximum - controlFunctionMinimum) / higherResCell.resolution;
+			const double periodPerCell = 4.0;
+			const double terrainSizeX = m_noiseBottomRight.x - m_noiseTopLeft.x;
+			const double terrainSizeY = m_noiseBottomRight.y - m_noiseTopLeft.y;
+			const double higherResCellSize = std::max(terrainSizeX, terrainSizeY) / higherResCell.resolution;
+			const double highestResCellSizeX = terrainSizeX / highestResCell.resolution;
+			const double highestResCellSizeY = terrainSizeY / highestResCell.resolution;
+			const double amplitude = amplitudeMax * smootherstep(0.0, higherResCellSize / 4.0, distancePrimitiveCenter);
+			const double wavelengthX = highestResCellSizeX / periodPerCell;
+			const double wavelengthY = highestResCellSizeY / periodPerCell;
+			const double noise = amplitude * Perlin(x / wavelengthX, y / wavelengthY)
+							   + 0.5 * amplitude * Perlin(x / (2.0 * wavelengthX), y / (2.0 * wavelengthY))
+							   + 0.25 * amplitude * Perlin(x / (4.0 * wavelengthX), y / (4.0 * wavelengthY));
+
+			// Final elevation
+			const double elevation = nearestPointOnSegmentHeight + adaptiveSlope * distancePrimitiveCenter + noise;
 
 			numerator += alphaPrimitive * elevation;
 			denominator += alphaPrimitive;

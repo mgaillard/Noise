@@ -120,6 +120,7 @@ NoiseRenderer::VectorDouble2D NoiseRenderer::RenderTerrain() const
 		m_parameters.displacement,
 		m_parameters.primitivesResolutionSteps,
 		m_parameters.slopePower,
+		m_parameters.noiseAmplitudeProportion,
 		false,
 		false,
 		false);
@@ -150,19 +151,20 @@ NoiseRenderer::VectorDouble2D NoiseRenderer::RenderLichtenberg() const
 	const Point2D controlFunctionBottomRight(m_parameters.controlFunctionRight, m_parameters.controlFunctionBottom);
 
 	const Noise<ControlFunctionType> noise(std::move(controlFunction),
-										   noiseTopLeft,
-										   noiseBottomRight,
-										   controlFunctionTopLeft,
-										   controlFunctionBottomRight,
-										   m_parameters.seed,
-										   m_parameters.epsilon,
-										   m_parameters.levels,
-										   m_parameters.displacement,
-										   m_parameters.primitivesResolutionSteps,
-										   m_parameters.slopePower,
-										   false,
-										   true,
-										   false);
+		noiseTopLeft,
+		noiseBottomRight,
+		controlFunctionTopLeft,
+		controlFunctionBottomRight,
+		m_parameters.seed,
+		m_parameters.epsilon,
+		m_parameters.levels,
+		m_parameters.displacement,
+		m_parameters.primitivesResolutionSteps,
+		m_parameters.slopePower,
+		m_parameters.noiseAmplitudeProportion,
+		false,
+		true,
+		false);
 
 	VectorDouble2D result(m_parameters.heightResolution, m_parameters.widthResolution);
 

@@ -26,6 +26,7 @@ struct NoiseParameters
 	double controlFunctionRight;
 	int primitivesResolutionSteps;
 	double slopePower;
+	double noiseAmplitudeProportion;
 	double controlScale;
 };
 
