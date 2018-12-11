@@ -25,4 +25,6 @@ void EvaluationTerrainImage(int width, int height, int seed, const std::string& 
 
 void LichtenbergFigureImage(int width, int height, int seed, const std::string& filename);
 
+void EffectParametersImage(int width, int height, int seed, int resolution, double eps, double displacement, const std::string& filename);
+
 #endif // EXAMPLES_H

@@ -80,6 +80,56 @@ int main(int argc, char* argv[])
 	const int LICHTENBERG_SEED = 33058;
 	const string LICHTENBERG_OUTPUT = "lichtenberg.png";
 	LichtenbergFigureImage(LICHTENBERG_WIDTH, LICHTENBERG_HEIGHT, LICHTENBERG_SEED, LICHTENBERG_OUTPUT);
-	
+
+	std::cout << "Procedural generation of figures showing the effect of parameters" << std::endl;
+	const int EFFECT_WIDTH = 512;
+	const int EFFECT_HEIGHT = 512;
+	const int EFFECT_DEFAULT_SEED = 5;
+	const int EFFECT_DEFAULT_RESOLUTION = 3;
+	const double EFFECT_DEFAULT_EPSILON = 0.25;
+	// Special value of delta when varying epsilon
+	const double EFFECT_EPSILON_DELTA = 0.0;
+	const double EFFECT_DEFAULT_DELTA = 0.05;
+	const string EFFECT_OUTPUT = "effect_";
+	const string EFFECT_EXTENTION = ".png";
+	// Vary the seed
+	for (int seed = EFFECT_DEFAULT_SEED; seed < EFFECT_DEFAULT_SEED + 5; seed++)
+	{
+		const string filename = EFFECT_OUTPUT + "seed_" + std::to_string(seed) + EFFECT_EXTENTION;
+
+		std::cout << "File: " << filename << std::endl;
+
+		EffectParametersImage(EFFECT_WIDTH, EFFECT_HEIGHT, seed, EFFECT_DEFAULT_RESOLUTION, EFFECT_DEFAULT_EPSILON, EFFECT_DEFAULT_DELTA, filename);
+	}
+	// Vary the resolution
+	for (int resolution = 1; resolution <= 5; resolution++)
+	{
+		const string filename = EFFECT_OUTPUT + "resolution_" + std::to_string(resolution) + EFFECT_EXTENTION;
+
+		std::cout << "File: " << filename << std::endl;
+
+		EffectParametersImage(EFFECT_WIDTH, EFFECT_HEIGHT, EFFECT_DEFAULT_SEED, resolution, EFFECT_DEFAULT_EPSILON, EFFECT_DEFAULT_DELTA, filename);
+	}
+	// Vary the epsilon
+	for (int e = 0; e <= 4; e++)
+	{
+		const double eps = e * 0.125;
+		const string filename = EFFECT_OUTPUT + "epsilon_" + std::to_string(e) + EFFECT_EXTENTION;
+
+		std::cout << "File: " << filename << std::endl;
+
+		EffectParametersImage(EFFECT_WIDTH, EFFECT_HEIGHT, EFFECT_DEFAULT_SEED, EFFECT_DEFAULT_RESOLUTION, eps, EFFECT_EPSILON_DELTA, filename);
+	}
+	// Vary the delta
+	for (int d = 0; d <= 4; d++)
+	{
+		const double delta = d * 0.025;
+		const string filename = EFFECT_OUTPUT + "delta_" + std::to_string(d) + EFFECT_EXTENTION;
+
+		std::cout << "File: " << filename << std::endl;
+
+		EffectParametersImage(EFFECT_WIDTH, EFFECT_HEIGHT, EFFECT_DEFAULT_SEED, EFFECT_DEFAULT_RESOLUTION, EFFECT_DEFAULT_EPSILON, delta, filename);
+	}
+
 	return 0;
 }

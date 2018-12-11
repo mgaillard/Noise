@@ -167,6 +167,13 @@ cv::Mat GenerateImage(const vector<vector<double> > &values)
 	return image;
 }
 
+cv::Mat GenerateImageNegative(const vector<vector<double> > &values)
+{
+	cv::Mat image = GenerateImage(values);
+	cv::bitwise_not(image, image);
+	return image;
+}
+
 cv::Mat GenerateImageMatlab(const vector<vector<double> > &values)
 {
 	const int width = int(values.size());
@@ -451,8 +458,8 @@ void LichtenbergFigureImage(int width, int height, int seed, const string& filen
 	const int primitivesResolutionSteps = 3;
 	const double slopePower = 1.0;
 	const double noiseAmplitudeProportion = 0.05;
-	const Point2D noiseTopLeft(-3.0, -3.0);
-	const Point2D noiseBottomRight(2.0, 2.0);
+	const Point2D noiseTopLeft(-2.0, -2.0);
+	const Point2D noiseBottomRight(1.0, 1.0);
 	const Point2D controlFunctionTopLeft(-1.0, -1.0);
 	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
@@ -465,4 +472,24 @@ void LichtenbergFigureImage(int width, int height, int seed, const string& filen
 	resize(image, resized_image, resized_image.size(), 0, 0, CV_INTER_AREA);
 
 	cv::imwrite(filename, resized_image);
+}
+
+void EffectParametersImage(int width, int height, int seed, int resolution, double eps, double displacement, const std::string& filename)
+{
+	typedef LichtenbergControlFunction ControlFunctionType;
+	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
+
+	const int primitivesResolutionSteps = 3;
+	const double slopePower = 1.0;
+	const double noiseAmplitudeProportion = 0.0;
+	const Point2D noiseTopLeft(-2.0, -2.0);
+	const Point2D noiseBottomRight(1.0, 1.0);
+	const Point2D controlFunctionTopLeft(-1.0, -1.0);
+	const Point2D controlFunctionBottomRight(1.0, 1.0);
+
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, true, false, true, false, false);
+	// TODO: Random generator std::mt19937_64
+	const cv::Mat image = GenerateImageNegative(EvaluateLichtenbergFigure(noise, noiseTopLeft, noiseBottomRight, width, height));
+
+	cv::imwrite(filename, image);
 }
