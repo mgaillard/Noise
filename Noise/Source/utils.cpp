@@ -26,3 +26,31 @@ double bi_cubic_interpolate(const std::array<std::array<double, 4>, 4>& p, doubl
 	}
 	return cubic_interpolate(temp, u);
 }
+
+double matlab_jet_base(double val)
+{
+	if (val <= 0.125) {
+		return 0.0;
+	}
+	else if (val <= 0.375) {
+		return remap_clamp(val, 0.125, 0.375, 0.0, 1.0);
+	}
+	else if (val <= 0.625) {
+		return 1.0;
+	}
+	else if (val <= 0.875) {
+		return remap_clamp(val, 0.625, 0.875, 1.0, 0.0);
+	}
+	else {
+		return 0.0;
+	}
+}
+
+std::array<double, 3> matlab_jet(double u)
+{
+	const double r = matlab_jet_base(u - 0.25);
+	const double g = matlab_jet_base(u);
+	const double b = matlab_jet_base(u + 0.25);
+
+	return { { r, g, b } };
+}

@@ -102,4 +102,7 @@ double cubic_interpolate(const std::array<double, 4>& p, double t);
 
 double bi_cubic_interpolate(const std::array<std::array<double, 4>, 4>& p, double u, double v);
 
+// Equivalent of the Jet coloring in Matlab.
+std::array<double, 3> matlab_jet(double u);
+
 #endif // UTILS_H

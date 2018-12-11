@@ -35,6 +35,9 @@
     <ClCompile Include="Source\utils.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\examples.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\noise.h">
@@ -68,6 +71,9 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="Include\imagecontrolfunction.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\examples.h">
       <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>

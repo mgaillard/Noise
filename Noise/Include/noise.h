@@ -33,9 +33,11 @@ public:
 		  int primitivesResolutionSteps = 3,
 		  double slopePower = 1.0,
 		  double noiseAmplitudeProportion = 0.0,
-	      bool displayPoints = true,
-	      bool displaySegments = true,
-	      bool displayGrid = true);
+		  bool displayFunction = true,
+		  bool displayPoints = false,
+	      bool displaySegments = false,
+	      bool displayGrid = false,
+		  bool displayDistance = false);
 
 	double evaluateTerrain(double x, double y) const;
 	double evaluateLichtenberg(double x, double y) const;
@@ -210,15 +212,20 @@ private:
 	template <typename ...Tail>
 	double ComputeColorControlFunction(double x, double y, Tail&&... tail) const;
 
+	template <typename ...Tail>
+	double ComputeColorDistance(double x, double y, Tail&&... tail) const;
+
 	// Seed of the noise
 	const int m_seed;
 
 	// A control function
 	const std::unique_ptr<ControlFunction<I> > m_controlFunction;
 
+	const bool m_displayFunction;
 	const bool m_displayPoints;
 	const bool m_displaySegments;
 	const bool m_displayGrid;
+	const bool m_displayDistance;
 
 	const Point2D m_noiseTopLeft;
 	const Point2D m_noiseBottomRight;
@@ -249,12 +256,14 @@ private:
 };
 
 template <typename I>
-Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, int resolution, double displacement, int primitivesResolutionSteps, double slopePower, double noiseAmplitudeProportion, bool displayPoints, bool displaySegments, bool displayGrid) :
+Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Point2D& noiseTopLeft, const Point2D& noiseBottomRight, const Point2D & controlFunctionTopLeft, const Point2D & controlFunctionBottomRight, int seed, double eps, int resolution, double displacement, int primitivesResolutionSteps, double slopePower, double noiseAmplitudeProportion, bool displayFunction, bool displayPoints, bool displaySegments, bool displayGrid, bool displayDistance) :
 	m_seed(seed),
 	m_controlFunction(std::move(controlFunction)),
+	m_displayFunction(displayFunction),
 	m_displayPoints(displayPoints),
 	m_displaySegments(displaySegments),
 	m_displayGrid(displayGrid),
+	m_displayDistance(displayDistance),
 	m_noiseTopLeft(noiseTopLeft),
 	m_noiseBottomRight(noiseBottomRight),
 	m_controlFunctionTopLeft(controlFunctionTopLeft),
@@ -263,8 +272,8 @@ Noise<I>::Noise(std::unique_ptr<ControlFunction<I> > controlFunction, const Poin
 	m_resolution(resolution),
 	m_displacement(displacement),
     m_primitivesResolutionSteps(primitivesResolutionSteps),
-	m_slopePower(slopePower),
-	m_noiseAmplitudeProportion(noiseAmplitudeProportion)
+	m_noiseAmplitudeProportion(noiseAmplitudeProportion),
+	m_slopePower(slopePower)
 {
 	InitPointCache();
 }
@@ -776,8 +785,20 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 
 	if (m_resolution == 1)
 	{
-		value = std::max(value, ComputeColorPrimitives(x, y, cell1, points1, cell1, segments1));
-		// value = std::max(value, ComputeColor(x, y, cell1, segments1, points1));
+		if (m_displayFunction)
+		{
+			value = std::max(value, ComputeColorPrimitives(x, y, cell1, points1, cell1, segments1));
+		}
+		
+		if (m_displayPoints || m_displaySegments || m_displayGrid)
+		{
+			value = std::max(value, ComputeColor(x, y, cell1, segments1, points1));
+		}
+		
+		if (m_displayDistance)
+		{
+			value = std::max(value, ComputeColorDistance(x, y, cell1, segments1));
+		}
 
 		return value;
 	}
@@ -793,8 +814,20 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 
 	if (m_resolution == 2)
 	{
-		value = std::max(value, ComputeColorPrimitives(x, y, cell2, points2, cell1, segments1, cell2, segments2));
-		// value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2));
+		if (m_displayFunction)
+		{
+			value = std::max(value, ComputeColorPrimitives(x, y, cell2, points2, cell1, segments1, cell2, segments2));
+		}
+
+		if (m_displayPoints || m_displaySegments || m_displayGrid)
+		{
+			value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2));
+		}
+
+		if (m_displayDistance)
+		{
+			value = ComputeColorDistance(x, y, cell1, segments1, cell2, segments2);
+		}
 
 		return value;
 	}
@@ -810,8 +843,20 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 
 	if (m_resolution == 3)
 	{
-		value = std::max(value, ComputeColorPrimitives(x, y, cell3, points3, cell1, segments1, cell2, segments2, cell3, segments3));
-		// value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3));
+		if (m_displayFunction)
+		{
+			value = std::max(value, ComputeColorPrimitives(x, y, cell3, points3, cell1, segments1, cell2, segments2, cell3, segments3));
+		}
+
+		if (m_displayPoints || m_displaySegments || m_displayGrid)
+		{
+			value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3));
+		}
+
+		if (m_displayDistance)
+		{
+			value = ComputeColorDistance(x, y, cell1, segments1, cell2, segments2, cell3, segments3);
+		}
 
 		return value;
 	}
@@ -826,9 +871,21 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 
 	if (m_resolution == 4)
 	{
-		value = std::max(value, ComputeColorPrimitives(x, y, cell4, points4, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4));
-		// value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4));
-		
+		if (m_displayFunction)
+		{
+			value = std::max(value, ComputeColorPrimitives(x, y, cell4, points4, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4));
+		}
+
+		if (m_displayPoints || m_displaySegments || m_displayGrid)
+		{
+			value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4));
+		}
+
+		if (m_displayDistance)
+		{
+			value = ComputeColorDistance(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4);
+		}
+
 		return value;
 	}
 
@@ -842,8 +899,20 @@ double Noise<I>::evaluateTerrain(double x, double y) const
 
 	if (m_resolution == 5)
 	{
-		value = std::max(value, ComputeColorPrimitives(x, y, cell5, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5));
-		// value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
+		if (m_displayFunction)
+		{
+			value = std::max(value, ComputeColorPrimitives(x, y, cell5, points5, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5));
+		}
+
+		if (m_displayPoints || m_displaySegments || m_displayGrid)
+		{
+			value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
+		}
+
+		if (m_displayDistance)
+		{
+			value = ComputeColorDistance(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5);
+		}
 
 		return value;
 	}
@@ -876,8 +945,15 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 
 	if (m_resolution == 1)
 	{
-		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1));
-		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1));
+		if (m_displayPoints || m_displaySegments || m_displayGrid)
+		{
+			value = std::max(value, ComputeColor(x, y, cell1, segments1, points1));
+		}
+
+		if (m_displayDistance)
+		{
+			value = std::max(value, ComputeColorDistance(x, y, cell1, segments1));
+		}
 
 		return value;
 	}
@@ -893,8 +969,15 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 
 	if (m_resolution == 2)
 	{
-		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2));
-		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2));
+		if (m_displayPoints || m_displaySegments || m_displayGrid)
+		{
+			value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2));
+		}
+
+		if (m_displayDistance)
+		{
+			value = std::max(value, ComputeColorDistance(x, y, cell1, segments1, cell2, segments2));
+		}
 
 		return value;
 	}
@@ -910,8 +993,15 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 
 	if (m_resolution == 3)
 	{
-		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3));
-		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3));
+		if (m_displayPoints || m_displaySegments || m_displayGrid)
+		{
+			value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3));
+		}
+
+		if (m_displayDistance)
+		{
+			value = std::max(value, ComputeColorDistance(x, y, cell1, segments1, cell2, segments2, cell3, segments3));
+		}
 
 		return value;
 	}
@@ -926,8 +1016,15 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 
 	if (m_resolution == 4)
 	{
-		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4));
-		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4));
+		if (m_displayPoints || m_displaySegments || m_displayGrid)
+		{
+			value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4));
+		}
+
+		if (m_displayDistance)
+		{
+			value = std::max(value, ComputeColorDistance(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4));
+		}
 
 		return value;
 	}
@@ -942,8 +1039,15 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 
 	if (m_resolution == 5)
 	{
-		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
-		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5));
+		if (m_displayPoints || m_displaySegments || m_displayGrid)
+		{
+			value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5));
+		}
+
+		if (m_displayDistance)
+		{
+			value = std::max(value, ComputeColorDistance(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5));
+		}
 
 		return value;
 	}
@@ -958,8 +1062,15 @@ double Noise<I>::evaluateLichtenberg(double x, double y) const
 
 	if (m_resolution == 6)
 	{
-		value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5, cell6, segments6, points6));
-		// value = std::max(value, ComputeColorControlFunction(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5, cell6, segments6));
+		if (m_displayPoints || m_displaySegments || m_displayGrid)
+		{
+			value = std::max(value, ComputeColor(x, y, cell1, segments1, points1, cell2, segments2, points2, cell3, segments3, points3, cell4, segments4, points4, cell5, segments5, points5, cell6, segments6, points6));
+		}
+
+		if (m_displayDistance)
+		{
+			value = std::max(value, ComputeColorDistance(x, y, cell1, segments1, cell2, segments2, cell3, segments3, cell4, segments4, cell5, segments5, cell6, segments6));
+		}
 
 		return value;
 	}
@@ -1635,6 +1746,17 @@ double Noise<I>::ComputeColorControlFunction(double x, double y, Tail&&... tail)
 	}
 
 	return value;
+}
+
+template <typename I>
+template <typename ... Tail>
+double Noise<I>::ComputeColorDistance(double x, double y, Tail&&... tail) const
+{
+	const Point2D point(x, y);
+
+	// nearest segment
+	Segment3D nearestSegment;
+	return NearestSegmentProjectionZ(1, point, nearestSegment, std::forward<Tail>(tail)...);
 }
 
 #endif // NOISE_H

@@ -121,6 +121,8 @@ NoiseRenderer::VectorDouble2D NoiseRenderer::RenderTerrain() const
 		m_parameters.primitivesResolutionSteps,
 		m_parameters.slopePower,
 		m_parameters.noiseAmplitudeProportion,
+		true,
+		false,
 		false,
 		false,
 		false);
@@ -162,8 +164,10 @@ NoiseRenderer::VectorDouble2D NoiseRenderer::RenderLichtenberg() const
 		m_parameters.primitivesResolutionSteps,
 		m_parameters.slopePower,
 		m_parameters.noiseAmplitudeProportion,
+		true,
 		false,
 		true,
+		false,
 		false);
 
 	VectorDouble2D result(m_parameters.heightResolution, m_parameters.widthResolution);

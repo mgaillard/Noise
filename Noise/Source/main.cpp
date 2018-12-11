@@ -1,340 +1,8 @@
 #include <iostream>
-#include <iomanip>
-#include <memory>
-#include <cassert>
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
-#include "noise.h"
-#include "math2d.h"
-#include "utils.h"
-#include "perlincontrolfunction.h"
-#include "planecontrolfunction.h"
-#include "lichtenbergcontrolfunction.h"
-#include "imagecontrolfunction.h"
+#include "examples.h"
 
 using namespace std;
-
-struct Progress
-{
-	const int totalSteps;
-	const int moduloSteps;
-	int completedSteps;
-
-	/// <summary>
-	/// Construct a Progress object to monitor the progress in an OpenMP loop.
-	/// </summary>
-	/// <param name="totalSteps">The total number of steps in the loop</param>
-	/// <param name="numberDisplay">The number of times the progress is going to be displayed</param>
-	Progress(int totalSteps, int numberDisplay = 100) :
-		totalSteps(totalSteps),
-		moduloSteps(totalSteps / numberDisplay),
-		completedSteps(0)
-	{
-		assert(numberDisplay > 0);
-	}
-
-	/// <summary>
-	/// Update the progress.
-	/// This function should be called each time a step is completed.
-	/// </summary>
-	void Update()
-	{
-#pragma omp atomic
-		++completedSteps;
-	}
-
-	/// <summary>
-	/// Display the progress.
-	/// This function display the progress every "moduloSteps" steps have been completed.
-	/// </summary>
-	void Display() const
-	{
-		// stepsCompleted may have changed, however it is not a big problem if the progress is not very precise.
-		if ((completedSteps % moduloSteps) == 0)
-		{
-#pragma omp critical
-			cout << "Progress: " << (100LLU * completedSteps / totalSteps) << " %\n";
-		}
-	}
-};
-
-template<typename I>
-cv::Mat SegmentImage(const Noise<I>& noise, const Point2D& a, const Point2D&b, int width, int height)
-{
-	const Point3D point(5.69, -1.34, 4.0);
-	const std::array<Segment3D, 2> segments = { {
-		Segment3D(Point3D(1.0, 1.0, 2.0), Point3D(2.0, 3.0, 1.0)),
-		Segment3D(Point3D(2.0, 3.0, 1.0), Point3D(2.0, 5.0, 0.0))
-	} };
-
-	cv::Mat image(height, width, CV_16U);
-
-#pragma omp parallel for shared(image)
-	for (int i = 0; i < height; i++) {
-		for (int j = 0; j < width; j++) {
-			const double x = remap(double(j), 0.0, double(width), a.x, b.x);
-			const double y = remap(double(i), 0.0, double(height), a.y, b.y);
-
-			const double value = noise.displaySegment(x, y, segments, point);
-
-			image.at<uint16_t>(i, j) = uint16_t(value * numeric_limits<uint16_t>::max());
-		}
-	}
-
-	return image;
-}
-
-template<typename I>
-vector<vector<double> > EvaluateTerrain(const Noise<I>& noise, const Point2D& a, const Point2D&b, int width, int height)
-{
-	vector<vector<double> > values(height, vector<double>(width));
-
-	// Display progress 25 times.
-	Progress progress(width * height, 25);
-
-#pragma omp parallel for shared(values)
-	for (int i = 0; i < height; i++) {
-		for (int j = 0; j < width; j++) {
-			const double x = remap_clamp(double(j), 0.0, double(width), a.x, b.x);
-			const double y = remap_clamp(double(i), 0.0, double(height), a.y, b.y);
-
-			values[i][j] = noise.evaluateTerrain(x, y);
-
-			progress.Update();
-			progress.Display();
-		}
-	}
-
-	return values;
-}
-
-template<typename I>
-vector<vector<double> > EvaluateLichtenbergFigure(const Noise<I>& noise, const Point2D& a, const Point2D& b, int width, int height)
-{
-	vector<vector<double> > values(height, vector<double>(width));
-
-	// Display progress 25 times.
-	Progress progress(width * height, 25);
-
-#pragma omp parallel for shared(values)
-	for (int i = 0; i < height; i++) {
-		for (int j = 0; j < width; j++) {
-			const double x = remap_clamp(double(j), 0.0, double(width), a.x, b.x);
-			const double y = remap_clamp(double(i), 0.0, double(height), a.y, b.y);
-
-			values[i][j] = noise.evaluateLichtenberg(x, y);
-
-			progress.Update();
-			progress.Display();
-		}
-	}
-
-	return values;
-}
-
-cv::Mat GenerateImage(const vector<vector<double> > &values)
-{
-	const int width = int(values.size());
-	const int height = int(values.front().size());
-
-	// Find min and max to remap to 16 bits
-	double minimum = numeric_limits<double>::max();
-	double maximum = numeric_limits<double>::lowest();
-	for (int i = 0; i < height; i++) {
-		for (int j = 0; j < width; j++) {
-			minimum = min(minimum, values[i][j]);
-			maximum = max(maximum, values[i][j]);
-		}
-	}
-
-	// Convert to 16 bits image
-	cv::Mat image(height, width, CV_16U);
-
-#pragma omp parallel for shared(image)
-	for (int i = 0; i < height; i++) {
-		for (int j = 0; j < width; j++) {
-			const double value = remap_clamp(values[i][j], minimum, maximum, 0.0, 65535.0);
-
-			image.at<uint16_t>(i, j) = uint16_t(value);
-		}
-	}
-
-	return image;
-}
-
-void SmallAmplificationImage(int width, int height, int seed, const string& input, const string& filename)
-{
-	const auto inputImage = cv::imread(input, cv::ImreadModes::IMREAD_ANYDEPTH);
-
-	typedef ImageControlFunction ControlFunctionType;
-	std::unique_ptr<ControlFunctionType> controlFunction(std::make_unique<ControlFunctionType>(inputImage));
-
-	const double eps = 0.10;
-	const int resolution = 1;
-	const double displacement = 0.05;
-	const int primitivesResolutionSteps = 2;
-	const double slopePower = 1.0;
-	const double noiseAmplitudeProportion = 0.05;
-	const Point2D noiseTopLeft(0.0, 0.0);
-	const Point2D noiseBottomRight(12.0, 12.0);
-	const Point2D controlFunctionTopLeft(0.0, 0.0);
-	const Point2D controlFunctionBottomRight(1.0, 1.0);
-
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, false);
-	// TODO: Random generator std::minstd_rand
-	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
-
-	cv::imwrite(filename, image);
-}
-
-void BigAmplificationImage(int width, int height, int seed, const string& input, const string& filename)
-{
-	const auto inputImage = cv::imread(input, cv::ImreadModes::IMREAD_ANYDEPTH);
-
-	typedef ImageControlFunction ControlFunctionType;
-	std::unique_ptr<ControlFunctionType> controlFunction(std::make_unique<ControlFunctionType>(inputImage));
-
-	const double eps = 0.10;
-	const int resolution = 1;
-	const double displacement = 0.05;
-	const int primitivesResolutionSteps = 2;
-	const double slopePower = 1.0;
-	const double noiseAmplitudeProportion = 0.05;
-	const Point2D noiseTopLeft(0.0, 0.0);
-	const Point2D noiseBottomRight(48.0, 48.0);
-	const Point2D controlFunctionTopLeft(0.0, 0.0);
-	const Point2D controlFunctionBottomRight(1.0, 1.0);
-
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, false);
-	// TODO: Random generator std::minstd_rand
-	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
-
-	cv::imwrite(filename, image);
-}
-
-void SmallTerrainImage(int width, int height, int seed, const string& filename)
-{
-	typedef PerlinControlFunction ControlFunctionType;
-	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
-
-	const double eps = 0.25;
-	const int resolution = 2;
-	const double displacement = 0.08;
-	const int primitivesResolutionSteps = 3;
-	const double slopePower = 1.5;
-	const double noiseAmplitudeProportion = 0.025;
-	const Point2D noiseTopLeft(0.0, 0.0);
-	const Point2D noiseBottomRight(4.0, 4.0);
-	const Point2D controlFunctionTopLeft(0.0, 0.0);
-	const Point2D controlFunctionBottomRight(0.5, 0.5);
-
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, false);
-	// TODO: Random generator std::mt19937_64
-	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
-
-	cv::imwrite(filename, image);
-}
-
-void MediumTerrainImage(int width, int height, int seed, const string& filename)
-{
-	typedef PerlinControlFunction ControlFunctionType;
-	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
-
-	const double eps = 0.25;
-	const int resolution = 2;
-	const double displacement = 0.2;
-	const int primitivesResolutionSteps = 3;
-	const double slopePower = 0.5;
-	const double noiseAmplitudeProportion = 0.05;
-	const Point2D noiseTopLeft(0.0, 0.0);
-	const Point2D noiseBottomRight(4.0, 4.0);
-	const Point2D controlFunctionTopLeft(-0.2, -0.5);
-	const Point2D controlFunctionBottomRight(1.45, 0.7);
-
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, false);
-	// TODO: Random generator std::mt19937_64
-	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
-
-	cv::imwrite(filename, image);
-}
-
-void LargeTerrainImage(int width, int height, int seed, const string& filename)
-{
-	typedef PerlinControlFunction ControlFunctionType;
-	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>(0.250));
-
-	const double eps = 0.20;
-	const int resolution = 3;
-	const double displacement = 0.075;
-	const int primitivesResolutionSteps = 3;
-	const double slopePower = 0.1;
-	const double noiseAmplitudeProportion = 0.05;
-	const Point2D noiseTopLeft(0.0, 0.0);
-	const Point2D noiseBottomRight(4.0, 4.0);
-	const Point2D controlFunctionTopLeft(-0.2, -0.5);
-	const Point2D controlFunctionBottomRight(1.40, 0.7);
-
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, false);
-	// TODO: Random generator std::mt19937_64
-	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
-
-	cv::imwrite(filename, image);
-}
-
-void EvaluationTerrainImage(int width, int height, int seed, const string& filename)
-{
-	typedef PerlinControlFunction ControlFunctionType;
-	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
-
-	const double eps = 0.25;
-	const int resolution = 2;
-	const double displacement = 0.1;
-	const int primitivesResolutionSteps = 3;
-	const double slopePower = 0.5;
-	const double noiseAmplitudeProportion = 0.05;
-	const Point2D noiseTopLeft(0.0, 0.0);
-	const Point2D noiseBottomRight(4.0, 4.0);
-	const Point2D controlFunctionTopLeft(-0.2, -0.4);
-	const Point2D controlFunctionBottomRight(1.4, 0.7);
-
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, false);
-	// TODO: Random generator std::mt19937_64
-	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
-
-	cv::imwrite(filename, image);
-}
-
-void LichtenbergFigureImage(int width, int height, int seed, const string& filename)
-{
-	const int antiAliasingLevel = 4;
-	
-	typedef LichtenbergControlFunction ControlFunctionType;
-	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
-
-	const double eps = 0.1;
-	const int resolution = 6;
-	const double displacement = 0.05;
-	const int primitivesResolutionSteps = 3;
-	const double slopePower = 1.0;
-	const double noiseAmplitudeProportion = 0.05;
-	const Point2D noiseTopLeft(-3.0, -3.0);
-	const Point2D noiseBottomRight(2.0, 2.0);
-	const Point2D controlFunctionTopLeft(-1.0, -1.0);
-	const Point2D controlFunctionBottomRight(1.0, 1.0);
-
-	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, true, false);
-	// TODO: Random generator std::mt19937_64
-	const cv::Mat image = GenerateImage(EvaluateLichtenbergFigure(noise, noiseTopLeft, noiseBottomRight, width, height));
-
-	// Resize image (anti aliasing)
-	cv::Mat resized_image(height / antiAliasingLevel, width / antiAliasingLevel, CV_16U);
-	resize(image, resized_image, resized_image.size(), 0, 0, CV_INTER_AREA);
-
-	cv::imwrite(filename, resized_image);
-}
 
 int main(int argc, char* argv[])
 {
@@ -344,11 +12,7 @@ int main(int argc, char* argv[])
 	const int SMALL_AMP_SEED = 1;
 	const string SMALL_AMP_INPUT = "../Images/amplification_small.png";
 	const string SMALL_AMP_OUTPUT = "amplification_small_result.png";
-	SmallAmplificationImage(SMALL_AMP_WIDTH,
-							SMALL_AMP_HEIGHT,
-							SMALL_AMP_SEED,
-							SMALL_AMP_INPUT,
-							SMALL_AMP_OUTPUT);
+	// SmallAmplificationImage(SMALL_AMP_WIDTH, SMALL_AMP_HEIGHT, SMALL_AMP_SEED, SMALL_AMP_INPUT, SMALL_AMP_OUTPUT);
 
 	std::cout << "Amplification of a big terrain" << std::endl;
 	const int BIG_AMP_WIDTH = 1024;
@@ -356,41 +20,41 @@ int main(int argc, char* argv[])
 	const int BIG_AMP_SEED = 0;
 	const string BIG_AMP_INPUT = "../Images/amplification_big.png";
 	const string BIG_AMP_OUTPUT = "amplification_big_result.png";
-	BigAmplificationImage(BIG_AMP_WIDTH,
-						  BIG_AMP_HEIGHT,
-						  BIG_AMP_SEED,
-						  BIG_AMP_INPUT,
-						  BIG_AMP_OUTPUT);
+	// BigAmplificationImage(BIG_AMP_WIDTH, BIG_AMP_HEIGHT, BIG_AMP_SEED, BIG_AMP_INPUT, BIG_AMP_OUTPUT);
 
 	std::cout << "Procedural generation of a small terrain" << std::endl;
 	const int SMALL_TERRAIN_WIDTH = 512;
 	const int SMALL_TERRAIN_HEIGHT = 512;
 	const int SMALL_TERRAIN_SEED = 1;
 	const string SMALL_TERRAIN_OUTPUT = "small_terrain.png";
-	SmallTerrainImage(SMALL_TERRAIN_WIDTH,
-					  SMALL_TERRAIN_HEIGHT,
-					  SMALL_TERRAIN_SEED,
-					  SMALL_TERRAIN_OUTPUT);
-	
-	std::cout << "Procedural generation of a medium terrain" << std::endl;
-	const int MEDIUM_TERRAIN_WIDTH = 768;
-	const int MEDIUM_TERRAIN_HEIGHT = 768;
-	const int MEDIUM_TERRAIN_SEED = 0;
-	const string MEDIUM_TERRAIN_OUTPUT = "medium_terrain.png";
-	MediumTerrainImage(MEDIUM_TERRAIN_WIDTH,
-					   MEDIUM_TERRAIN_HEIGHT,
-					   MEDIUM_TERRAIN_SEED,
-					   MEDIUM_TERRAIN_OUTPUT);
+	// SmallTerrainImage(SMALL_TERRAIN_WIDTH, SMALL_TERRAIN_HEIGHT, SMALL_TERRAIN_SEED, SMALL_TERRAIN_OUTPUT);
 
-	std::cout << "Procedural generation of a large terrain" << std::endl;
-	const int LARGE_TERRAIN_WIDTH = 1024;
-	const int LARGE_TERRAIN_HEIGHT = 1024;
-	const int LARGE_TERRAIN_SEED = 0;
-	const string LARGE_TERRAIN_OUTPUT = "large_terrain.png";
-	LargeTerrainImage(LARGE_TERRAIN_WIDTH,
-					  LARGE_TERRAIN_HEIGHT,
-					  LARGE_TERRAIN_SEED,
-					  LARGE_TERRAIN_OUTPUT);
+	std::cout << "Procedural generation of the teaser 1 terrain" << std::endl;
+	const int TEASER_1_TERRAIN_WIDTH = 512;
+	const int TEASER_1_TERRAIN_HEIGHT = 512;
+	const int TEASER_1_TERRAIN_SEED = 0;
+	const string TEASER_1_DISTANCE_OUTPUT = "teaser_1_distance.png";
+	const string TEASER_1_TERRAIN_OUTPUT = "teaser_1_terrain.png";
+	TeaserFirstDistanceImage(TEASER_1_TERRAIN_WIDTH, TEASER_1_TERRAIN_HEIGHT, TEASER_1_TERRAIN_SEED, TEASER_1_DISTANCE_OUTPUT);
+	TeaserFirstTerrainImage(TEASER_1_TERRAIN_WIDTH, TEASER_1_TERRAIN_HEIGHT, TEASER_1_TERRAIN_SEED, TEASER_1_TERRAIN_OUTPUT);
+
+	std::cout << "Procedural generation of the teaser 2 terrain" << std::endl;
+	const int TEASER_2_TERRAIN_WIDTH = 768;
+	const int TEASER_2_TERRAIN_HEIGHT = 768;
+	const int TEASER_2_TERRAIN_SEED = 0;
+	const string TEASER_2_DISTANCE_OUTPUT = "teaser_2_distance.png";
+	const string TEASER_2_TERRAIN_OUTPUT = "teaser_2_terrain.png";
+	TeaserSecondDistanceImage(TEASER_2_TERRAIN_WIDTH, TEASER_2_TERRAIN_HEIGHT, TEASER_2_TERRAIN_SEED, TEASER_2_DISTANCE_OUTPUT);
+	TeaserSecondTerrainImage(TEASER_2_TERRAIN_WIDTH, TEASER_2_TERRAIN_HEIGHT, TEASER_2_TERRAIN_SEED, TEASER_2_TERRAIN_OUTPUT);
+
+	std::cout << "Procedural generation of the teaser 3 terrain" << std::endl;
+	const int TEASER_3_TERRAIN_WIDTH = 1024;
+	const int TEASER_3_TERRAIN_HEIGHT = 1024;
+	const int TEASER_3_TERRAIN_SEED = 0;
+	const string TEASER_3_DISTANCE_OUTPUT = "teaser_3_distance.png";
+	const string TEASER_3_TERRAIN_OUTPUT = "teaser_3_terrain.png";
+	TeaserThirdDistanceImage(TEASER_3_TERRAIN_WIDTH, TEASER_3_TERRAIN_HEIGHT, TEASER_3_TERRAIN_SEED, TEASER_3_DISTANCE_OUTPUT);
+	TeaserThirdTerrainImage(TEASER_3_TERRAIN_WIDTH, TEASER_3_TERRAIN_HEIGHT, TEASER_3_TERRAIN_SEED, TEASER_3_TERRAIN_OUTPUT);
 
 	std::cout << "Procedural generation of a set of medium terrains for evaluation" << std::endl;
 	const int EVALUATION_TERRAIN_WIDTH = 512;
@@ -407,10 +71,7 @@ int main(int argc, char* argv[])
 
 		std::cout << "Terrain: " << filename << std::endl;
 
-		EvaluationTerrainImage(EVALUATION_TERRAIN_WIDTH,
-							   EVALUATION_TERRAIN_HEIGHT,
-							   s,
-							   filename);
+		// EvaluationTerrainImage(EVALUATION_TERRAIN_WIDTH, EVALUATION_TERRAIN_HEIGHT, s, filename);
 	}
 	
 	std::cout << "Procedural generation of a Lichtenberg figure" << std::endl;
@@ -418,7 +79,7 @@ int main(int argc, char* argv[])
 	const int LICHTENBERG_HEIGHT = 2048;
 	const int LICHTENBERG_SEED = 33058;
 	const string LICHTENBERG_OUTPUT = "lichtenberg.png";
-	LichtenbergFigureImage(LICHTENBERG_WIDTH, LICHTENBERG_HEIGHT, LICHTENBERG_SEED, LICHTENBERG_OUTPUT);
-
+	// LichtenbergFigureImage(LICHTENBERG_WIDTH, LICHTENBERG_HEIGHT, LICHTENBERG_SEED, LICHTENBERG_OUTPUT);
+	
 	return 0;
 }
