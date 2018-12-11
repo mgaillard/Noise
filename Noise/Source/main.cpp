@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
 	const int SMALL_AMP_SEED = 1;
 	const string SMALL_AMP_INPUT = "../Images/amplification_small.png";
 	const string SMALL_AMP_OUTPUT = "amplification_small_result.png";
-	// SmallAmplificationImage(SMALL_AMP_WIDTH, SMALL_AMP_HEIGHT, SMALL_AMP_SEED, SMALL_AMP_INPUT, SMALL_AMP_OUTPUT);
+	SmallAmplificationImage(SMALL_AMP_WIDTH, SMALL_AMP_HEIGHT, SMALL_AMP_SEED, SMALL_AMP_INPUT, SMALL_AMP_OUTPUT);
 
 	std::cout << "Amplification of a big terrain" << std::endl;
 	const int BIG_AMP_WIDTH = 1024;
@@ -20,14 +20,14 @@ int main(int argc, char* argv[])
 	const int BIG_AMP_SEED = 0;
 	const string BIG_AMP_INPUT = "../Images/amplification_big.png";
 	const string BIG_AMP_OUTPUT = "amplification_big_result.png";
-	// BigAmplificationImage(BIG_AMP_WIDTH, BIG_AMP_HEIGHT, BIG_AMP_SEED, BIG_AMP_INPUT, BIG_AMP_OUTPUT);
+	BigAmplificationImage(BIG_AMP_WIDTH, BIG_AMP_HEIGHT, BIG_AMP_SEED, BIG_AMP_INPUT, BIG_AMP_OUTPUT);
 
 	std::cout << "Procedural generation of a small terrain" << std::endl;
 	const int SMALL_TERRAIN_WIDTH = 512;
 	const int SMALL_TERRAIN_HEIGHT = 512;
 	const int SMALL_TERRAIN_SEED = 1;
 	const string SMALL_TERRAIN_OUTPUT = "small_terrain.png";
-	// SmallTerrainImage(SMALL_TERRAIN_WIDTH, SMALL_TERRAIN_HEIGHT, SMALL_TERRAIN_SEED, SMALL_TERRAIN_OUTPUT);
+	SmallTerrainImage(SMALL_TERRAIN_WIDTH, SMALL_TERRAIN_HEIGHT, SMALL_TERRAIN_SEED, SMALL_TERRAIN_OUTPUT);
 
 	std::cout << "Procedural generation of the teaser 1 terrain" << std::endl;
 	const int TEASER_1_TERRAIN_WIDTH = 512;
@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
 
 		std::cout << "Terrain: " << filename << std::endl;
 
-		// EvaluationTerrainImage(EVALUATION_TERRAIN_WIDTH, EVALUATION_TERRAIN_HEIGHT, s, filename);
+		EvaluationTerrainImage(EVALUATION_TERRAIN_WIDTH, EVALUATION_TERRAIN_HEIGHT, s, filename);
 	}
 	
 	std::cout << "Procedural generation of a Lichtenberg figure" << std::endl;
@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 	const int LICHTENBERG_HEIGHT = 2048;
 	const int LICHTENBERG_SEED = 33058;
 	const string LICHTENBERG_OUTPUT = "lichtenberg.png";
-	// LichtenbergFigureImage(LICHTENBERG_WIDTH, LICHTENBERG_HEIGHT, LICHTENBERG_SEED, LICHTENBERG_OUTPUT);
+	LichtenbergFigureImage(LICHTENBERG_WIDTH, LICHTENBERG_HEIGHT, LICHTENBERG_SEED, LICHTENBERG_OUTPUT);
 	
 	return 0;
 }
