@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <memory>
 #include <cassert>
+#include <chrono>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -131,6 +132,24 @@ vector<vector<double> > EvaluateLichtenbergFigure(const Noise<I>& noise, const P
 
 			progress.Update();
 			progress.Display();
+		}
+	}
+
+	return values;
+}
+
+template<typename I>
+vector<vector<double> > EvaluateLichtenbergFigureWithoutProgress(const Noise<I>& noise, const Point2D& a, const Point2D& b, int width, int height)
+{
+	vector<vector<double> > values(height, vector<double>(width));
+
+#pragma omp parallel for shared(values)
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			const double x = remap_clamp(double(j), 0.0, double(width), a.x, b.x);
+			const double y = remap_clamp(double(i), 0.0, double(height), a.y, b.y);
+
+			values[i][j] = noise.evaluateLichtenberg(x, y);
 		}
 	}
 
@@ -492,4 +511,36 @@ void EffectParametersImage(int width, int height, int seed, int resolution, doub
 	const cv::Mat image = GenerateImageNegative(EvaluateLichtenbergFigure(noise, noiseTopLeft, noiseBottomRight, width, height));
 
 	cv::imwrite(filename, image);
+}
+
+double PerformanceTest(int width, int height, const std::string& filename)
+{
+	typedef LichtenbergControlFunction ControlFunctionType;
+	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
+
+	const int seed = 33058;
+	const double eps = 0.1;
+	const int resolution = 6;
+	const double displacement = 0.05;
+	const int primitivesResolutionSteps = 0;
+	const double slopePower = 0.0;
+	const double noiseAmplitudeProportion = 0.00;
+	const Point2D noiseTopLeft(-2.0, -2.0);
+	const Point2D noiseBottomRight(1.0, 1.0);
+	const Point2D controlFunctionTopLeft(-1.0, -1.0);
+	const Point2D controlFunctionBottomRight(1.0, 1.0);
+
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, true, false, true, false, false);
+
+	// Measure execution time
+	const auto startTime = chrono::high_resolution_clock::now();
+	const auto result = EvaluateLichtenbergFigureWithoutProgress(noise, noiseTopLeft, noiseBottomRight, width, height);
+	const auto endTime = chrono::high_resolution_clock::now();
+
+	// Save the image for comparison to a reference
+	const cv::Mat image = GenerateImage(result);
+	cv::imwrite(filename, image);
+
+	// Execution time in ms
+	return chrono::duration<double, milli>(endTime - startTime).count();
 }

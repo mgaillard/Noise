@@ -27,4 +27,6 @@ void LichtenbergFigureImage(int width, int height, int seed, const std::string& 
 
 void EffectParametersImage(int width, int height, int seed, int resolution, double eps, double displacement, const std::string& filename);
 
+double PerformanceTest(int width, int height, const std::string& filename);
+
 #endif // EXAMPLES_H

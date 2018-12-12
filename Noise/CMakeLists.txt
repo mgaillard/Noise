@@ -13,6 +13,7 @@ find_package(OpenCV REQUIRED)
 
 set(SOURCE_FILES Source/main.cpp
 			     Include/controlfunction.h
+				 Include/examples.h Source/examples.cpp
 				 Include/imagecontrolfunction.h Source/imagecontrolfunction.cpp
 				 Include/lichtenbergcontrolfunction.h
 				 Include/math2d.h Source/math2d.cpp

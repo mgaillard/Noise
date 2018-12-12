@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 
 #include "examples.h"
 
@@ -6,6 +7,12 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+	std::cout << "Performance Test" << std::endl;
+	const int PERFORMANCE_WIDTH = 1024;
+	const int PERFORMANCE_HEIGHT = 1024;
+	const string PERFORMANCE_OUTPUT = "performance_test.png";
+	std::cout << std::fixed << std::setprecision(2) << PerformanceTest(PERFORMANCE_WIDTH, PERFORMANCE_HEIGHT, PERFORMANCE_OUTPUT) << std::endl;
+
 	std::cout << "Amplification of a small terrain" << std::endl;
 	const int SMALL_AMP_WIDTH = 512;
 	const int SMALL_AMP_HEIGHT = 512;
