@@ -656,8 +656,8 @@ typename Noise<I>::template Segment3DChain<D> Noise<I>::ConnectPointToSegmentRiv
 	if (length_sq(straightSegment) > 0.0)
 	{
 		// Compute the connection angle
-		const double mainSegmentSlope = abs(segment.b.z - segment.a.z) / length(ProjectionZ(segment));
-		const double tributarySlope = abs(straightSegment.b.z - straightSegment.a.z) / length(ProjectionZ(straightSegment));		
+		const double mainSegmentSlope = std::abs(segment.b.z - segment.a.z) / length(ProjectionZ(segment));
+		const double tributarySlope = std::abs(straightSegment.b.z - straightSegment.a.z) / length(ProjectionZ(straightSegment));		
 		double connectionAngle = 0.0;
 		if (tributarySlope >= 0.0 && mainSegmentSlope <= tributarySlope)
 		{
@@ -748,7 +748,7 @@ double Noise<I>::ComputeColorGrid(double x, double y, double deltaX, double delt
 	double value = 0.0;
 
 	// When near to the grid
-	if (abs(x - floor(x) - deltaX) < radius || abs(y - floor(y) - deltaY) < radius)
+	if (std::abs(x - floor(x) - deltaX) < radius || std::abs(y - floor(y) - deltaY) < radius)
 	{
 		value = 1.0;
 	}
