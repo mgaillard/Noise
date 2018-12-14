@@ -572,6 +572,8 @@ typename Noise<I>::template Segment3DChain<D> Noise<I>::ConnectPointToSegmentAng
 	// Find the intersection so that the angle between the two segments is 45°
 	// v designates the ratio of the segment on which the intersection is located
 	// v = 0 is point A of the segment ; v = 1 is point B of the segment
+	// TODO: segmentDist could actually not be the distance to the line which means the angle is not 45 degrees
+	// TODO: make sure that segmentDist is the distance to the line (AB) using u or by recomputing it in this function
 	double v = u + (segmentDist / tanAngle) / length(ProjectionZ(segment));
 	// The intersection must lie on the segment
 	v = clamp(v, 0.0, 1.0);
