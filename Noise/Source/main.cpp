@@ -96,7 +96,6 @@ int main(int argc, char* argv[])
 		EvaluationTerrainImage(EVALUATION_TERRAIN_WIDTH, EVALUATION_TERRAIN_HEIGHT, s, filename);
 	}
 
-	// TODO: fine tune the slopePower and the amplitude of the control function
 	std::cout << "Segments and terrain with the perlin plane control function" << std::endl;
 	const int PERLIN_PLANE_WIDTH = 512;
 	const int PERLIN_PLANE_HEIGHT = 512;

@@ -527,7 +527,7 @@ void PerlinPlaneSegmentsImage(int width, int height, int seed, const std::string
 	const int resolution = 2;
 	const double displacement = 0.025;
 	const int primitivesResolutionSteps = 3;
-	const double slopePower = 0.5;
+	const double slopePower = 0.25;
 	const double noiseAmplitudeProportion = 0.05;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(4.0, 4.0);
@@ -550,7 +550,7 @@ void PerlinPlaneTerrainImage(int width, int height, int seed, const std::string&
 	const int resolution = 2;
 	const double displacement = 0.025;
 	const int primitivesResolutionSteps = 3;
-	const double slopePower = 0.5;
+	const double slopePower = 0.25;
 	const double noiseAmplitudeProportion = 0.05;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(4.0, 4.0);
