@@ -27,7 +27,13 @@ void TeaserThirdDistanceImage(int width, int height, int seed, const std::string
 
 void TeaserThirdTerrainImage(int width, int height, int seed, const std::string& filename);
 
+void SketchSegmentsImage(int width, int height, int seed, const std::string& input, const std::string& filename);
+
+void SketchTerrainImage(int width, int height, int seed, const std::string& input, const std::string& filename);
+
 void EvaluationTerrainImage(int width, int height, int seed, const std::string& filename);
+
+void PerlinSegmentsImage(int width, int height, int seed, const std::string& filename);
 
 void PerlinPlaneSegmentsImage(int width, int height, int seed, const std::string& filename);
 

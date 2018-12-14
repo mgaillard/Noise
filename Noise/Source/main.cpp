@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
 	const int PERFORMANCE_HEIGHT = 1024;
 	const string PERFORMANCE_OUTPUT = "performance_test.png";
 	std::cout << std::fixed << std::setprecision(2) << PerformanceTest(PERFORMANCE_WIDTH, PERFORMANCE_HEIGHT, PERFORMANCE_OUTPUT) << std::endl;
-
+	
 	const int CONTROL_FUNCTION_WIDTH = 512;
 	const int CONTROL_FUNCTION_HEIGHT = 512;
 	
@@ -95,7 +95,17 @@ int main(int argc, char* argv[])
 
 		EvaluationTerrainImage(EVALUATION_TERRAIN_WIDTH, EVALUATION_TERRAIN_HEIGHT, s, filename);
 	}
-
+	
+	std::cout << "Procedural generation of the sketch terrain" << std::endl;
+	const int SKETCH_TERRAIN_WIDTH = 1024;
+	const int SKETCH_TERRAIN_HEIGHT = 1024;
+	const int SKETCH_TERRAIN_SEED = 0;
+	const string SKETCH_INPUT = "../Images/sketch_control_function.png";
+	const string SKETCH_SEGMENTS_OUTPUT = "sketch_segments.png";
+	const string SKETCH_TERRAIN_OUTPUT = "sketch_terrain.png";
+	SketchSegmentsImage(SKETCH_TERRAIN_WIDTH, SKETCH_TERRAIN_HEIGHT, SKETCH_TERRAIN_SEED, SKETCH_INPUT, SKETCH_SEGMENTS_OUTPUT);
+	SketchTerrainImage(SKETCH_TERRAIN_WIDTH, SKETCH_TERRAIN_HEIGHT, SKETCH_TERRAIN_SEED, SKETCH_INPUT, SKETCH_TERRAIN_OUTPUT);
+	
 	std::cout << "Segments and terrain with the perlin plane control function" << std::endl;
 	const int PERLIN_PLANE_WIDTH = 512;
 	const int PERLIN_PLANE_HEIGHT = 512;
@@ -104,6 +114,13 @@ int main(int argc, char* argv[])
 	const string PERLIN_PLANE_OUTPUT = "perlin_plane_terrain.png";
 	PerlinPlaneSegmentsImage(PERLIN_PLANE_WIDTH, PERLIN_PLANE_HEIGHT, PERLIN_PLANE_SEED, PERLIN_PLANE_SEGMENTS_OUTPUT);
 	PerlinPlaneTerrainImage(PERLIN_PLANE_WIDTH, PERLIN_PLANE_HEIGHT, PERLIN_PLANE_SEED, PERLIN_PLANE_OUTPUT);
+
+	std::cout << "Segments with the perlin control function" << std::endl;
+	const int PERLIN_WIDTH = 512;
+	const int PERLIN_HEIGHT = 512;
+	const int PERLIN_SEED = 0;
+	const string PERLIN_OUTPUT = "perlin_segments.png";
+	PerlinSegmentsImage(PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SEED, PERLIN_OUTPUT);
 
 	std::cout << "Procedural generation of a Lichtenberg figure" << std::endl;
 	const int LICHTENBERG_WIDTH = 2048;
@@ -161,6 +178,6 @@ int main(int argc, char* argv[])
 
 		EffectParametersImage(EFFECT_WIDTH, EFFECT_HEIGHT, EFFECT_DEFAULT_SEED, EFFECT_DEFAULT_RESOLUTION, EFFECT_DEFAULT_EPSILON, delta, filename);
 	}
-
+	
 	return 0;
 }

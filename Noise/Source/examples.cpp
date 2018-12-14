@@ -495,6 +495,56 @@ void TeaserThirdTerrainImage(int width, int height, int seed, const string& file
 	cv::imwrite(filename, image);
 }
 
+void SketchSegmentsImage(int width, int height, int seed, const std::string& input, const std::string& filename)
+{
+	const auto inputImage = cv::imread(input, cv::ImreadModes::IMREAD_ANYDEPTH);
+
+	typedef ImageControlFunction ControlFunctionType;
+	std::unique_ptr<ControlFunctionType> controlFunction(std::make_unique<ControlFunctionType>(inputImage));
+
+	const double eps = 0.15;
+	const int resolution = 2;
+	const double displacement = 0.025;
+	const int primitivesResolutionSteps = 3;
+	const double slopePower = 0.5;
+	const double noiseAmplitudeProportion = 0.05;
+	const Point2D noiseTopLeft(0.0, 0.0);
+	const Point2D noiseBottomRight(8.0, 8.0);
+	const Point2D controlFunctionTopLeft(0.1, 0.1);
+	const Point2D controlFunctionBottomRight(0.9, 0.9);
+
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, true, false, false);
+	// TODO: Random generator std::minstd_rand
+	const cv::Mat image = GenerateImageNegative(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
+
+	cv::imwrite(filename, image);
+}
+
+void SketchTerrainImage(int width, int height, int seed, const std::string& input, const std::string& filename)
+{
+	const auto inputImage = cv::imread(input, cv::ImreadModes::IMREAD_ANYDEPTH);
+
+	typedef ImageControlFunction ControlFunctionType;
+	std::unique_ptr<ControlFunctionType> controlFunction(std::make_unique<ControlFunctionType>(inputImage));
+
+	const double eps = 0.15;
+	const int resolution = 2;
+	const double displacement = 0.025;
+	const int primitivesResolutionSteps = 3;
+	const double slopePower = 0.5;
+	const double noiseAmplitudeProportion = 0.05;
+	const Point2D noiseTopLeft(0.0, 0.0);
+	const Point2D noiseBottomRight(8.0, 8.0);
+	const Point2D controlFunctionTopLeft(0.1, 0.1);
+	const Point2D controlFunctionBottomRight(0.9, 0.9);
+
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, true, false, false, false, false);
+	// TODO: Random generator std::minstd_rand
+	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
+
+	cv::imwrite(filename, image);
+}
+
 void EvaluationTerrainImage(int width, int height, int seed, const string& filename)
 {
 	typedef PerlinControlFunction ControlFunctionType;
@@ -514,6 +564,29 @@ void EvaluationTerrainImage(int width, int height, int seed, const string& filen
 	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, true, false, false, false, false);
 	// TODO: Random generator std::mt19937_64
 	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
+
+	cv::imwrite(filename, image);
+}
+
+void PerlinSegmentsImage(int width, int height, int seed, const std::string& filename)
+{
+	typedef PerlinControlFunction ControlFunctionType;
+	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
+
+	const double eps = 0.25;
+	const int resolution = 2;
+	const double displacement = 0.075;
+	const int primitivesResolutionSteps = 3;
+	const double slopePower = 0.5;
+	const double noiseAmplitudeProportion = 0.05;
+	const Point2D noiseTopLeft(0.0, 0.0);
+	const Point2D noiseBottomRight(4.0, 4.0);
+	const Point2D controlFunctionTopLeft(-0.2, -0.5);
+	const Point2D controlFunctionBottomRight(1.40, 0.7);
+
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, true, false, false);
+	// TODO: Random generator std::mt19937_64
+	const cv::Mat image = GenerateImageNegative(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
 
 	cv::imwrite(filename, image);
 }
