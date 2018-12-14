@@ -156,6 +156,24 @@ vector<vector<double> > EvaluateLichtenbergFigureWithoutProgress(const Noise<I>&
 	return values;
 }
 
+template<typename I>
+vector<vector<double> > EvaluateControlFunction(const ControlFunction<I>& controlFunction, const Point2D& a, const Point2D& b, int width, int height)
+{
+	vector<vector<double> > values(height, vector<double>(width));
+
+#pragma omp parallel for shared(values)
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			const double x = remap_clamp(double(j), 0.0, double(width), a.x, b.x);
+			const double y = remap_clamp(double(i), 0.0, double(height), a.y, b.y);
+
+			values[i][j] = controlFunction.evaluate(x, y);
+		}
+	}
+
+	return values;
+}
+
 cv::Mat GenerateImage(const vector<vector<double> > &values)
 {
 	const int width = int(values.size());
@@ -228,6 +246,42 @@ cv::Mat GenerateImageMatlab(const vector<vector<double> > &values)
 	}
 
 	return image;
+}
+
+void PerlinControlFunctionImage(int width, int height, const std::string& filename)
+{
+	PerlinControlFunction controlFunction;
+
+	const Point2D controlFunctionTopLeft(-0.2, -0.5);
+	const Point2D controlFunctionBottomRight(1.40, 0.7);
+
+	const cv::Mat image = GenerateImage(EvaluateControlFunction(controlFunction, controlFunctionTopLeft, controlFunctionBottomRight, width, height));
+
+	cv::imwrite(filename, image);
+}
+
+void LichtenbergControlFunctionImage(int width, int height, const std::string& filename)
+{
+	LichtenbergControlFunction controlFunction;
+
+	const Point2D controlFunctionTopLeft(-1.0, -1.0);
+	const Point2D controlFunctionBottomRight(1.0, 1.0);
+
+	const cv::Mat image = GenerateImage(EvaluateControlFunction(controlFunction, controlFunctionTopLeft, controlFunctionBottomRight, width, height));
+
+	cv::imwrite(filename, image);
+}
+
+void PerlinPlaneControlFunctionImage(int width, int height, const std::string& filename)
+{
+	PlaneControlFunction controlFunction;
+
+	const Point2D controlFunctionTopLeft(0.0, 0.0);
+	const Point2D controlFunctionBottomRight(1.0, 1.0);
+
+	const cv::Mat image = GenerateImage(EvaluateControlFunction(controlFunction, controlFunctionTopLeft, controlFunctionBottomRight, width, height));
+
+	cv::imwrite(filename, image);
 }
 
 void SmallAmplificationImage(int width, int height, int seed, const string& input, const string& filename)
@@ -456,6 +510,52 @@ void EvaluationTerrainImage(int width, int height, int seed, const string& filen
 	const Point2D noiseBottomRight(4.0, 4.0);
 	const Point2D controlFunctionTopLeft(-0.2, -0.4);
 	const Point2D controlFunctionBottomRight(1.4, 0.7);
+
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, true, false, false, false, false);
+	// TODO: Random generator std::mt19937_64
+	const cv::Mat image = GenerateImage(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
+
+	cv::imwrite(filename, image);
+}
+
+void PerlinPlaneSegmentsImage(int width, int height, int seed, const std::string& filename)
+{
+	typedef PlaneControlFunction ControlFunctionType;
+	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
+
+	const double eps = 0.15;
+	const int resolution = 2;
+	const double displacement = 0.025;
+	const int primitivesResolutionSteps = 3;
+	const double slopePower = 0.5;
+	const double noiseAmplitudeProportion = 0.05;
+	const Point2D noiseTopLeft(0.0, 0.0);
+	const Point2D noiseBottomRight(4.0, 4.0);
+	const Point2D controlFunctionTopLeft(0.0, 0.0);
+	const Point2D controlFunctionBottomRight(1.0, 1.0);
+
+	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, false, false, true, false, false);
+	// TODO: Random generator std::mt19937_64
+	const cv::Mat image = GenerateImageNegative(EvaluateTerrain(noise, noiseTopLeft, noiseBottomRight, width, height));
+
+	cv::imwrite(filename, image);
+}
+
+void PerlinPlaneTerrainImage(int width, int height, int seed, const std::string& filename)
+{
+	typedef PlaneControlFunction ControlFunctionType;
+	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
+
+	const double eps = 0.15;
+	const int resolution = 2;
+	const double displacement = 0.025;
+	const int primitivesResolutionSteps = 3;
+	const double slopePower = 0.5;
+	const double noiseAmplitudeProportion = 0.05;
+	const Point2D noiseTopLeft(0.0, 0.0);
+	const Point2D noiseBottomRight(4.0, 4.0);
+	const Point2D controlFunctionTopLeft(0.0, 0.0);
+	const Point2D controlFunctionBottomRight(1.0, 1.0);
 
 	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, true, false, false, false, false);
 	// TODO: Random generator std::mt19937_64

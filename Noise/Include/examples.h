@@ -3,6 +3,12 @@
 
 #include <string>
 
+void PerlinControlFunctionImage(int width, int height, const std::string& filename);
+
+void LichtenbergControlFunctionImage(int width, int height, const std::string& filename);
+
+void PerlinPlaneControlFunctionImage(int width, int height, const std::string& filename);
+
 void SmallAmplificationImage(int width, int height, int seed, const std::string& input, const std::string& filename);
 
 void BigAmplificationImage(int width, int height, int seed, const std::string& input, const std::string& filename);
@@ -22,6 +28,10 @@ void TeaserThirdDistanceImage(int width, int height, int seed, const std::string
 void TeaserThirdTerrainImage(int width, int height, int seed, const std::string& filename);
 
 void EvaluationTerrainImage(int width, int height, int seed, const std::string& filename);
+
+void PerlinPlaneSegmentsImage(int width, int height, int seed, const std::string& filename);
+
+void PerlinPlaneTerrainImage(int width, int height, int seed, const std::string& filename);
 
 void LichtenbergFigureImage(int width, int height, int seed, const std::string& filename);
 

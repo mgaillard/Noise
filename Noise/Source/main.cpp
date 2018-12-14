@@ -13,6 +13,21 @@ int main(int argc, char* argv[])
 	const string PERFORMANCE_OUTPUT = "performance_test.png";
 	std::cout << std::fixed << std::setprecision(2) << PerformanceTest(PERFORMANCE_WIDTH, PERFORMANCE_HEIGHT, PERFORMANCE_OUTPUT) << std::endl;
 
+	const int CONTROL_FUNCTION_WIDTH = 512;
+	const int CONTROL_FUNCTION_HEIGHT = 512;
+	
+	std::cout << "Perlin control function" << std::endl;
+	const string PERLIN_CONTROL_OUTPUT = "perlin_function.png";
+	PerlinControlFunctionImage(CONTROL_FUNCTION_WIDTH, CONTROL_FUNCTION_HEIGHT, PERLIN_CONTROL_OUTPUT);
+
+	std::cout << "Lichtenberg control function" << std::endl;
+	const string LICHTENBERG_CONTROL_OUTPUT = "lichtenberg_function.png";
+	LichtenbergControlFunctionImage(CONTROL_FUNCTION_WIDTH, CONTROL_FUNCTION_HEIGHT, LICHTENBERG_CONTROL_OUTPUT);
+
+	std::cout << "Perlin plane control function" << std::endl;
+	const string PERLIN_PLANE_CONTROL_OUTPUT = "perlin_plane_function.png";
+	PerlinPlaneControlFunctionImage(CONTROL_FUNCTION_WIDTH, CONTROL_FUNCTION_HEIGHT, PERLIN_PLANE_CONTROL_OUTPUT);
+	
 	std::cout << "Amplification of a small terrain" << std::endl;
 	const int SMALL_AMP_WIDTH = 512;
 	const int SMALL_AMP_HEIGHT = 512;
@@ -80,7 +95,17 @@ int main(int argc, char* argv[])
 
 		EvaluationTerrainImage(EVALUATION_TERRAIN_WIDTH, EVALUATION_TERRAIN_HEIGHT, s, filename);
 	}
-	
+
+	// TODO: fine tune the slopePower and the amplitude of the control function
+	std::cout << "Segments and terrain with the perlin plane control function" << std::endl;
+	const int PERLIN_PLANE_WIDTH = 512;
+	const int PERLIN_PLANE_HEIGHT = 512;
+	const int PERLIN_PLANE_SEED = 0;
+	const string PERLIN_PLANE_SEGMENTS_OUTPUT = "perlin_plane_segments.png";
+	const string PERLIN_PLANE_OUTPUT = "perlin_plane_terrain.png";
+	PerlinPlaneSegmentsImage(PERLIN_PLANE_WIDTH, PERLIN_PLANE_HEIGHT, PERLIN_PLANE_SEED, PERLIN_PLANE_SEGMENTS_OUTPUT);
+	PerlinPlaneTerrainImage(PERLIN_PLANE_WIDTH, PERLIN_PLANE_HEIGHT, PERLIN_PLANE_SEED, PERLIN_PLANE_OUTPUT);
+
 	std::cout << "Procedural generation of a Lichtenberg figure" << std::endl;
 	const int LICHTENBERG_WIDTH = 2048;
 	const int LICHTENBERG_HEIGHT = 2048;

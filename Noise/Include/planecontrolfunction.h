@@ -10,7 +10,7 @@ class PlaneControlFunction : public ControlFunction<PlaneControlFunction>
 protected:
 	double EvaluateImpl(double x, double y) const
 	{
-		return x / 8.0 + (Perlin(x, y) + 1.0) / 8.0;
+		return x / 8.0 + (Perlin(4.0 * x, 4.0 * y) + 1.0) / 8.0;
 	}
 
 	bool InsideDomainImpl(double x, double y) const
