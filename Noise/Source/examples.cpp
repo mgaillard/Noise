@@ -319,13 +319,13 @@ void BigAmplificationImage(int width, int height, int seed, const string& input,
 	const double eps = 0.10;
 	const int resolution = 1;
 	const double displacement = 0.05;
-	const int primitivesResolutionSteps = 2;
-	const double slopePower = 1.0;
+	const int primitivesResolutionSteps = 3;
+	const double slopePower = 0.75;
 	const double noiseAmplitudeProportion = 0.05;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(48.0, 48.0);
-	const Point2D controlFunctionTopLeft(0.0, 0.0);
-	const Point2D controlFunctionBottomRight(1.0, 1.0);
+	const Point2D controlFunctionTopLeft(0.1, 0.1);
+	const Point2D controlFunctionBottomRight(0.9, 0.9);
 
 	const Noise<ControlFunctionType> noise(move(controlFunction), noiseTopLeft, noiseBottomRight, controlFunctionTopLeft, controlFunctionBottomRight, seed, eps, resolution, displacement, primitivesResolutionSteps, slopePower, noiseAmplitudeProportion, true, false, false, false, false);
 	// TODO: Random generator std::minstd_rand
