@@ -37,8 +37,8 @@ int main(int argc, char* argv[])
 	SmallAmplificationImage(SMALL_AMP_WIDTH, SMALL_AMP_HEIGHT, SMALL_AMP_SEED, SMALL_AMP_INPUT, SMALL_AMP_OUTPUT);
 
 	std::cout << "Amplification of a big terrain" << std::endl;
-	const int BIG_AMP_WIDTH = 1024;
-	const int BIG_AMP_HEIGHT = 1024;
+	const int BIG_AMP_WIDTH = 256;
+	const int BIG_AMP_HEIGHT = 256;
 	const int BIG_AMP_SEED = 0;
 	const string BIG_AMP_INPUT = "../Images/amplification_big.png";
 	const string BIG_AMP_OUTPUT = "amplification_big_result.png";
