@@ -98,6 +98,8 @@ vector<vector<double> > EvaluateTerrain(const Noise<I>& noise, const Point2D& a,
 	// Display progress 25 times.
 	Progress progress(width * height, 25);
 
+	// Measure execution time
+	const auto startTime = chrono::high_resolution_clock::now();
 #pragma omp parallel for shared(values)
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
@@ -110,6 +112,10 @@ vector<vector<double> > EvaluateTerrain(const Noise<I>& noise, const Point2D& a,
 			progress.Display();
 		}
 	}
+	const auto endTime = chrono::high_resolution_clock::now();
+
+	// Execution time in ms
+	std::cout << "Execution time in ms: " << chrono::duration<double, milli>(endTime - startTime).count() << std::endl;
 
 	return values;
 }
