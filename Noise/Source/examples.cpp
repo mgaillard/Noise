@@ -645,7 +645,7 @@ void PerlinPlaneTerrainImage(int width, int height, int seed, const std::string&
 
 void LichtenbergFigureImage(int width, int height, int seed, const string& filename)
 {
-	const int antiAliasingLevel = 4;
+	const int antiAliasingLevel = 8;
 
 	typedef LichtenbergControlFunction ControlFunctionType;
 	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
