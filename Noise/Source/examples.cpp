@@ -323,7 +323,7 @@ void BigAmplificationImage(int width, int height, int seed, const string& input,
 	const double slopePower = 0.75;
 	const double noiseAmplitudeProportion = 0.05;
 	const Point2D noiseTopLeft(0.0, 0.0);
-	const Point2D noiseBottomRight(48.0, 48.0);
+	const Point2D noiseBottomRight(16.0, 16.0);
 	const Point2D controlFunctionTopLeft(0.1, 0.1);
 	const Point2D controlFunctionBottomRight(0.9, 0.9);
 
