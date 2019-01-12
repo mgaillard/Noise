@@ -46,8 +46,13 @@ double smoother(double x)
 // Computes the dot product of the distance and gradient vectors.
 double dotGridGradient(int ix, int iy, double x, double y)
 {
+	const int mx = RobustMod(ix, 256);
+	const int my = RobustMod(iy, 256);
+
+	const int index = RobustMod(mx + HashTable[my], 256);
+
 	// Index of the gradient
-	int g = HashTable[(ix % 256 + HashTable[iy % 256]) % 256] % 8;
+	int g = HashTable[index] % 8;
 
 	// Compute the distance vector
 	double dx = x - (double)ix;
