@@ -13,7 +13,7 @@ void SmallAmplificationImage(int width, int height, int seed, const std::string&
 
 void BigAmplificationImage(int width, int height, int seed, const std::string& input, const std::string& filename);
 
-void SmallTerrainImage(int width, int height, int seed, const std::string& filename);
+void EffectBetaTerrainImage(int width, int height, int seed, double beta, const std::string& filename);
 
 void TeaserFirstDistanceImage(int width, int height, int seed, const std::string& filename);
 

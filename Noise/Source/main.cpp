@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 	const string SMALL_AMP_INPUT = "../Images/amplification_small.png";
 	const string SMALL_AMP_OUTPUT = "amplification_small_result.png";
 	SmallAmplificationImage(SMALL_AMP_WIDTH, SMALL_AMP_HEIGHT, SMALL_AMP_SEED, SMALL_AMP_INPUT, SMALL_AMP_OUTPUT);
-
+	
 	std::cout << "Amplification of a big terrain" << std::endl;
 	const int BIG_AMP_WIDTH = 256;
 	const int BIG_AMP_HEIGHT = 256;
@@ -43,14 +43,25 @@ int main(int argc, char* argv[])
 	const string BIG_AMP_INPUT = "../Images/amplification_big.png";
 	const string BIG_AMP_OUTPUT = "amplification_big_result.png";
 	BigAmplificationImage(BIG_AMP_WIDTH, BIG_AMP_HEIGHT, BIG_AMP_SEED, BIG_AMP_INPUT, BIG_AMP_OUTPUT);
+	
+	std::cout << "Procedural generation of a small terrain to show the effect of beta (slope power)" << std::endl;
+	const int BETA_TERRAIN_WIDTH = 512;
+	const int BETA_TERRAIN_HEIGHT = 512;
+	const int BETA_TERRAIN_SEED = 1;
+	const string BETA_TERRAIN_OUTPUT = "effect_beta";
+	const string BETA_TERRAIN_EXTENSION = ".png";
+	
+	for (int i = 0; i <= 3; i++)
+	{
+		const double beta = i * 0.5;
 
-	std::cout << "Procedural generation of a small terrain" << std::endl;
-	const int SMALL_TERRAIN_WIDTH = 512;
-	const int SMALL_TERRAIN_HEIGHT = 512;
-	const int SMALL_TERRAIN_SEED = 1;
-	const string SMALL_TERRAIN_OUTPUT = "small_terrain.png";
-	SmallTerrainImage(SMALL_TERRAIN_WIDTH, SMALL_TERRAIN_HEIGHT, SMALL_TERRAIN_SEED, SMALL_TERRAIN_OUTPUT);
+		string filename = BETA_TERRAIN_OUTPUT;
+		filename += std::to_string(i);
+		filename += BETA_TERRAIN_EXTENSION;
 
+		EffectBetaTerrainImage(BETA_TERRAIN_WIDTH, BETA_TERRAIN_HEIGHT, BETA_TERRAIN_SEED, beta, filename);
+	}
+	
 	std::cout << "Procedural generation of the teaser 1 terrain" << std::endl;
 	const int TEASER_1_TERRAIN_WIDTH = 512;
 	const int TEASER_1_TERRAIN_HEIGHT = 512;
@@ -121,14 +132,14 @@ int main(int argc, char* argv[])
 	const int PERLIN_SEED = 0;
 	const string PERLIN_OUTPUT = "perlin_segments.png";
 	PerlinSegmentsImage(PERLIN_WIDTH, PERLIN_HEIGHT, PERLIN_SEED, PERLIN_OUTPUT);
-
+	
 	std::cout << "Procedural generation of a Lichtenberg figure" << std::endl;
 	const int LICHTENBERG_WIDTH = 8192;
 	const int LICHTENBERG_HEIGHT = 8192;
 	const int LICHTENBERG_SEED = 33058;
 	const string LICHTENBERG_OUTPUT = "lichtenberg.png";
 	LichtenbergFigureImage(LICHTENBERG_WIDTH, LICHTENBERG_HEIGHT, LICHTENBERG_SEED, LICHTENBERG_OUTPUT);
-
+	
 	std::cout << "Procedural generation of figures showing the effect of parameters" << std::endl;
 	const int EFFECT_WIDTH = 512;
 	const int EFFECT_HEIGHT = 512;

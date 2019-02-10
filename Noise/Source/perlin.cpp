@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdint>
 
+#include "utils.h"
+
 const double unit = 1.0 / sqrt(2);
 const double Gradients[][2] = {
 	{ unit, unit },
@@ -31,25 +33,13 @@ const uint8_t HashTable[256] = {
 	 61, 156, 180, 219
 };
 
-// Function to linearly interpolate between a0 and a1
-// Weight w should be in the range [0.0, 1.0]
-double lerp(double a0, double a1, double w)
-{
-	return (1.0 - w) * a0 + w * a1;
-}
-
-double smoother(double x)
-{
-	return x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
-}
-
 // Computes the dot product of the distance and gradient vectors.
 double dotGridGradient(int ix, int iy, double x, double y)
 {
-	const int mx = RobustMod(ix, 256);
-	const int my = RobustMod(iy, 256);
+	const int mx = robust_mod(ix, 256);
+	const int my = robust_mod(iy, 256);
 
-	const int index = RobustMod(mx + HashTable[my], 256);
+	const int index = robust_mod(mx + HashTable[my], 256);
 
 	// Index of the gradient
 	int g = HashTable[index] % 8;

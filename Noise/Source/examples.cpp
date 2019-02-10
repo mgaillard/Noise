@@ -346,7 +346,7 @@ void BigAmplificationImage(int width, int height, int seed, const string& input,
 	cv::imwrite(filename, image);
 }
 
-void SmallTerrainImage(int width, int height, int seed, const string& filename)
+void EffectBetaTerrainImage(int width, int height, int seed, double beta, const string& filename)
 {
 	typedef PerlinControlFunction ControlFunctionType;
 	unique_ptr<ControlFunctionType> controlFunction(make_unique<ControlFunctionType>());
@@ -355,7 +355,7 @@ void SmallTerrainImage(int width, int height, int seed, const string& filename)
 	const int resolution = 2;
 	const double displacement = 0.08;
 	const int primitivesResolutionSteps = 3;
-	const double slopePower = 1.5;
+	const double slopePower = beta;
 	const double noiseAmplitudeProportion = 0.025;
 	const Point2D noiseTopLeft(0.0, 0.0);
 	const Point2D noiseBottomRight(4.0, 4.0);
