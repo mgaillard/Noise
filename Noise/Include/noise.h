@@ -250,8 +250,8 @@ private:
 	// Additional parameter to control the variation of slope on terrains
 	const double m_slopePower;
 
-	const int CACHE_X = 32;
-	const int CACHE_Y = 32;
+	const int CACHE_X = 128;
+	const int CACHE_Y = 128;
 	std::vector<std::vector<Point2D> > m_pointCache;
 };
 

@@ -6,23 +6,23 @@
 
 // Default parameters for the noise function
 const NoiseParameters MainWindow::default_noise_parameters = {
-	NoiseType::lichtenberg,
+	NoiseType::terrain,
 	0,    // seed
 	512,  // width
 	512,  // height
 	1,    // levels
-	0.1,  // epsilon
-	0.0,  // displacement
-	-2.0, // noiseTop
-	1.0,  // noiseBottom
-	-2.0, // noiseLeft
-	1.0,  // noiseRight
-	-1.0, // controlFunctionTop
-	1.0,  // controlFunctionBottom
-	-1.0, // controlFunctionLeft
-	1.0,  // controlFunctionRight
+	0.25, // epsilon
+	0.075,// displacement
+	0.0,  // noiseTop
+	4.0,  // noiseBottom
+	0.0,  // noiseLeft
+	4.0,  // noiseRight
+	-0.5, // controlFunctionTop
+	0.7,  // controlFunctionBottom
+	-0.2, // controlFunctionLeft
+	1.4,  // controlFunctionRight
 	3,    // primitivesResolutionSteps
-	1.0,  // slopePower
+	0.5,  // slopePower
 	0.05, // noiseAmplitudeProportion
 	1.0   // controlScale
 };
