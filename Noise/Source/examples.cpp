@@ -673,7 +673,7 @@ void LichtenbergFigureImage(int width, int height, int seed, const string& filen
 
 	// Resize image (anti aliasing)
 	cv::Mat resized_image(height / antiAliasingLevel, width / antiAliasingLevel, CV_16U);
-	resize(image, resized_image, resized_image.size(), 0, 0, CV_INTER_AREA);
+	cv::resize(image, resized_image, resized_image.size(), 0.0, 0.0, cv::INTER_AREA);
 
 	cv::imwrite(filename, resized_image);
 }

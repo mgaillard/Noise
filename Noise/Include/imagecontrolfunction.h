@@ -28,8 +28,8 @@ public:
 protected:
 	double EvaluateImpl(double x, double y) const
 	{
-		x = clamp(x, 0.0, 1.0);
-		y = clamp(y, 0.0, 1.0);
+		x = std::clamp(x, 0.0, 1.0);
+		y = std::clamp(y, 0.0, 1.0);
 
 		return sample(y, x);
 	}

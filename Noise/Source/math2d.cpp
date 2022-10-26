@@ -1,5 +1,7 @@
 #include "math2d.h"
 
+#include <algorithm>
+
 Point2D& Point2D::operator+=(const Vec2D& v)
 {
 	x += v.x;
@@ -46,7 +48,7 @@ double pointLineProjection(const Point2D& p, const Segment2D& s)
 double pointLineSegmentProjection(const Point2D& p, const Point2D& a, const Point2D& b)
 {
 	const double u = pointLineProjection(p, a, b);
-	return clamp(u, 0.0, 1.0);
+	return std::clamp(u, 0.0, 1.0);
 }
 
 double pointLineSegmentProjection(const Point2D& p, const Segment2D& s)

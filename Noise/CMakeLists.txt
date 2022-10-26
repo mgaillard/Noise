@@ -1,30 +1,58 @@
-cmake_minimum_required(VERSION 3.5)
-project(Noise)
+add_executable(Noise)
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+message(STATUS "Creating target 'Noise'")
 
-find_package(OpenMP)
-if (OPENMP_FOUND)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif()
+set(HEADER_FILES
+    Include/controlfunction.h
+    Include/examples.h
+    Include/imagecontrolfunction.h
+    Include/lichtenbergcontrolfunction.h
+    Include/math2d.h
+    Include/math3d.h
+    Include/noise.h
+    Include/perlin.h
+    Include/perlincontrolfunction.h
+    Include/planecontrolfunction.h
+    Include/spline.h
+    Include/utils.h
+)
 
-find_package(OpenCV REQUIRED)
+set(SRC_FILES
+    Source/main.cpp
+    Source/examples.cpp
+    Source/imagecontrolfunction.cpp
+    Source/math2d.cpp
+    Source/math3d.cpp
+    Source/perlin.cpp
+    Source/spline.cpp
+    Source/utils.cpp
+)
 
-set(SOURCE_FILES Source/main.cpp
-			     Include/controlfunction.h
-				 Include/examples.h Source/examples.cpp
-				 Include/imagecontrolfunction.h Source/imagecontrolfunction.cpp
-				 Include/lichtenbergcontrolfunction.h
-				 Include/math2d.h Source/math2d.cpp
-				 Include/math3d.h Source/math3d.cpp
-				 Include/noise.h
-				 Include/perlin.h Source/perlin.cpp
-				 Include/perlincontrolfunction.h
-				 Include/planecontrolfunction.h
-				 Include/spline.h Source/spline.cpp
-				 Include/utils.h Source/utils.cpp)
+# Setup filters in Visual Studio
+source_group("Header Files" FILES ${HEADER_FILES})
+source_group("Source Files" FILES ${SRC_FILES})
 
-add_executable(Noise ${SOURCE_FILES})
-target_include_directories(Noise PRIVATE Include)
-target_link_libraries(Noise ${OpenCV_LIBS})
+# Copy the ReSharper config file
+configure_file(
+    "${CMAKE_SOURCE_DIR}/Noise.sln.DotSettings"
+    ${CMAKE_BINARY_DIR} COPYONLY
+)
+
+target_sources(Noise
+    PUBLIC
+    ${HEADER_FILES}
+    PRIVATE
+    ${SRC_FILES}
+)
+
+target_include_directories(Noise
+    PRIVATE
+    Include
+    ${OpenCV_INCLUDE_DIRS}
+)
+
+target_link_libraries(Noise 
+    PRIVATE
+    OpenMP::OpenMP_CXX
+    ${OpenCV_LIBS}
+)

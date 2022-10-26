@@ -19,15 +19,16 @@ A ZIP archive with a Release version is available for Windows 10 64 bits. To run
 
 ### Prerequisites
 
-- Visual Studio 2017
-- Qt Visual Studio Tools
-- Qt 5.9 LTS
-- OpenCV 3.4
+- Visual Studio 2022
+- Qt 6.2 LTS
+- OpenCV 4.5.5
 
 ### Build on Windows
 
-* Open the Visual Studio 2017 solution.
-* Build the InteractiveDesigner project.
+```Powershell
+mkdir build && cd build
+cmake -DCMAKE_PREFIX_PATH=C:/Code/opencv_455/build/;C:/Code/Qt/6.2.4/msvc2019_64 ..
+```
 
 ### Build on Linux
 ```bash

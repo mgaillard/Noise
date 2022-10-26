@@ -32,25 +32,6 @@ T remap_clamp(const T& x, const T& in_start, const T& in_end, const T& out_start
 }
 
 template<typename T>
-const T& clamp(const T& v, const T& lo, const T& hi)
-{
-	assert(lo <= hi);
-
-	if (v < lo)
-	{
-		return lo;
-	}
-	else if (v > hi)
-	{
-		return hi;
-	}
-	else
-	{
-		return v;
-	}
-}
-
-template<typename T>
 T lerp(const T& a, const T& b, const T& x)
 {
 	// FMA friendly

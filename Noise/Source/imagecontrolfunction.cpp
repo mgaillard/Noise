@@ -1,5 +1,7 @@
 #include "imagecontrolfunction.h"
 
+#include <algorithm>
+
 double ImageControlFunction::sample(double ri, double rj) const
 {
 	assert(0.0 <= ri && ri <= 1.0);
@@ -44,5 +46,5 @@ double ImageControlFunction::sample(double ri, double rj) const
 
 	const double interpolation = bi_cubic_interpolate(p, ri - floor(ri), rj - floor(rj));
 
-	return clamp(interpolation, 0.0, 1.0);
+	return std::clamp(interpolation, 0.0, 1.0);
 }

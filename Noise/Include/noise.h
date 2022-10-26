@@ -576,7 +576,7 @@ typename Noise<I>::template Segment3DChain<D> Noise<I>::ConnectPointToSegmentAng
 	// TODO: make sure that segmentDist is the distance to the line (AB) using u or by recomputing it in this function
 	double v = u + (segmentDist / tanAngle) / length(ProjectionZ(segment));
 	// The intersection must lie on the segment
-	v = clamp(v, 0.0, 1.0);
+	v = std::clamp(v, 0.0, 1.0);
 
 	const Point3D straightSegmentEnd(lerp(segment, v));
 	const Segment3D straightSegment(point, straightSegmentEnd);
