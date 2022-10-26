@@ -3,7 +3,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP "Generated Files")
 
-find_package(Qt6 COMPONENTS Core Widgets Gui Qml REQUIRED)
+find_package(Qt6 COMPONENTS Core Widgets Gui Concurrent REQUIRED)
 
 # Add a target for windeployqt
 # Source: https://stackoverflow.com/questions/41193584/deploy-all-qt-dependencies-when-building

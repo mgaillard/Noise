@@ -15,8 +15,9 @@ list(PREPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/")
 include(opencv)
 include(qt6)
 
-# add_subdirectory(InteractiveDesigner)
+add_subdirectory(NoiseLib)
 add_subdirectory(Noise)
+add_subdirectory(InteractiveDesigner)
 
 # Set the project as startup project in Visual Studio
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Noise)
