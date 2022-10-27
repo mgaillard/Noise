@@ -72,11 +72,11 @@ bool NoiseRenderer::start()
 		switch (m_parameters.type)
 		{
 		case NoiseType::terrain:
-			futureImage = QtConcurrent::run(this, &NoiseRenderer::RenderTerrain);
+			futureImage = QtConcurrent::run(&NoiseRenderer::RenderTerrain, this);
 			break;
 
 		case NoiseType::lichtenberg:
-			futureImage = QtConcurrent::run(this, &NoiseRenderer::RenderLichtenberg);
+			futureImage = QtConcurrent::run(&NoiseRenderer::RenderLichtenberg, this);
 			break;
 		};
 

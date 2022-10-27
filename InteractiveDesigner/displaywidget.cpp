@@ -62,9 +62,8 @@ void DisplayWidget::zoomOut()
 
 void DisplayWidget::scaleImage(double factor)
 {
-	Q_ASSERT(m_imageLabel->pixmap());
 	m_scaleFactor *= factor;
-	m_imageLabel->resize(m_scaleFactor * m_imageLabel->pixmap()->size());
+	m_imageLabel->resize(m_scaleFactor * m_imageLabel->pixmap().size());
 
 	adjustScrollBar(m_scrollArea->horizontalScrollBar(), factor);
 	adjustScrollBar(m_scrollArea->verticalScrollBar(), factor);
