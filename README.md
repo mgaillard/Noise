@@ -1,9 +1,29 @@
 # Dendry: A Procedural Model for Dendritic Patterns
 We introduce Dendry, a procedural function that generates dendritic patterns and is locally computable. The function is controlled by parameters such as the level of branching, the degree of local smoothing, random seeding and local disturbance parameters, and the range of the branching angles. It is also controlled by a global control function that defines the overall shape and can be used, for example, to initialize local minima. The algorithm returns the distance to a tree structure which is implicitly constructed on the fly, while requiring a small memory footprint. The evaluation can be performed in parallel for multiple points and scales linearly with the number of cores. We demonstrate an application of our model to the generation of terrain heighfields with consistent river networks. A quad core implementation of our algorithm takes aboutten seconds for a 512×512 resolution grid on the CPU.
 
+![Images](Images/rendering.jpg "Screenshot of terrains generated using our method")
+
 ## Please cite our work
 
 > Mathieu Gaillard, Bedrich Benes, Eric Guérin, Eric Galin, Damien Rohmer, Marie-Paule Cani. Symposium on Interactive 3D Graphics and Games (I3D). 2019
+
+```
+@inproceedings{gaillard2019dendry,
+ author = {Gaillard, Mathieu and Benes, Bedrich and Gu{\'e}rin, Eric and Galin, Eric and Rohmer, Damien and Cani, Marie-Paule},
+ title = {Dendry: A Procedural Model for Dendritic Patterns},
+ booktitle = {Proceedings of the ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games},
+ series = {I3D '19},
+ year = {2019},
+ isbn = {978-1-4503-6310-5},
+ location = {Montreal, Quebec, Canada},
+ pages = {16:1--16:9},
+ articleno = {16},
+ numpages = {9},
+ doi = {10.1145/3306131.3317020},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+}
+```
 
 ## Getting started
 
