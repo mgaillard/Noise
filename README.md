@@ -53,7 +53,7 @@ cmake -DCMAKE_PREFIX_PATH=C:/Code/opencv_455/build/;C:/Code/Qt/6.2.4/msvc2019_64
 ### Build on Linux
 ```bash
 $ mkdir build && cd build
-$ cmake -DCMAKE_BUILD_TYPE=Release ../Noise
+$ cmake -DCMAKE_BUILD_TYPE=Release ..
 $ make
 ```
 
