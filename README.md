@@ -3,9 +3,13 @@ We introduce Dendry, a procedural function that generates dendritic patterns and
 
 ![Images](Images/rendering.jpg "Screenshot of terrains generated using our method")
 
+## Link to the published paper
+
+More details about the algorithm are available in our paper: [Dendry: A Procedural Model for Dendritic Patterns](https://www.doi.org/10.1145/3306131.3317020).
+
 ## Please cite our work
 
-> Mathieu Gaillard, Bedrich Benes, Eric Guérin, Eric Galin, Damien Rohmer, Marie-Paule Cani. Symposium on Interactive 3D Graphics and Games (I3D). 2019
+> Mathieu Gaillard, Bedrich Benes, Eric Guérin, Eric Galin, Damien Rohmer, Marie-Paule Cani. (2019). **Dendry: A Procedural Model for Dendritic Patterns**. Symposium on Interactive 3D Graphics and Games (I3D).
 
 ```
 @inproceedings{gaillard2019dendry,
