@@ -1660,7 +1660,7 @@ double Noise<I>::ComputeColorPrimitives(double x, double y, const Cell& higherRe
 	{
 		Cell newCell = GetCell(x, y, 2 * highestResCell.resolution);
 		Point2DArray<N> newPoints = GenerateNeighboringPoints<N>(newCell);
-		ReplaceNeighboringPoints(highestResCell, higherResPoints, newCell, newPoints);
+		ReplaceNeighboringPoints(highestResCell, highestResPoints, newCell, newPoints);
 
 		highestResCell = newCell;
 		highestResPoints = newPoints;
